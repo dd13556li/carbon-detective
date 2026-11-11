@@ -1,0 +1,237 @@
+<title>電費單碳排計算器</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: one column like a utility bill — header strip, big readout, then the tool below. Big touch targets for students with special needs. */
+:root{
+  --bg:#f3f6f4; --paper:#ffffff; --ink:#18302a; --muted:#56706a;
+  --line:#cfdcd7; --accent:#0f7a63; --accent-ink:#ffffff;
+  --carbon:#3b3a36; --rice:#e9dcc0; --rice-ink:#6b5a35; --warn:#b4541c;
+  --font:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1a17; --paper:#17251f; --ink:#e4efe9; --muted:#9db5ad;
+  --line:#2c3f38; --accent:#3cc29f; --accent-ink:#06261d;
+  --carbon:#d8d4c8; --rice:#4a4130; --rice-ink:#efdfb8; --warn:#f0a070; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1a17; --paper:#17251f; --ink:#e4efe9; --muted:#9db5ad;
+  --line:#2c3f38; --accent:#3cc29f; --accent-ink:#06261d;
+  --carbon:#d8d4c8; --rice:#4a4130; --rice-ink:#efdfb8; --warn:#f0a070; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-direction:column;gap:4px}
+h1{font-size:clamp(26px,6vw,36px);font-weight:900;margin:0;text-wrap:balance;letter-spacing:.02em}
+.sub{color:var(--muted);margin:0}
+.en{color:var(--accent);font-weight:700;margin:0;letter-spacing:.02em}
+.tab small,.step small{font-weight:500;font-size:.75em;opacity:.85;margin-left:6px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tab{font:inherit;font-size:20px;font-weight:700;padding:16px 10px;border-radius:14px;border:3px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.tab[aria-selected="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.panel{background:var(--paper);border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.step{display:flex;gap:10px;align-items:baseline;font-weight:700;font-size:20px}
+.step b{display:inline-grid;place-items:center;min-width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:18px}
+.bills{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bill{border:2px dashed var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;cursor:pointer;background:transparent;color:inherit;font:inherit;text-align:left}
+.bill[aria-pressed="true"]{border-style:solid;border-color:var(--accent)}
+.bill .lab{font-size:15px;color:var(--muted)}
+.bill .val{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums}
+.bill .val small{font-size:18px;font-weight:500}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.key{font:inherit;font-size:28px;font-weight:700;padding:14px 0;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.key:active{transform:scale(.97)}
+.key.alt{font-size:20px;color:var(--warn)}
+button:focus-visible{outline:4px solid var(--accent);outline-offset:2px}
+.result{display:flex;flex-direction:column;gap:12px}
+.big{font-size:clamp(30px,8vw,46px);font-weight:900;line-height:1.25;font-variant-numeric:tabular-nums}
+.big .unit{font-size:.5em;font-weight:700}
+.eq{font-size:20px}
+.bags{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;min-height:60px}
+.bags svg{display:block}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:15px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.speak{font:inherit;font-size:22px;font-weight:700;padding:16px;border-radius:14px;border:none;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.compare{border-top:2px solid var(--line);padding-top:14px;font-size:20px}
+.compare strong{color:var(--warn)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.card{font:inherit;border:3px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+.card[aria-pressed="true"]{border-color:var(--accent)}
+.card .ico{font-size:34px;line-height:1}
+.card .nm{font-weight:700;font-size:18px}
+.card .w{font-size:14px;color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper button{font:inherit;font-size:26px;font-weight:900;width:52px;height:52px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.stepper output{min-width:90px;text-align:center;font-size:24px;font-weight:900;font-variant-numeric:tabular-nums}
+.note{font-size:14px;color:var(--muted);margin:0}
+details{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:12px 16px}
+summary{cursor:pointer;font-weight:700}
+details label{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+.sample{display:inline-block;font-size:13px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--rice);color:var(--rice-ink)}
+@media (max-width:420px){.cards{grid-template-columns:repeat(2,1fr)} .key{font-size:24px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>電費單碳排計算器</h1>
+    <p class="en">Electricity Bill → CO2 Calculator</p>
+    <p class="sub">用了幾度電，就排了多少二氧化碳？輸入電費單上的度數看看。</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-bill" aria-selected="true">電費單<small>Bill</small></button>
+    <button class="tab" role="tab" id="tab-app" aria-selected="false">家電<small>Appliance</small></button>
+  </div>
+
+  <!-- 電費單模式 -->
+  <section class="panel" id="panel-bill">
+    <div class="step"><b>1</b>找到電費單上的「度數」，按數字輸入<small>kWh</small></div>
+    <div class="bills">
+      <button class="bill" id="billA" aria-pressed="true"><span class="lab">第一張電費單 <span class="sample" id="sampleA">範例</span></span><span class="val"><span id="valA">512</span> <small>度</small></span></button>
+      <button class="bill" id="billB" aria-pressed="false"><span class="lab">第二張（比一比，可不填） <span class="sample" id="sampleB">範例</span></span><span class="val"><span id="valB">286</span> <small>度</small></span></button>
+    </div>
+    <div class="keypad" id="keypad"></div>
+    <div class="step"><b>2</b>看結果<small>CO2</small></div>
+    <div class="result" id="resBill"></div>
+    <button class="speak" id="speakBill">🔊 念給我聽 Read aloud</button>
+  </section>
+
+  <!-- 家電模式 -->
+  <section class="panel" id="panel-app" hidden>
+    <div class="step"><b>1</b>選一個家電</div>
+    <div class="cards" id="cards"></div>
+    <p class="note">卡片上的瓦數是示例，請以家電上的標示為準。可以用下面的按鈕改瓦數。</p>
+    <div class="row"><span>瓦數</span>
+      <div class="stepper"><button id="wMinus" aria-label="瓦數減少">−</button><output id="wOut">1000 W</output><button id="wPlus" aria-label="瓦數增加">＋</button></div>
+    </div>
+    <div class="step"><b>2</b>一天用幾小時？</div>
+    <div class="stepper"><button id="hMinus" aria-label="時數減少">−</button><output id="hOut">8 小時</output><button id="hPlus" aria-label="時數增加">＋</button></div>
+    <div class="step"><b>3</b>一個月（30 天）會排多少碳？</div>
+    <div class="result" id="resApp"></div>
+    <button class="speak" id="speakApp">🔊 念給我聽 Read aloud</button>
+  </section>
+
+  <div class="legend">
+    <span><svg width="22" height="28" viewBox="0 0 22 28" aria-hidden="true"><path d="M4 6h14l3 20H1z" fill="var(--rice)" stroke="var(--rice-ink)" stroke-width="1.5"/><rect x="5" y="2" width="12" height="5" rx="1" fill="var(--rice-ink)"/></svg>一包 10 公斤的米</span>
+    <span><svg width="14" height="18" viewBox="0 0 22 28" aria-hidden="true"><path d="M4 6h14l3 20H1z" fill="var(--carbon)"/><rect x="5" y="2" width="12" height="5" rx="1" fill="var(--carbon)"/></svg>1 公斤</span>
+    <span>1 公斤二氧化碳，和 1 公斤的米一樣重。</span>
+  </div>
+
+  <details>
+    <summary>老師設定與資料來源</summary>
+    <label for="coef">電力排碳係數（公斤 CO2e／度）<input id="coef" type="number" step="0.001" min="0.1" max="1.5" value="0.471"></label>
+    <p class="note">預設值 0.471：經濟部能源署 114 年度「民生住宅電力排碳係數」（2026 年 6 月 2 日公布）。每年公布新係數後，請改成最新值。本頁不會儲存或上傳任何輸入的資料。</p>
+  </details>
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  let coef=0.471;
+  const bill={A:'512',B:'286',active:'A',touched:{A:false,B:false}};
+  const apps=[
+    {ico:'❄️',nm:'冷氣',w:1000,h:8},{ico:'🍚',nm:'電鍋',w:800,h:1},{ico:'🧊',nm:'冰箱',w:150,h:24},
+    {ico:'📺',nm:'電視',w:100,h:4},{ico:'💡',nm:'電燈',w:20,h:6},{ico:'🔌',nm:'手機充電',w:10,h:3}
+  ];
+  let app={i:0,w:1000,h:8};
+  const fmt=(n,d=1)=>Number(n.toFixed(d)).toLocaleString('zh-TW');
+
+  function bagsSVG(kg){
+    const r=Math.round(kg), big=Math.floor(r/10), small=r%10;
+    let s='';
+    const bag=(w,h,fill,stroke)=>`<svg width="${w}" height="${h}" viewBox="0 0 22 28" aria-hidden="true"><path d="M4 6h14l3 20H1z" fill="${fill}" ${stroke?`stroke="${stroke}" stroke-width="1.5"`:''}/><rect x="5" y="2" width="12" height="5" rx="1" fill="${stroke||fill}"/></svg>`;
+    const shownBig=Math.min(big,60);
+    for(let i=0;i<shownBig;i++) s+=bag(30,38,'var(--rice)','var(--rice-ink)');
+    for(let i=0;i<small;i++) s+=bag(16,20,'var(--carbon)');
+    if(big>60) s+=`<span>…還有 ${big-60} 包</span>`;
+    return {html:s,big,small};
+  }
+  function riceText(kg){
+    const r=Math.round(kg), big=Math.floor(r/10), small=r%10;
+    if(big===0) return `大約 ${small} 公斤`;
+    return `${big} 包 10 公斤的米`+(small?`，再加 ${small} 公斤`:'');
+  }
+
+  // keypad
+  const keys=['1','2','3','4','5','6','7','8','9','清除','0','⌫'];
+  $('keypad').innerHTML=keys.map(k=>`<button class="key${k.length>1?' alt':''}" data-k="${k}" aria-label="${k==='⌫'?'刪除一個數字':k}">${k}</button>`).join('');
+  $('keypad').addEventListener('click',e=>{
+    const k=e.target.closest('button')?.dataset.k; if(!k) return;
+    const a=bill.active;
+    if(!bill.touched[a]){bill[a]='';bill.touched[a]=true;$('sample'+a).hidden=true;}
+    if(k==='清除') bill[a]='';
+    else if(k==='⌫') bill[a]=bill[a].slice(0,-1);
+    else if(bill[a].length<5) bill[a]=(bill[a]+k).replace(/^0+(?=\d)/,'');
+    renderBill();
+  });
+  ['A','B'].forEach(x=>$('bill'+x).addEventListener('click',()=>{bill.active=x;renderBill();}));
+
+  function billSpeech(){
+    const a=Number(bill.A||0); if(!a) return '請先輸入電費單上的度數。';
+    const kg=a*coef; let t=`這一期用了${a}度電，大約排放${fmt(kg,0)}公斤的二氧化碳，跟${riceText(kg)}一樣重。`;
+    const b=Number(bill.B||0);
+    if(b){const d=(a-b)*coef; t+= d>0?`第一張比第二張多排了${fmt(d,0)}公斤。`: d<0?`第一張比第二張少排了${fmt(-d,0)}公斤。`:'兩張一樣多。';}
+    return t;
+  }
+  function renderBill(){
+    $('valA').textContent=bill.A||'0'; $('valB').textContent=bill.B||'—';
+    $('billA').setAttribute('aria-pressed',bill.active==='A'); $('billB').setAttribute('aria-pressed',bill.active==='B');
+    const a=Number(bill.A||0);
+    if(!a){$('resBill').innerHTML='<div class="eq">請先輸入第一張電費單的度數。</div>';return;}
+    const kg=a*coef, bg=bagsSVG(kg);
+    let h=`<div class="big">${fmt(kg,1)} <span class="unit">公斤二氧化碳 kg CO2</span></div>
+      <div class="eq">${a} 度 × ${coef} = ${fmt(kg,1)} 公斤，跟 <strong>${riceText(kg)}</strong> 一樣重</div>
+      <div class="bags">${bg.html}</div>`;
+    const b=Number(bill.B||0);
+    if(b){const kb=b*coef, d=kg-kb;
+      h+=`<div class="compare">第二張：${b} 度 → ${fmt(kb,1)} 公斤<br>${d>0?`第一張<strong>多排了 ${fmt(d,1)} 公斤</strong>`:d<0?`第一張<strong>少排了 ${fmt(-d,1)} 公斤</strong>`:'兩張一樣多'}</div>`;}
+    $('resBill').innerHTML=h;
+  }
+
+  // appliance mode
+  $('cards').innerHTML=apps.map((p,i)=>`<button class="card" data-i="${i}" aria-pressed="${i===0}"><span class="ico" aria-hidden="true">${p.ico}</span><span class="nm">${p.nm}</span><span class="w">示例 ${p.w} W</span></button>`).join('');
+  $('cards').addEventListener('click',e=>{const c=e.target.closest('.card'); if(!c) return; const i=+c.dataset.i; app={i,w:apps[i].w,h:apps[i].h}; renderApp();});
+  const wStep=w=>w>=500?100:w>=100?10:w>=20?5:1;
+  $('wMinus').onclick=()=>{app.w=Math.max(1,app.w-wStep(app.w-1));renderApp();};
+  $('wPlus').onclick=()=>{app.w=Math.min(5000,app.w+wStep(app.w));renderApp();};
+  $('hMinus').onclick=()=>{app.h=Math.max(0.5,app.h-(app.h<=1?0.5:1));renderApp();};
+  $('hPlus').onclick=()=>{app.h=Math.min(24,app.h+(app.h<1?0.5:1));renderApp();};
+  function appCalc(){const kwh=app.w*app.h*30/1000; return {kwh,kg:kwh*coef};}
+  function renderApp(){
+    document.querySelectorAll('.card').forEach((c,i)=>c.setAttribute('aria-pressed',i===app.i));
+    $('wOut').textContent=app.w+' W'; $('hOut').textContent=app.h+' 小時';
+    const {kwh,kg}=appCalc(), bg=bagsSVG(kg);
+    $('resApp').innerHTML=`<div class="big">${fmt(kg,1)} <span class="unit">公斤二氧化碳／月 kg CO2</span></div>
+      <div class="eq">${app.w} W × ${app.h} 小時 × 30 天 ÷ 1000 = ${fmt(kwh,1)} 度<br>${fmt(kwh,1)} 度 × ${coef} = ${fmt(kg,1)} 公斤，跟 <strong>${riceText(kg)}</strong> 一樣重</div>
+      <div class="bags">${bg.html}</div>`;
+  }
+  function appSpeech(){const {kwh,kg}=appCalc(); return `${apps[app.i].nm}，${app.w}瓦，一天用${app.h}小時，一個月大約用${fmt(kwh,0)}度電，排放${fmt(kg,1)}公斤的二氧化碳，跟${riceText(kg)}一樣重。`;}
+
+  // speech
+  function say(t){
+    try{ if(!('speechSynthesis' in window)) return; speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(t); u.lang='zh-TW'; u.rate=.85;
+      const v=speechSynthesis.getVoices().find(v=>/zh[-_]TW/i.test(v.lang)); if(v) u.voice=v;
+      speechSynthesis.speak(u);}catch(e){}
+  }
+  $('speakBill').onclick=()=>say(billSpeech());
+  $('speakApp').onclick=()=>say(appSpeech());
+
+  // tabs
+  function show(which){
+    const isBill=which==='bill';
+    $('tab-bill').setAttribute('aria-selected',isBill); $('tab-app').setAttribute('aria-selected',!isBill);
+    $('panel-bill').hidden=!isBill; $('panel-app').hidden=isBill;
+  }
+  $('tab-bill').onclick=()=>show('bill'); $('tab-app').onclick=()=>show('app');
+
+  $('coef').addEventListener('input',e=>{const v=parseFloat(e.target.value); if(v>0){coef=v;renderBill();renderApp();}});
+
+  renderBill(); renderApp();
+})();
+</script>

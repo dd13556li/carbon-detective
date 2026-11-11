@@ -14,6 +14,7 @@ engine/               引擎（棋盤、骰子、選擇卡、朗讀、身分證�
 themes/list.js        主題清單
 themes/save-power/    節電主題：theme.js（內容）＋ icons.js（自繪圖示）
 tools/check_theme.mjs 主題檢查程式
+calculator/           第一節用的電費單碳排計算器（獨立單頁，與遊戲引擎無關）
 ```
 
 ## 改題目或數字
