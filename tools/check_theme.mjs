@@ -1,5 +1,5 @@
 // 主題檢查：node tools/check_theme.mjs [主題資料夾]
-// 檢查欄位齊不齊、圖示在不在，並列出每題算出來的度數與瓶數，方便人工核對。
+// 檢查欄位齊不齊、圖示在不在，並列出每題算出來的度數與單位數（例如碳雲朵數），方便人工核對。
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -17,11 +17,13 @@ const err = (m) => errs.push(m), warn = (m) => warns.push(m);
 if (!T) { console.error('讀不到 window.THEME'); process.exit(1); }
 
 const C = T.constants || {};
-for (const k of ['kgCO2PerKwh', 'kgPerBottle', 'pricePerKwh', 'source']) if (C[k] == null) err(`constants.${k} 沒填`);
+if (C.kgPerUnit == null && C.kgPerBottle == null) err('constants.kgPerUnit 沒填');
+const KPU = C.kgPerUnit ?? C.kgPerBottle;
+for (const k of ['kgCO2PerKwh', 'pricePerKwh', 'source']) if (C[k] == null) err(`constants.${k} 沒填`);
 for (const k of ['id', 'name', 'resource', 'board', 'questions', 'chance', 'titles', 'idCard']) if (T[k] == null) err(`缺少區塊 ${k}`);
 
 const kwhOf = (u) => !u ? 0 : Array.isArray(u) ? u.reduce((a, x) => a + kwhOf(x), 0) : u.kwh != null ? u.kwh : u.watts * u.minutes / 60000 * (u.factor ?? 1);
-const bottles = (k) => k * C.kgCO2PerKwh / C.kgPerBottle;
+const units = (k) => k * C.kgCO2PerKwh / KPU;
 const checkUse = (u, where) => {
   if (!u) return;
   for (const x of Array.isArray(u) ? u : [u]) {
@@ -64,7 +66,7 @@ for (const [id, q] of Object.entries(T.questions)) {
   if (ks[0] === ks[1]) err(`${w}：兩個選項耗電一樣，分不出哪個比較省`);
   if (!used.has(id)) warn(`${w}：棋盤上沒有用到`);
   const hi = Math.max(...ks), lo = Math.min(...ks);
-  worst += bottles(hi); best += bottles(lo);
+  worst += units(hi); best += units(lo);
   rows.push([id, q.options[ks[0] >= ks[1] ? 0 : 1].label, hi, q.options[ks[0] >= ks[1] ? 1 : 0].label, lo]);
 }
 T.chance.forEach((c, i) => {
@@ -77,20 +79,25 @@ if (!T.titles.some((t) => t.default)) err('titles 要有一個 default');
 T.titles.forEach((t) => checkIcon(t.icon, `稱號「${t.name}」`));
 (T.idCard.avatars || []).forEach((a) => checkIcon(a, '頭像'));
 (T.idCard.ruler || []).forEach((r) => { checkIcon(r.icon, `換算尺「${r.label}」`); if (!(r.watts > 0)) err(`換算尺「${r.label}」沒有 watts`); });
+const R = T.resource || {};
+if (!R.goal || R.goal.keepAtMost == null) err('resource.goal.keepAtMost 沒填（一天結束時最多幾個單位就過關）');
+for (const k of ['unit', 'verbUp', 'verbDown']) if (!R[k]) err(`resource.${k} 沒填`);
+checkIcon(R.icon, 'resource（單位圖示）');
+(T.compare || []).forEach((x, i, a) => { checkIcon(x.icon, `compare「${x.label}」`); if (!(x.kg > 0)) err(`compare「${x.label}」沒有 kg`); if (i && x.kg <= a[i - 1].kg) err('compare 要由輕到重排'); });
 
 // 報表
-const f = (n) => n.toFixed(2).padStart(5);
-console.log(`\n主題：${T.name}（${dir}）　係數 ${C.kgCO2PerKwh} kg/度，每瓶 ${C.kgPerBottle} kg\n`);
-console.log('題目          耗電的選擇 → 度 / 瓶　｜　省電的選擇 → 度 / 瓶');
-for (const [id, a, hi, b, lo] of rows) console.log(`${id.padEnd(11)} ${a}：${f(hi)} / ${f(bottles(hi))}　｜　${b}：${f(lo)} / ${f(bottles(lo))}`);
+const f = (n) => n.toFixed(2).padStart(5), U = R.unit || '個';
+console.log(`\n主題：${T.name}（${dir}）　係數 ${C.kgCO2PerKwh} kg/度，每${U} ${KPU} kg\n`);
+console.log(`題目          耗電的選擇 → 度 / ${U}　｜　省電的選擇 → 度 / ${U}`);
+for (const [id, a, hi, b, lo] of rows) console.log(`${id.padEnd(11)} ${a}：${f(hi)} / ${f(units(hi))}　｜　${b}：${f(lo)} / ${f(units(lo))}`);
 console.log('\n機會卡');
-T.chance.forEach((c) => { const k = kwhOf(c.use); console.log(`  ${c.effect === 'save' ? '加' : '扣'} ${f(bottles(k))} 瓶（${f(k)} 度）　${c.say}`); });
-const R = T.resource;
-console.log(`\n平衡：起始 ${R.start} 瓶，過關門檻 ${R.goal.keepAtLeast} 瓶`);
-console.log(`  每題都選耗電：用掉 ${worst.toFixed(2)} 瓶，剩 ${(R.start - worst).toFixed(2)}`);
-console.log(`  每題都選省電：用掉 ${best.toFixed(2)} 瓶，剩 ${(R.start - best).toFixed(2)}`);
-if (R.start - worst >= R.goal.keepAtLeast) warn('每題都選耗電也能過關，門檻太低');
-if (R.start - best < R.goal.keepAtLeast) err('每題都選省電也過不了關，門檻太高');
+T.chance.forEach((c) => { const k = kwhOf(c.use); console.log(`  ${c.effect === 'save' ? R.verbDown : R.verbUp} ${f(units(k))} ${U}（${f(k)} 度）　${c.say}`); });
+const G = R.goal?.keepAtMost ?? 0, S0 = R.start || 0;
+console.log(`\n平衡：起始 ${S0} ${U}，一天結束時不超過 ${G} ${U}就過關（不含機會卡與巡守）`);
+console.log(`  每題都選耗電：排了 ${(S0 + worst).toFixed(2)} ${U}`);
+console.log(`  每題都選省電：排了 ${(S0 + best).toFixed(2)} ${U}`);
+if (S0 + worst <= G) warn('每題都選耗電也能過關，門檻太寬');
+if (S0 + best > G) err('每題都選省電也過不了關，門檻太嚴');
 
 console.log('');
 warns.forEach((m) => console.log('⚠️  ' + m));

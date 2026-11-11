@@ -10,8 +10,7 @@
   const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   let T, C; // 主題、換算常數
-  const S = { players: [], turn: 0, pos: 0, left: 0, deck: [], ring: [], set: { diceMax: 3, speak: true } };
-  const TIER_NAME = { A: 'A 自己想', B: 'B 有提示', C: 'C 看瓶子' };
+  const S = { players: [], turn: 0, pos: 0, amt: 0, deck: [], ring: [], set: { diceMax: 3, speak: true } };
 
   // ---------- 換算 ----------
   function kwhOf(use) {
@@ -20,13 +19,26 @@
     if (use.kwh != null) return use.kwh;
     return use.watts * use.minutes / 60000 * (use.factor ?? 1);
   }
-  const bottlesOf = (kwh) => kwh * C.kgCO2PerKwh / C.kgPerBottle;
+  // 資源＝排出去的壞東西（例如碳雲），越用越多；過關＝一天結束時不超過 goal.keepAtMost
+  const kgPerUnit = () => C.kgPerUnit ?? C.kgPerBottle;
+  const unitsOf = (kwh) => kwh * C.kgCO2PerKwh / kgPerUnit();
   const r1 = (n) => Math.round(n * 10) / 10;
-  function fmtBottles(b) {
+  function fmtUnits(b) {
     if (b <= 0) return '0 ' + T.resource.unit;
-    if (b < 0.1) return '一小口';
+    if (b < 0.1) return '一點點';
     return '約 ' + r1(b) + ' ' + T.resource.unit;
   }
+  // 公斤 → 生活物品（主題的 compare 清單，由輕到重）：挑「至少 1 個」的最重那一項
+  function compareText(kg, short) {
+    const L = T.compare || [];
+    if (!L.length || kg <= 0) return '';
+    let it = L[0];
+    for (const x of L) if (kg >= x.kg) it = x;
+    const n = kg / it.kg, num = n < 1 ? '不到 1' : String(n >= 2 ? Math.round(n) : r1(n));
+    if (short) return `≈ ${num} ${it.label}重`;            // 身分證上空間小
+    return `${n < 1 ? '' : '差不多 '}${num} ${it.label}那麼重`;
+  }
+  const fmtKg = (kg) => kg < 10 ? r1(kg) : Math.round(kg);
   function fmtSub(kwh) {
     if (kwh <= 0) return '不用電';
     const k = kwh < 0.1 ? Math.round(kwh * 100) / 100 : r1(kwh);
@@ -42,22 +54,23 @@
     if (lib[key]) return `<svg class="ic" viewBox="0 0 64 64" aria-hidden="true">${lib[key]}</svg>`;
     return `<span class="ic emoji" aria-hidden="true">${esc(key)}</span>`;
   }
-  function bottle(fill) {
-    const h = 38 * Math.max(0, Math.min(1, fill));
-    return `<svg class="bt" viewBox="0 0 24 56" aria-hidden="true"><rect x="8" y="1" width="8" height="6" rx="1.5" fill="#3b82c4"/>` +
-      `<path d="M7 8h10l3 8v36a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V16z" fill="#f2f9ff" stroke="#3b82c4" stroke-width="1.5"/>` +
-      (h > 0 ? `<rect x="5.2" y="${53.8 - h}" width="13.6" height="${h}" rx="2" fill="#4fb3ff"/>` : '') + `</svg>`;
+  // 一個單位的圖（例如一朵碳雲）。fill 0–1：不滿一個就畫小一點、淡一點；0 畫成空位
+  function unit(fill) {
+    const f = Math.max(0, Math.min(1, fill));
+    return `<span class="unit ${f <= 0 ? 'empty' : ''}" style="--f:${f.toFixed(2)}">${icon(T.resource.icon)}</span>`;
   }
-  // 一排瓶子：amount 瓶，共畫 count 個
-  function bottleRow(amount, count) {
+  // 一排單位：amount 個，共畫 count 格；goal 有給就在門檻後面畫一條線
+  function unitRow(amount, count, goal, cls = '') {
     let s = '';
-    for (let i = 0; i < count; i++) s += bottle(amount - i);
-    return `<div class="bottles">${s}</div>`;
+    for (let i = 0; i < count; i++) { s += unit(amount - i); if (goal && i === goal - 1 && i < count - 1) s += '<i class="goalmark" aria-hidden="true"></i>'; }
+    return `<div class="units ${cls}">${s}</div>`;
   }
-  function costRow(b) {
-    if (b <= 0) return bottleRow(0, 1);
-    return bottleRow(Math.max(b, 0.08), Math.max(1, Math.ceil(b - 1e-9)));
+  function costRow(b, cls) {
+    if (b <= 0) return unitRow(0, 1, 0, cls);
+    return unitRow(Math.max(b, 0.08), Math.max(1, Math.ceil(b - 1e-9)), 0, cls);
   }
+  // 天空顏色：碳雲越多越灰
+  const skyStyle = () => `--sky:${Math.round(Math.min(1, S.amt / (T.resource.max || 10)) * 100)}%`;
 
   // ---------- 聲音與朗讀 ----------
   let actx;
@@ -118,7 +131,7 @@
             ${seg('tier' + i, [['A', 'A'], ['B', 'B'], ['C', 'C']], p.tier)}
           </div>`).join('')}
         </div>
-        <p class="tierhelp">A：自己選，選完說理由。B：先看提示再選。C：先看兩邊各喝掉幾瓶再選。名字只留在這台電腦，不會上傳。</p>
+        <p class="tierhelp">A：自己選，選完說理由。B：先看提示再選。C：先看兩邊各${esc(T.resource.verbUp)}幾${esc(T.resource.unit)}${esc(T.resource.unitName || '')}再選。名字只留在這台電腦，不會上傳。</p>
       </div>
       <div class="panel"><h2>遊戲長度</h2>${seg('dice', [[3, '短（骰 1–3，約 10 分鐘）'], [2, '中（骰 1–2）'], [1, '完整（每一格都停）']], S.set.diceMax)}</div>
       <div class="panel"><h2>朗讀題目</h2>${seg('speak', [[1, '開'], [0, '關']], S.set.speak ? 1 : 0)}</div>
@@ -163,12 +176,12 @@
   }
   const cur = () => S.players[S.turn % S.players.length];
   function renderHUD(rolling) {
-    const p = cur(), R = T.resource, low = S.left < R.goal.keepAtLeast;
+    const p = cur(), R = T.resource, over = S.amt > R.goal.keepAtMost;
     $('#hud').innerHTML = `
       <div class="resname">${esc(R.name)}</div>
-      ${bottleRow(S.left, R.start)}
-      <div class="leftnum ${low ? 'low' : ''}">還有 ${r1(S.left)} ${R.unit}</div>
-      <div class="goal">走完一天，還剩 ${R.goal.keepAtLeast} ${R.unit}以上就過關</div>
+      <div class="sky" style="${skyStyle()}">${unitRow(S.amt, R.max || 10, R.goal.keepAtMost)}</div>
+      <div class="leftnum ${over ? 'low' : ''}">現在有 ${r1(S.amt)} ${R.unit}${esc(R.unitName || '')}</div>
+      <div class="goal">一天結束時，不超過 ${R.goal.keepAtMost} ${R.unit}就過關</div>
       <div id="turn"><span class="av">${icon(T.idCard.avatars[p.avatar])}</span><span>輪到 ${esc(p.name)}</span><span class="tier">${p.tier} 層</span></div>
       <button class="btn" id="dicebtn" ${rolling ? 'disabled' : ''}><span id="die">?</span><span>擲骰子</span></button>
       <div class="hudtools"><button id="speakbtn">朗讀：${S.set.speak ? '開' : '關'}</button><button id="quitbtn">回設定</button></div>`;
@@ -178,7 +191,7 @@
     here.insertAdjacentHTML('beforeend', `<div id="token">${icon(T.idCard.avatars[p.avatar])}</div>`);
   }
   function startGame() {
-    S.left = T.resource.start; S.pos = 0; S.turn = 0; S.deck = shuffle(T.chance.slice());
+    S.amt = T.resource.start || 0; S.pos = 0; S.turn = 0; S.deck = shuffle(T.chance.slice());
     S.players.forEach((p) => { p.choices = []; p.patrol = false; p.stamps = p.stamps || {}; });
     renderBoard(); renderHUD(); show('game');
     speak('輪到' + cur().name + '，請擲骰子');
@@ -186,7 +199,7 @@
     if (TEST === 'card') { // 直接看結果頁：塞一組示範資料
       const tags = ['cool', 'off', 'light', 'heat'];
       S.players.forEach((p, i) => { p.choices = [{ q: 'x', better: i !== 3, tag: tags[i % 4] }, { q: 'y', better: i === 0, tag: tags[i % 4] }]; p.patrol = i < 2; });
-      S.players[0].choices[1].better = true; S.left = 7.4; endGame();
+      S.players[0].choices[1].better = true; S.amt = 2.6; endGame();
       if (params.get('flip')) document.querySelectorAll('.id').forEach((x) => x.classList.add('flip'));
       return;
     }
@@ -222,18 +235,18 @@
     speak('輪到' + cur().name + '，請擲骰子');
     if (TEST === 'end') roll();
   }
-  function spend(b) { S.left = Math.max(0, S.left - b); }
-  function gain(b) { S.left = Math.min(T.resource.start, S.left + b); }
+  function spend(b) { S.amt += b; }                      // 用電：多排了 b 個單位
+  function gain(b) { S.amt = Math.max(0, S.amt - b); }   // 省電：擋下 b 個單位
 
   // ---------- 三種卡 ----------
   function optHTML(o, showCost, cls, tag, asButton, idx) {
-    const cost = showCost ? `<div class="cost">${costRow(o.b)}<div class="amt">${fmtBottles(o.b)}</div><div class="sub">${fmtSub(o.kwh)}</div></div>` : '';
+    const cost = showCost ? `<div class="cost">${costRow(o.b)}<div class="amt">${fmtUnits(o.b)}${o.b >= 0.1 ? esc(T.resource.unitName || '') : ''}</div><div class="sub">${fmtSub(o.kwh)}</div></div>` : '';
     const inner = `${tag ? `<span class="tag">${tag}</span>` : ''}<div class="pic">${icon(o.icon)}</div><div class="lb">${esc(o.label)}</div>${cost}`;
     return asButton ? `<button type="button" class="opt" data-pick="${idx}">${inner}</button>` : `<div class="opt ${cls}">${inner}</div>`;
   }
   function showChoice(qid, done) {
     const q = T.questions[qid], p = cur();
-    const opts = shuffle(q.options.map((o) => { const kwh = kwhOf(o.use); return { ...o, kwh, b: bottlesOf(kwh) }; }));
+    const opts = shuffle(q.options.map((o) => { const kwh = kwhOf(o.use); return { ...o, kwh, b: unitsOf(kwh) }; }));
     const min = Math.min(...opts.map((o) => o.kwh));
     const hint = p.tier === 'B' ? `<div class="hint">💡 ${esc((q.hint && q.hint.B) || '想一想：哪一個用的電比較少？')}</div>` : '';
     sfx.card();
@@ -259,22 +272,22 @@
   }
   function showChance() {
     if (!S.deck.length) S.deck = shuffle(T.chance.slice());
-    const c = S.deck.pop(), kwh = kwhOf(c.use), b = bottlesOf(kwh), save = c.effect === 'save';
+    const c = S.deck.pop(), kwh = kwhOf(c.use), b = unitsOf(kwh), save = c.effect === 'save', R = T.resource;
     save ? gain(b) : spend(b);
     save ? sfx.good() : sfx.bad();
     openModal(`<div class="who">機會卡</div><div class="bigpic">${icon(c.icon)}</div><h2>${esc(c.say)}</h2>
-      <div class="delta ${save ? 'save' : 'cost'}"><span>${save ? '省下' : '喝掉'}</span>${costRow(b)}<span>${fmtBottles(b)}</span></div>
+      <div class="delta ${save ? 'save' : 'cost'}"><span>${save ? R.verbDown : R.verbUp}</span>${costRow(b, save ? 'blocked' : '')}<span>${fmtUnits(b)}${esc(R.unitName || '')}</span></div>
       <div class="en">${fmtSub(kwh)}</div>
       ${c.source ? `<p class="src">資料：${esc(c.source)}</p>` : ''}
       <div class="actions"><button class="btn" id="okbtn">好，繼續</button></div>`);
-    speak(c.say + (save ? '省下' : '喝掉') + fmtBottles(b));
+    speak(c.say + (save ? R.verbDown : R.verbUp) + fmtUnits(b) + (R.unitName || ''));
     $('#card').onclick = (e) => { if (e.target.closest('#okbtn')) { $('#card').onclick = null; nextTurn(); } };
   }
   function showAction(sq) {
-    const p = cur(), b = bottlesOf(kwhOf(sq.use));
+    const p = cur(), b = unitsOf(kwhOf(sq.use)), R = T.resource;
     sfx.card();
     openModal(`<div class="who">${esc(p.name)} 的任務</div><div class="bigpic">${icon(sq.icon)}</div><h2>${esc(sq.task)}</h2><div class="en">${esc(sq.en || '')}</div>
-      <div class="delta save"><span>做到了可以省下</span>${costRow(b)}<span>${fmtBottles(b)}</span></div>
+      <div class="delta save"><span>做到了可以${R.verbDown}</span>${costRow(b, 'blocked')}<span>${fmtUnits(b)}${esc(R.unitName || '')}</span></div>
       <div class="actions"><button class="btn" id="didbtn">做到了！</button><button class="btn ghost" id="skipbtn">這次先跳過</button></div>`);
     speak(sq.task);
     $('#card').onclick = (e) => {
@@ -296,15 +309,15 @@
       if (w.allBetter && ch.length >= (w.minChoices || 1) && better === ch.length) return t;
       if (w.tag && ch.filter((c) => c.better && c.tag === w.tag).length >= (w.atLeast || 1)) return t;
       if (w.betterAtLeast && better >= w.betterAtLeast) return t;
-      if (w.leftAtLeast != null && S.left >= w.leftAtLeast) return t;
+      if (w.totalAtMost != null && S.amt <= w.totalAtMost) return t;
     }
     return T.titles[T.titles.length - 1];
   }
   function cardHTML(p, i) {
-    const ID = T.idCard, t = titleOf(p), R = T.resource;
+    const ID = T.idCard, t = titleOf(p);
     const fields = ID.fields.map((f) => {
       if (f.from === 'teacher') return `<li>${esc(f.label)} <input type="number" min="0" inputmode="numeric" data-field="${i}:${f.key}:${f.convert || ''}" value="${p[f.key] ?? ''}" aria-label="${esc(f.label)}"> ${esc(f.unit)} <span class="conv" id="conv${i}${f.key}"></span></li>`;
-      const v = f.key === 'left' ? r1(S.left) : f.key === 'better' ? p.choices.filter((c) => c.better).length : '';
+      const v = f.key === 'total' ? r1(S.amt) : f.key === 'better' ? p.choices.filter((c) => c.better).length : '';
       return `<li>${esc(f.label)} <b>${v}</b> ${esc(f.unit)}</li>`;
     }).join('');
     const stamps = ID.stamps.map((s) => {
@@ -331,7 +344,7 @@
       <div class="face back ruler">
         <div class="idhead"><b>1 度電換算尺</b><span class="en">1 kWh</span></div>
         <ul>
-          <li>💧 碳約 ${gPerKwh} 公克（約 1 瓶水的重量）</li>
+          <li class="rw"><span class="ri">${icon(T.resource.icon)}</span>碳約 ${gPerKwh} 公克${ID.backWeight ? '，' + esc(ID.backWeight) : ''}</li>
           <li>💰 約 ${C.pricePerKwh} 元</li>
           <li>⚡ 1 度電可以讓：</li>
         </ul>
@@ -342,18 +355,19 @@
   }
   function endGame() {
     closeModal();
-    const R = T.resource, pass = S.left >= R.goal.keepAtLeast;
+    const R = T.resource, pass = S.amt <= R.goal.keepAtMost, kg = S.amt * kgPerUnit();
     $('#result').innerHTML = `
-      <h1>${pass ? '🎉 過關！全班守住了地球零用錢' : '一天結束了，再挑戰一次吧'}</h1>
-      <p class="sum">${esc(R.name)}還剩 <b>${r1(S.left)}</b> ${R.unit}（目標：${R.goal.keepAtLeast} ${R.unit}以上）</p>
-      <div class="sumbottles">${bottleRow(S.left, R.start)}</div>
+      <h1>${pass ? esc(R.passText || '🎉 過關！') : esc(R.failText || '一天結束了，再挑戰一次吧')}</h1>
+      <p class="sum">全班一天排了 <b>${r1(S.amt)}</b> ${R.unit}${esc(R.unitName || '')}（目標：不超過 ${R.goal.keepAtMost} ${R.unit}）</p>
+      <p class="sum2">碳約 ${fmtKg(kg)} 公斤，${compareText(kg)}</p>
+      <div class="sumunits sky" style="${skyStyle()}">${unitRow(S.amt, Math.max(R.max || 10, Math.ceil(S.amt)), R.goal.keepAtMost)}</div>
       <p class="tip">這是每個人的${esc(T.idCard.title)}。老師可以填入電費單的度數、點印章蓋章。</p>
       <div class="cards">${S.players.map(cardHTML).join('')}</div>
       <div class="actions"><button class="btn" id="printbtn">列印身分證</button><button class="btn ghost" id="againbtn">再玩一次</button><button class="btn ghost" id="backbtn">回設定</button></div>
       <p class="src">${esc(C.wattsNote || '')}</p>`;
     show('result');
     pass ? sfx.fanfare() : sfx.card();
-    speak(pass ? '過關了！全班守住了地球零用錢。' : '一天結束了，再挑戰一次吧。');
+    speak((pass ? (R.passText || '過關了！') : (R.failText || '一天結束了，再挑戰一次吧')).replace('🎉 ', '') + '。碳約' + fmtKg(kg) + '公斤，' + compareText(kg) + '。');
   }
   function onResultClick(e) {
     const b = e.target.closest('button'); if (!b) return;
@@ -368,7 +382,9 @@
     const [i, key, conv] = d.split(':'), v = parseFloat(e.target.value);
     S.players[+i][key] = isNaN(v) ? undefined : v;
     const out = $('#conv' + i + key); if (!out) return;
-    out.textContent = (conv === 'kwh' && v > 0) ? `＝約 ${Math.round(bottlesOf(v))} 瓶重的碳・約 ${Math.round(v * C.pricePerKwh)} 元` : '';
+    const kg = v * C.kgCO2PerKwh;
+    out.textContent = (conv === 'kwh' && v > 0) ? compareText(kg, true) : '';
+    out.title = (conv === 'kwh' && v > 0) ? `碳約 ${fmtKg(kg)} 公斤・電費約 ${Math.round(v * C.pricePerKwh)} 元` : '';
   }
 
   // ---------- 啟動 ----------

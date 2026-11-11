@@ -51,9 +51,20 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 4px s
 #hud { background: var(--card); border-radius: 18px; padding: 2vmin; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 1vmin; min-width: 0; min-height: 0; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
 #hud .resname { font-weight: 700; font-size: clamp(16px, 2.8vmin, 30px); }
 #hud .goal { color: var(--sub); font-size: clamp(12px, 1.9vmin, 20px); }
-.bottles { display: flex; gap: .4vmin; align-items: flex-end; justify-content: center; flex-wrap: nowrap; }
-.bt { height: 100%; width: auto; }
-#hud .bottles { height: clamp(50px, 13vmin, 150px); }
+/* 資源單位（碳雲）：不滿一個畫小一點、淡一點；空位是淡淡的虛影 */
+.units { display: flex; gap: .4vmin; align-items: center; justify-content: center; flex-wrap: wrap; height: 100%; }
+.unit { height: var(--uh, 60px); aspect-ratio: 1; display: inline-grid; place-items: center; flex: none; }
+.unit .ic { width: calc(45% + 55% * var(--f)); height: calc(45% + 55% * var(--f)); opacity: calc(.45 + .55 * var(--f)); }
+.unit.empty .ic { opacity: .13; filter: grayscale(1); width: 100%; height: 100%; }
+.units.blocked .unit .ic { filter: grayscale(.2) opacity(.55); }
+.units.blocked .unit { position: relative; }
+.units.blocked .unit::after { content: ""; position: absolute; inset: 8% 8%; border: 4px solid var(--green); border-radius: 50%;
+  background: linear-gradient(to top right, transparent calc(50% - 2px), var(--green) calc(50% - 2px), var(--green) calc(50% + 2px), transparent calc(50% + 2px)); }
+.goalmark { width: 4px; align-self: stretch; background: repeating-linear-gradient(var(--red) 0 6px, transparent 6px 10px); border-radius: 2px; flex: none; }
+/* 天空：碳雲越多越灰（--sky 0%–100%） */
+.sky { width: 100%; border-radius: 14px; padding: 1vmin; background: color-mix(in srgb, #9aa3ad var(--sky, 0%), #d8efff); transition: background .6s; }
+#hud .units { flex-wrap: nowrap; }
+#hud .unit { height: auto; flex: 1 1 0; min-width: 0; max-width: 80px; }
 #hud .leftnum { font-size: clamp(16px, 2.6vmin, 28px); font-weight: 700; }
 #hud .leftnum.low { color: var(--red); }
 #turn { display: flex; align-items: center; gap: 1.2vmin; font-size: clamp(16px, 2.8vmin, 30px); font-weight: 700; }
@@ -80,7 +91,7 @@ button.opt:hover { border-color: var(--blue); }
 .opt .pic { width: min(150px, 42%); aspect-ratio: 1; }
 .opt .lb { font-size: 1.25em; font-weight: 700; line-height: 1.35; }
 .opt .cost { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.opt .cost .bottles { height: 64px; }
+.opt .cost .units { --uh: 56px; }
 .opt .cost .amt { font-weight: 700; }
 .opt .cost .sub { color: var(--sub); font-size: .75em; }
 .opt.picked { border-color: var(--orange); background: #fff7e8; }
@@ -94,7 +105,7 @@ button.opt:hover { border-color: var(--blue); }
 .src { color: var(--sub); font-size: .7em; margin: 6px 0 0; }
 .bigpic { width: 150px; height: 150px; margin: 6px auto; }
 .delta { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 1.4em; font-weight: 700; margin: 8px 0; }
-.delta .bottles { height: 70px; }
+.delta .units { --uh: 64px; height: auto; }
 .delta.cost { color: #b3541e; } .delta.save { color: var(--green-d); }
 .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
 
@@ -102,8 +113,8 @@ button.opt:hover { border-color: var(--blue); }
 #result { max-width: 1100px; margin: 0 auto; text-align: center; }
 #result h1 { font-size: 2em; margin: 10px 0 4px; }
 #result .sum { font-size: 1.2em; margin: 0 0 6px; }
-#result .sumbottles { margin: 8px 0; }
-#result .sumbottles .bottles { height: 90px; }
+#result .sum2 { font-size: 1.1em; margin: 0 0 6px; color: var(--sub); }
+#result .sumunits { margin: 8px auto; max-width: 900px; --uh: 72px; }
 #result .tip { color: var(--sub); font-size: .85em; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px; margin: 18px 0; }
 .idwrap { perspective: 1200px; }

@@ -1,26 +1,32 @@
 // 主題包：節電「減碳偵探的一天」
-// 題目只存瓦數與時間，瓶數由引擎用 constants 換算。改數字只改這個檔。
+// 題目只存瓦數與時間，碳雲朵數由引擎用 constants 換算。改數字只改這個檔。
 window.THEME = {
   id: "save-power",
   name: "減碳偵探的一天",
   en: "A Day of the Carbon Detectives",
   version: "1.0",
-  intro: "全班一起過一天。每次用電，地球零用錢就會少一點。走完一天，還剩 6 瓶以上就過關！",
+  intro: "全班一起過一天。每次用電，天上就會多一些碳雲，讓地球變熱。一天結束時，碳雲不超過 4 朵就過關！（真正的二氧化碳是看不見的氣體，碳雲是把它畫出來。）",
 
   // ① 資源
+  // 排出去的壞東西，越用越多。1 朵＝constants.kgPerUnit 公斤的碳
   resource: {
-    name: "地球零用錢",
-    unit: "瓶",
-    start: 10,
+    name: "天上的碳雲",
+    unit: "朵", unitName: "碳雲",
+    icon: "cloud",
+    verbUp: "飄上", verbDown: "擋下",
+    start: 0,
+    max: 10,
     mode: "coop",
-    goal: { keepAtLeast: 6 }
+    goal: { keepAtMost: 4 },
+    passText: "🎉 過關！全班把碳雲擋在 4 朵以內",
+    failText: "碳雲有點多，再挑戰一次吧"
   },
 
   // ② 換算常數（每年更新只改這裡）
   constants: {
     kgCO2PerKwh: 0.471,
     source: "經濟部能源署 114 年度民生住宅電力排碳係數（2026-06-02 公布）",
-    kgPerBottle: 0.5,
+    kgPerUnit: 0.5,          // 1 朵碳雲＝0.5 公斤碳 ≈ 1 度電的碳（0.471）
     pricePerKwh: 3.78,
     priceSource: "住宅平均電價，約每度 3.78 元",
     wattsNote: "家電瓦數為常見機種的概略值，上課前請以實物標示核對。"
@@ -166,6 +172,14 @@ window.THEME = {
       source: "經濟部能源署節能月參考做法：每月清洗冷氣濾網，每天約省 0.47 度。" }
   ],
 
+  // ⑤之一 公斤換成生活物品（由輕到重）。水 1 公升約 1 公斤
+  compare: [
+    { label: "瓶 500 mL 礦泉水", kg: 0.5, icon: "waterBottle" },
+    { label: "大桶 5 公升的水",   kg: 5,   icon: "waterJug" },
+    { label: "台機車",           kg: 102, icon: "scooter",
+      source: "三陽迪爵 125（2026 年式碟煞）整備重量 102 公斤，三陽官網規格表" }
+  ],
+
   // ⑥ 稱號：由上往下，第一個符合的
   titles: [
     { when: { allBetter: true, minChoices: 2 }, name: "地球守護隊長", en: "Earth Guardian",   icon: "earth" },
@@ -179,10 +193,11 @@ window.THEME = {
   // ⑦ 身分證
   idCard: {
     title: "減碳身分證", en: "Carbon Saver ID",
+    backWeight: "差不多 1 瓶 500 mL 水那麼重（約 1 朵碳雲）",
     avatars: ["avatar1", "avatar2", "avatar3", "avatar4"],
     fields: [
       { key: "billKwh", label: "我家這期用了", unit: "度", from: "teacher", convert: "kwh" },
-      { key: "left",    label: "全班守住了",   unit: "瓶", from: "game" },
+      { key: "total",   label: "全班一天排了", unit: "朵碳雲", from: "game" },
       { key: "better",  label: "我選了省電",   unit: "次", from: "game" }
     ],
     stamps: [
