@@ -73,7 +73,7 @@ engine/sfx.js         合成音效，棋盤遊戲與尋寶遊戲共用
 
 ## 朗讀
 
-- 即時語音：`engine/tts-zh.js`（遊戲與計算器共用）。預設挑法（檔尾 `ZhTTS.pickTW`，唯一定義）：設定頁指定的 → Edge 雲端曉臻 → 雅婷（Chrome 上是 Windows 本機版）→ 品質優先，挑不到也照唸；設定頁「即時語音」可試聽、指定，記在這個瀏覽器（計算器沿用同一個選擇）。
+- 即時語音：`engine/tts-zh.js`（遊戲與計算器共用）。預設挑法（檔尾 `ZhTTS.pickTW`，唯一定義）：設定頁指定的 → Edge 雲端曉臻 → 雅婷（Chrome 上是 Windows 本機版）→ 品質優先，挑不到也照唸；設定頁「即時語音」可試聽、指定，記在這個瀏覽器（計算器、尋寶遊戲沿用同一個選擇；尋寶遊戲設定頁也有同一個選單，`ZhTTS.mountPicker`）。
 - 預錄語音（目前**沒有啟用**）：`python tools/gen_voice.py --project <帳戶>` 會從 `window.__voiceLines()` 拿固定句子（題目、回饋、機會卡、任務），用 Gemini 語音錄到 `themes/save-power/voice/`（檔名＝句子雜湊，附 `index.json`）。有 `index.json` 時引擎優先播預錄、沒有就用即時語音。會花錢：`--project` 沒有預設，`--dry-run` 只列句數不呼叫。
 
 ## 音效與頭像照片

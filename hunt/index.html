@@ -70,6 +70,10 @@ button:focus-visible{outline:4px solid var(--accent);outline-offset:2px}
 .row .go{flex:1;min-width:200px}
 .alt{background:var(--paper);color:var(--ink);border:3px solid var(--accent)}
 .note{font-size:15px;color:var(--muted)}
+.voicepick{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:700}
+.voicepick select{font:inherit;font-size:16px;padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:var(--paper);color:var(--ink);max-width:100%;flex:1;min-width:220px}
+.voicepick button{padding:8px 16px;border-radius:12px;border:2px solid var(--line);background:var(--paper);font-weight:700}
+.voicepick .voicenote{flex-basis:100%;margin:0;font-size:15px;font-weight:400;color:var(--muted)}
 a{color:var(--accent)}
 </style>
 </head>
@@ -86,6 +90,7 @@ a{color:var(--accent)}
     <div class="tiers" id="tiers"></div>
     <h2>朗讀與音效</h2>
     <div class="seg" id="opts"></div>
+    <div class="voicepick" id="voicepick"></div>
     <button class="go" id="start">開始尋寶 Start</button>
     <p class="note">三張帳單都是教學範例（已去除個資），和教案附錄十四同一批。學生的作答只留在這個分頁，不會上傳。</p>
   </section>
@@ -272,6 +277,7 @@ a{color:var(--accent)}
   // 測試用：寶藏中心點（帳單座標）
   window.__hunt = { S, center: (n) => { const r = ver().boxes[n][0]; return [r[0] + r[2] / 2, r[1] + r[3] / 2]; }, answer, hit, next };
   renderSetup();
+  if (window.ZhTTS) ZhTTS.mountPicker($('voicepick'), { sample: '你好，我是電費單尋寶的朗讀聲音。請找出度數。' });
 })();
 </script>
 </body>

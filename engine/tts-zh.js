@@ -332,4 +332,33 @@
         || L.find((v) => /Yating/i.test(v.name))
         || ZhTTS.best(null);
   };
+
+  /* 語音選單（尋寶遊戲用；棋盤遊戲設定頁自己畫，存的是同一份偏好）。
+   * ZhTTS.mountPicker(容器, { sample: '試聽句' })：選了就存成這個瀏覽器的偏好，pickTW() 之後都用它。
+   * 偏好存在瀏覽器（同網站共用）：在棋盤遊戲選的語音，尋寶遊戲也會用。 */
+  window.ZhTTS.mountPicker = function (el, opt = {}) {
+    if (!el) return;
+    const Z = window.ZhTTS, esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const draw = () => {
+      const r = Z.resolvePreferred(), cur = r.voice ? Z.describe(r.voice).key : '';
+      const opts = Z.list().map((v) => { const d = Z.describe(v); return `<option value="${esc(d.key)}"${d.key === cur ? ' selected' : ''}>${esc(d.engineLabel)}｜${esc(d.label)}（${esc(v.lang)}）</option>`; }).join('');
+      const note = r.status === 'missing' ? '這個瀏覽器沒有你之前選的語音，已改回自動挑選，請重新指定。'
+        : r.status === 'downgraded' ? '這個瀏覽器沒有你之前選的那一版，改用同名的另一版，音質會不一樣。' : '';
+      const now = Z.pickTW();
+      el.innerHTML = `<label for="zhvoice">即時語音</label> <select id="zhvoice"><option value="">自動（Edge 用曉臻、Chrome 用雅婷）</option>${opts}</select>
+        <button type="button" id="zhvoicetry">試聽</button>
+        <p class="voicenote">${note ? esc(note) + '<br>' : ''}目前使用：${now ? esc(Z.describe(now).engineLabel + '｜' + Z.describe(now).label) : '系統預設（這個瀏覽器還沒載入中文語音）'}。☁️ 雲端語音（Edge）音質最好。</p>`;
+    };
+    el.addEventListener('change', (e) => {
+      if (e.target.id !== 'zhvoice') return;
+      const v = Z.list().find((x) => Z.describe(x).key === e.target.value) || null;
+      Z.setPreferred(e.target.value ? v : null); draw();
+    });
+    el.addEventListener('click', (e) => {
+      if (e.target.id !== 'zhvoicetry') return;
+      try { speechSynthesis.cancel(); } catch (x) {}
+      Z.speak(opt.sample || '你好，我是減碳偵探的朗讀聲音。', { voice: Z.pickTW() || undefined, rate: 0.9 });
+    });
+    draw(); Z.ready().then(draw);
+  };
 })();
