@@ -72,9 +72,9 @@
   const MAXW = Math.max(...APPS.map((a) => a.watts));
   const month = (a) => a.watts * a.hours * 30 / 1000;
   const TIERS = {
-    A: { name: 'A', desc: `${APPS.length} 張家電全部排好`, k: APPS.length, bars: false, hintAfter: 2 },
-    B: { name: 'B', desc: '3 張家電排好，點錯會亮提示', k: 3, bars: false, hintAfter: 1 },
-    C: { name: 'C', desc: '2 張家電，看長條選出比較吃電的', k: 2, bars: true, hintAfter: 0 },
+    A: { name: 'A', desc: `${APPS.length} 張家電全部排好，卡片不寫瓦數，想想哪個比較吃電`, k: APPS.length, bars: false, showW: false, hintAfter: 2 },
+    B: { name: 'B', desc: `${APPS.length} 張家電全部排好，卡片上寫著瓦數，點錯會亮提示`, k: APPS.length, bars: false, showW: true, hintAfter: 1 },
+    C: { name: 'C', desc: '2 張家電，看瓦數和長條選出比較吃電的', k: 2, bars: true, showW: true, hintAfter: 0 },
   };
   const P = {};
   const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -86,7 +86,7 @@
     $('prog').textContent = `第 ${n} 位・${t.name}`;
     $('slots').style.setProperty('--n', t.k);
     $('slots').innerHTML = P.order.map((_, i) => `<div class="slot" data-i="${i}"><span class="rk">第 ${i + 1}</span></div>`).join('');
-    $('cards').innerHTML = pick.map((a) => `<button class="card" data-k="${a.key}">${icon(a.key, a.name)}<span class="nm">${a.name}</span><span class="w">示例 ${a.watts} W</span>${t.bars ? `<span class="wbar"><i style="width:${a.watts / MAXW * 100}%"></i></span>` : ''}</button>`).join('');
+    $('cards').innerHTML = pick.map((a) => `<button class="card" data-k="${a.key}">${icon(a.key, a.name)}<span class="nm">${a.name}</span>${t.showW ? `<span class="w">示例 ${a.watts} W</span>` : ''}${t.bars ? `<span class="wbar"><i style="width:${a.watts / MAXW * 100}%"></i></span>` : ''}</button>`).join('');
     $('msg').textContent = ''; $('after').innerHTML = '';
     if (t.hintAfter === 0) hint();
     speak(t.k === 2 ? `${pick[0].name}和${pick[1].name}，哪一個比較吃電？點一下。` : `從最吃電的開始，一個一個點。`);
@@ -101,7 +101,8 @@
     const a = APPS.find((x) => x.key === c.dataset.k), w = want();
     if (a.key !== w.key) {
       P.wrong++; c.classList.add('wrong'); setTimeout(() => c.classList.remove('wrong'), 450); sfx.gentle();
-      const say = `${a.name}是${a.watts}瓦，還有更吃電的喔。`;
+      // A 卡片不寫瓦數：第一次點錯只說「還有更吃電的」，再錯才說出瓦數當提示
+      const say = TIERS[P.tier].showW || P.wrong >= 2 ? `${a.name}是${a.watts}瓦，還有更吃電的喔。` : `還有更吃電的喔，想一想：哪一個家電用起來最耗電？`;
       $('msg').className = 'msg no'; $('msg').textContent = say; speak(say);
       if (P.wrong >= Math.max(1, TIERS[P.tier].hintAfter)) hint();
       return;
