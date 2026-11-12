@@ -83,6 +83,11 @@ const R = T.resource || {};
 if (!R.goal || R.goal.keepAtMost == null) err('resource.goal.keepAtMost 沒填（一天結束時最多幾個單位就過關）');
 for (const k of ['unit', 'verbUp', 'verbDown']) if (!R[k]) err(`resource.${k} 沒填`);
 checkIcon(R.icon, 'resource（單位圖示）');
+// 寫實照片（題目卡、機會卡用）：key 要是既有圖示（棋盤仍用圖示），檔案要存在
+for (const [k, f] of Object.entries(T.photos || {})) {
+  if (!ICONS[k]) err(`photos「${k}」不是 icons.js 裡的圖示`);
+  if (!fs.existsSync(path.join(dir, "images", f))) err(`photos「${k}」的檔案 images/${f} 不存在`);
+}
 (T.compare || []).forEach((x, i, a) => { checkIcon(x.icon, `compare「${x.label}」`); if (!(x.kg > 0)) err(`compare「${x.label}」沒有 kg`); if (i && x.kg <= a[i - 1].kg) err('compare 要由輕到重排'); });
 
 // 報表

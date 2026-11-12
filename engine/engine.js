@@ -54,6 +54,11 @@
     if (lib[key]) return `<svg class="ic" viewBox="0 0 64 64" aria-hidden="true">${lib[key]}</svg>`;
     return `<span class="ic emoji" aria-hidden="true">${esc(key)}</span>`;
   }
+  // 大圖（題目卡、機會卡）：主題有寫實照片就用照片，沒有就用圖示。棋盤與小圖示一律用 icon()
+  function photo(key) {
+    const f = (T.photos || {})[key];
+    return f ? `<img class="ic photo" src="${T.base}images/${esc(f)}" alt="">` : icon(key);
+  }
   // 一個單位的圖（例如一朵碳雲）。fill 0–1：不滿一個就畫小一點、淡一點；0 畫成空位
   function unit(fill) {
     const f = Math.max(0, Math.min(1, fill));
@@ -241,7 +246,7 @@
   // ---------- 三種卡 ----------
   function optHTML(o, showCost, cls, tag, asButton, idx) {
     const cost = showCost ? `<div class="cost">${costRow(o.b)}<div class="amt">${fmtUnits(o.b)}${o.b >= 0.1 ? esc(T.resource.unitName || '') : ''}</div><div class="sub">${fmtSub(o.kwh)}</div></div>` : '';
-    const inner = `${tag ? `<span class="tag">${tag}</span>` : ''}<div class="pic">${icon(o.icon)}</div><div class="lb">${esc(o.label)}</div>${cost}`;
+    const inner = `${tag ? `<span class="tag">${tag}</span>` : ''}<div class="pic">${photo(o.icon)}</div><div class="lb">${esc(o.label)}</div>${cost}`;
     return asButton ? `<button type="button" class="opt" data-pick="${idx}">${inner}</button>` : `<div class="opt ${cls}">${inner}</div>`;
   }
   function showChoice(qid, done) {
@@ -275,7 +280,7 @@
     const c = S.deck.pop(), kwh = kwhOf(c.use), b = unitsOf(kwh), save = c.effect === 'save', R = T.resource;
     save ? gain(b) : spend(b);
     save ? sfx.good() : sfx.bad();
-    openModal(`<div class="who">機會卡</div><div class="bigpic">${icon(c.icon)}</div><h2>${esc(c.say)}</h2>
+    openModal(`<div class="who">機會卡</div><div class="bigpic">${photo(c.icon)}</div><h2>${esc(c.say)}</h2>
       <div class="delta ${save ? 'save' : 'cost'}"><span>${save ? R.verbDown : R.verbUp}</span>${costRow(b, save ? 'blocked' : '')}<span>${fmtUnits(b)}${esc(R.unitName || '')}</span></div>
       <div class="en">${fmtSub(kwh)}</div>
       ${c.source ? `<p class="src">資料：${esc(c.source)}</p>` : ''}

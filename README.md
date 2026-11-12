@@ -13,7 +13,7 @@
 index.html            入口
 engine/               引擎（棋盤、骰子、選擇卡、朗讀、身分證）。不含任何主題內容
 themes/list.js        主題清單
-themes/save-power/    節電主題：theme.js（內容）＋ icons.js（自繪圖示）
+themes/save-power/    節電主題：theme.js（內容）＋ icons.js（自繪圖示）＋ images/（題目卡寫實照片）
 tools/check_theme.mjs 主題檢查程式
 calculator/           第一節用的電費單碳排計算器（獨立單頁，與遊戲引擎無關）
 ```
@@ -41,6 +41,9 @@ calculator/           第一節用的電費單碳排計算器（獨立單頁，�
 4. 用 `index.html?theme=<id>` 開啟。
 
 圖示三種寫法都可以：`icons.js` 裡的名稱、`images/` 資料夾裡的檔名（.svg／.png／.jpg）、或直接寫一個表情符號。
+
+**寫實照片（只用在大圖）**：主題的 `photos` 把圖示名稱對到 `images/` 裡的照片，題目卡選項與機會卡會改顯示照片；棋盤、狀態列、身分證仍用圖示（照片縮到格子大小反而不清楚）。
+照片由 `python tools/gen_icons.py --project <帳戶>` 呼叫 Vertex 圖片模型產生到 `_icon_trial/`（不進版控，會花錢：`--project` 沒有預設、`--max-calls` 限制次數），看過後用 `python tools/build_photos.py` 裁邊轉成 512px WebP。成對的圖（例如開燈／關燈）以前一張為底圖修改，兩張只差那一處。
 
 ## 測試用網址
 

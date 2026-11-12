@@ -173,6 +173,9 @@ window.THEME = {
   ],
 
   // ⑤之一 公斤換成生活物品（由輕到重）。水 1 公升約 1 公斤
+  // 寫實照片：只用在題目卡選項與機會卡的大圖（棋盤、狀態列、身分證仍用 icons.js 圖示）。
+  // 由 tools/gen_icons.py（Vertex 圖片模型）產生、教師看過，tools/build_photos.py 裁邊轉 WebP。
+  photos: { bulb: "bulb.webp", curtain: "curtain.webp", hairdryer: "hairdryer.webp", towel: "towel.webp", pot: "pot.webp", kettle: "kettle.webp", ac: "ac.webp", fan: "fan.webp", t22: "t22.webp", t26: "t26.webp", lightsOn: "lightsOn.webp", lightsOff: "lightsOff.webp", pcOn: "pcOn.webp", pcOff: "pcOff.webp", tv2h: "tv2h.webp", tv1h: "tv1h.webp", tvSleep: "tvSleep.webp", tvTimer: "tvTimer.webp", clothesDryer: "clothesDryer.webp", hanger: "hanger.webp", riceCooker: "riceCooker.webp", microwave: "microwave.webp", oldLamp: "oldLamp.webp", ledLamp: "ledLamp.webp", tv: "tv.webp", plug: "plug.webp", filter: "filter.webp" },
   compare: [
     { label: "瓶 500 mL 礦泉水", kg: 0.5, icon: "waterBottle" },
     { label: "大桶 5 公升的水",   kg: 5,   icon: "waterJug" },
@@ -220,5 +223,5 @@ window.THEME = {
     { zh: "度", en: "kWh" }, { zh: "二氧化碳", en: "CO₂" }, { zh: "省電", en: "save power" },
     { zh: "關掉", en: "turn off" }, { zh: "電費單", en: "electricity bill" }
   ],
-  credits: [{ file: "icons.js", by: "全部圖示為自繪向量圖" }]
+  credits: [{ file: "icons.js", by: "全部圖示為自繪向量圖" }, { file: "images/*.webp", by: "題目卡與機會卡的寫實照片由 AI 圖片模型（Google Vertex）生成，經教師審查" }]
 };
