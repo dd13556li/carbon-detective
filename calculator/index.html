@@ -103,8 +103,8 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
   <section class="panel" id="panel-bill">
     <div class="step"><b>1</b>找到電費單上的「度數」，按數字輸入<small>kWh</small></div>
     <div class="bills">
-      <button class="bill" id="billA" aria-pressed="true"><span class="lab">第一張電費單 <span class="sample" id="sampleA">範例</span></span><span class="val"><span id="valA">512</span> <small>度</small></span></button>
-      <button class="bill" id="billB" aria-pressed="false"><span class="lab">第二張（比一比，可不填） <span class="sample" id="sampleB">範例</span></span><span class="val"><span id="valB">286</span> <small>度</small></span></button>
+      <button class="bill" id="billA" aria-pressed="true"><span class="lab">第一張電費單 <span class="sample" id="sampleA">範例</span></span><span class="val"><span id="valA">616</span> <small>度</small></span></button>
+      <button class="bill" id="billB" aria-pressed="false"><span class="lab">第二張（比一比，可不填） <span class="sample" id="sampleB">範例</span></span><span class="val"><span id="valB">836</span> <small>度</small></span></button>
     </div>
     <div class="keypad" id="keypad"></div>
     <div class="step"><b>2</b>看結果<small>CO2</small></div>
@@ -147,7 +147,7 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
   const KPU=CS.kgPerUnit||0.5;
   const CMP=TH.compare||[{label:'瓶 500 mL 礦泉水',kg:.5,icon:'waterBottle'},{label:'大桶 5 公升的水',kg:5,icon:'waterJug'},{label:'台機車',kg:102,icon:'scooter'}];
   $('coef').value=coef;
-  const bill={A:'512',B:'286',active:'A',touched:{A:false,B:false}};
+  const bill={A:'616',B:'836',active:'A',touched:{A:false,B:false}};
   const apps=[
     {ico:'❄️',nm:'冷氣',w:900,h:8},{ico:'🍚',nm:'電鍋',w:800,h:1},{ico:'🧊',nm:'冰箱',w:150,h:24},
     {ico:'📺',nm:'電視',w:100,h:4},{ico:'💡',nm:'電燈',w:20,h:6},{ico:'🔌',nm:'手機充電',w:10,h:3}
