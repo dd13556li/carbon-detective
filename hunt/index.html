@@ -182,11 +182,11 @@ a{color:var(--accent)}
   const HOWRANK = { 獨立: 0, 提示: 1, 協助: 2 };
   const turns = window.Act && Act.turns({
     tiers: TIERS, resultCols: ['帳單', '找到的寶藏'], row: (x) => [`範例 ${x.bill}`, x.found],
-    play: (tier, n, done) => { S.tier = tier; S.bi = (n - 1) % BILLS.length; S.log = []; S.turnDone = done; show('play'); startBill(); },
+    play: (tier, n, done) => { S.tier = tier; S.bi = pickBill(); S.seq = [S.bi]; S.k = 0; S.log = []; S.turnDone = done; show('play'); startBill(); },
   });
   $('start').addEventListener('click', () => {
     if (S.rot && turns) { Act.S.speak = S.speak; $('setup').hidden = true; turns.next(); return; }
-    S.bi = 0; S.log = []; show('play'); startBill();
+    startSolo();
   });
   $('quit').addEventListener('click', () => { try { speechSynthesis.cancel(); } catch (e) {} show('setup'); });
   function show(id) { ['setup', 'turn', 'play', 'done'].forEach((x) => { $(x).hidden = x !== id; }); window.scrollTo(0, 0); }
@@ -195,10 +195,18 @@ a{color:var(--accent)}
   const tier = () => TIERS[S.tier];
   const bill = () => BILLS[S.bi];
   const ver = () => bill()[tier().ver];
-  const tid = () => tier().tasks[S.ti];
+  const tid = () => S.order[S.ti];
+  // 隨機：帳單不跟上一位重複；同一張帳單裡要找的項目每次打亂順序
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  let lastBill = -1;
+  function pickBill() {
+    const pool = BILLS.map((_, i) => i).filter((i) => BILLS.length < 2 || i !== lastBill);
+    return (lastBill = pool[Math.floor(Math.random() * pool.length)]);
+  }
+  function startSolo() { S.seq = shuffle(BILLS.map((_, i) => i)); S.k = 0; S.bi = S.seq[0]; S.log = []; show('play'); startBill(); }
 
   function startBill() {
-    S.ti = 0; sfx.flip();
+    S.ti = 0; S.order = shuffle(tier().tasks); sfx.flip();
     $('bill').src = ver().img;
     $('stage').querySelectorAll('.ov,.dot').forEach((x) => x.remove());
     startTask(true);
@@ -208,10 +216,10 @@ a{color:var(--accent)}
     const t = T[tid()], tr = tier();
     $('task').style.setProperty('--tc', t.c);
     $('task').innerHTML = `<span class="num">${tr.ver === 'marked' ? tid() : '?'}</span><span class="q">找出「${t.zh}」<small>${t.en}</small></span>`;
-    $('prog').textContent = `帳單 ${S.bi + 1}／${BILLS.length}・寶藏 ${S.ti + 1}／${tr.tasks.length}`;
+    $('prog').textContent = `${S.rot ? `範例帳單 ${bill().key}` : `帳單 ${S.k + 1}／${S.seq.length}`}・寶藏 ${S.ti + 1}／${tr.tasks.length}`;
     $('msg').textContent = ''; $('msg').className = 'msg';
     if (tr.hintAfter === 0) showHint();
-    speak((first ? `第${S.bi + 1}張帳單。` : '') + `請找出${t.zh}，點一下。` + (tr.hintAfter === 0 ? t.hintMk : ''));
+    speak((first ? (S.rot ? '這是你的帳單。' : `第${S.k + 1}張帳單。`) : '') + `請找出${t.zh}，點一下。` + (tr.hintAfter === 0 ? t.hintMk : ''));
   }
   // 量好的框是 900 寬的帳單座標；換成百分比，畫面多寬都對得上
   function place(el, r, grow = 6) {
@@ -269,7 +277,7 @@ a{color:var(--accent)}
   function next() {
     if (busy) return; busy = true; setTimeout(() => { busy = false; }, 300);
     if (S.ti + 1 < tier().tasks.length) { S.ti++; startTask(false); return; }
-    if (S.rot || S.bi + 1 < BILLS.length) { billDone(); return; }
+    if (S.rot || S.k + 1 < S.seq.length) { billDone(); return; }
     finish();
   }
   function billDone() {
@@ -284,7 +292,7 @@ a{color:var(--accent)}
     }
     $('msg').innerHTML = `這張帳單的寶藏都找到了！<button class="small" id="nextbill" style="margin-left:10px">下一張 Next ▶</button>`;
     speak('這張帳單的寶藏都找到了！按下一張。');
-    $('nextbill').addEventListener('click', () => { S.bi++; startBill(); }, { once: true });
+    $('nextbill').addEventListener('click', () => { S.k++; S.bi = S.seq[S.k]; startBill(); }, { once: true });
   }
   function finish() {
     sfx.fanfare();
@@ -300,7 +308,7 @@ a{color:var(--accent)}
       <p class="note">教師紀錄：依協助程度（獨立／提示／協助）記入紀錄表。下一步：用 <a href="../calculator/index.html">碳排計算器</a> 把度數換成碳排。</p>`;
     show('done');
     speak(`太棒了！你找到了${tot}個寶藏。`);
-    $('replay').addEventListener('click', () => { S.bi = 0; S.log = []; show('play'); startBill(); });
+    $('replay').addEventListener('click', startSolo);
     $('back').addEventListener('click', () => { renderSetup(); show('setup'); });
   }
   $('again').addEventListener('click', () => { const t = T[tid()]; speak(`請找出${t.zh}。` + (tier().ver === 'marked' ? t.hintMk : t.hint)); });
