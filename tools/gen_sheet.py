@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """棋盤圖示、碳雲、頭像：請 Vertex 圖片模型一次畫成一張 5×4 圖表（畫風才會一致），再切成單張去背。
 用法：
-  python tools/gen_sheet.py draw --project cuaji|hidarn [--max-calls N]   # 畫圖表到 _icon_trial/sheet_raw_N.png（花錢）
-  python tools/gen_sheet.py cut _icon_trial/sheet_raw_1.png                # 切格＋去背到 themes/save-power/art/（不花錢）
+  python tools/gen_sheet.py draw --project cuaji|hidarn [--sheet 1|2] [--max-calls N]   # 畫圖表到 _icon_trial/sheet_raw_N.png（花錢）
+  python tools/gen_sheet.py cut _icon_trial/sheet_raw_1.png [--sheet 1|2]                # 切格＋去背到 themes/save-power/art/（不花錢）
+第 2 張以第 1 張為畫風參考圖。
 🔴 --project 沒有預設：它決定扣哪個帳單帳戶，跑前先問使用者並確認該帳戶當下的抵免額餘額。"""
 import sys, argparse, pathlib
 from collections import deque
@@ -16,9 +17,8 @@ ACCOUNTS = {
     'hidarn': ('gen-lang-client-0655714065', '帳單 010DE9（hidarn，Google Developer Program）'),
 }
 MODEL = 'gemini-3.1-flash-image'
-COLS, ROWS = 5, 4
 # (圖示名稱, 這一格要畫什麼)；順序＝由左到右、由上到下
-CELLS = [
+CELLS1 = [
     ('bed', '一張單人床，枕頭和棉被，代表「起床」'),
     ('bulb', '一顆亮著的燈泡，發出光芒'),
     ('hairdryer', '一支粉紅色吹風機，吹出幾道風'),
@@ -40,7 +40,26 @@ CELLS = [
     ('avatar3', '卡通學生頭像（只畫頭和肩膀，圓臉、微笑）：戴圓框眼鏡的男生，穿校服'),
     ('avatar4', '卡通學生頭像（只畫頭和肩膀，圓臉、微笑）：短髮女生，戴黃色髮夾，穿校服'),
 ]
-PROMPT = (f'畫一張 {COLS} 欄 × {ROWS} 列、共 {COLS * ROWS} 格的遊戲圖示表，給特殊教育學生玩的節能減碳棋盤遊戲用。\n'
+# 第 2 張：補遊戲裡還是手繪向量圖的（稱號、重量比較物）＋計算器電器選單原本用 emoji 的
+CELLS2 = [
+    ('fan', '一台藍白色的立扇（電風扇），正面，吹出幾道風線'),
+    ('plug', '一個白色插頭已經從牆上插座拔出來，中間有一小段空隙，插頭線彎曲，代表「拔插頭」'),
+    ('earth', '一顆微笑的地球（藍色海洋、綠色陸地），旁邊兩片小綠葉，代表「地球守護」'),
+    ('waterBottle', '一瓶直立的透明寶特瓶礦泉水，藍色瓶蓋，瓶裡是淺藍色的水，沒有標籤文字'),
+    ('waterJug', '一個 5 公升的大桶裝水（透明藍色方形大水桶、有提把），沒有標籤文字'),
+    ('scooter', '一台機車（速克達），側面，整台入鏡，沒有騎士，沒有車牌'),
+    ('riceCooker', '一台台灣家庭常見的電鍋（圓筒形、淺色外殼、蓋子上有把手），沒有任何品牌字樣'),
+    ('fridge', '一台雙門冰箱（上下門），淺灰色，門上有把手'),
+    ('phoneCharge', '一支手機接著充電線，螢幕上一個綠色的電池充電符號'),
+]
+# 版式：(欄, 列, 格子, 長寬比, 參考圖)。參考圖＝已審過的第 1 張，讓新圖示畫風一致
+SHEETS = {1: (5, 4, CELLS1, '5:4', None), 2: (3, 3, CELLS2, '1:1', 'sheet_raw_1.png')}
+
+
+def prompt(n):
+    COLS, ROWS, CELLS, _, ref = SHEETS[n]
+    return (('附上的圖是同一套遊戲已經在用的圖示，新圖示的畫風、線條粗細、外框、配色要跟它完全一樣。\n' if ref else '') +
+          f'畫一張 {COLS} 欄 × {ROWS} 列、共 {COLS * ROWS} 格的遊戲圖示表，給特殊教育學生玩的節能減碳棋盤遊戲用。\n'
           '風格：彩色扁平插畫圖示，形狀簡單、圓潤可愛、顏色鮮明但柔和，每個圖示都有深灰色的粗外框，'
           '縮小到 80 像素還要認得出來。全部圖示畫風、線條粗細、配色要一致，像同一套貼圖。\n'
           '版面：整張是純白色背景（#FFFFFF），每個圖示置中放在自己的格子裡、四周留白，格子之間不要畫格線、不要編號、'
@@ -58,9 +77,11 @@ def draw(a):
     TRIAL.mkdir(exist_ok=True)
     n = 1
     while (TRIAL / f'sheet_raw_{n}.png').exists(): n += 1
+    _, _, _, aspect, ref = SHEETS[a.sheet]
+    contents = ([types.Part.from_bytes(data=(TRIAL / ref).read_bytes(), mime_type='image/png')] if ref else []) + [prompt(a.sheet)]
     for i in range(a.max_calls):
-        r = c.models.generate_content(model=MODEL, contents=[PROMPT], config=types.GenerateContentConfig(
-            response_modalities=['IMAGE'], image_config=types.ImageConfig(aspect_ratio='5:4')))
+        r = c.models.generate_content(model=MODEL, contents=contents, config=types.GenerateContentConfig(
+            response_modalities=['IMAGE'], image_config=types.ImageConfig(aspect_ratio=aspect)))
         parts = (r.candidates[0].content.parts or []) if r.candidates else []
         img = next((p.inline_data.data for p in parts if p.inline_data), None)
         if img:
@@ -86,7 +107,8 @@ def unbg(im):
     return im
 
 
-def cut(path):
+def cut(path, n):
+    COLS, ROWS, CELLS, _, _ = SHEETS[n]
     im = Image.open(path).convert('RGB'); W, H = im.size; cw, ch = W / COLS, H / ROWS
     ART.mkdir(parents=True, exist_ok=True)
     for i, (key, _) in enumerate(CELLS):
@@ -104,5 +126,6 @@ def cut(path):
 ap = argparse.ArgumentParser(); sub = ap.add_subparsers(dest='cmd', required=True)
 d = sub.add_parser('draw'); d.add_argument('--project', required=True, choices=ACCOUNTS); d.add_argument('--max-calls', type=int, default=2)
 k = sub.add_parser('cut'); k.add_argument('path')
+for x in (d, k): x.add_argument('--sheet', type=int, default=1, choices=SHEETS)
 a = ap.parse_args(); sys.stdout.reconfigure(encoding='utf-8')
-draw(a) if a.cmd == 'draw' else cut(a.path)
+draw(a) if a.cmd == 'draw' else cut(a.path, a.sheet)
