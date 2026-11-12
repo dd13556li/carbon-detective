@@ -49,6 +49,8 @@
   // ---------- 圖 ----------
   function icon(key) {
     if (!key) return '';
+    const art = (T && T.art || {})[key];   // AI 畫的圖示（有就優先），沒有才用 icons.js 的向量圖
+    if (art) return `<img class="ic art" src="${T.base}art/${esc(art)}" alt="">`;
     const lib = window.THEME_ICONS || {};
     if (/\.(svg|png|jpe?g|webp)$/i.test(key)) return `<img class="ic" src="${T.base}images/${esc(key)}" alt="">`;
     if (lib[key]) return `<svg class="ic" viewBox="0 0 64 64" aria-hidden="true">${lib[key]}</svg>`;
@@ -134,8 +136,7 @@
   }
   function liveSpeak(text) {
     if (!window.ZhTTS) return;
-    const r = ZhTTS.resolvePreferred();
-    ZhTTS.speak(text, { voice: r.voice || undefined, rate: 0.9 });   // 挑不到語音也照唸（交給系統）
+    ZhTTS.speak(text, { voice: ZhTTS.pickTW() || undefined, rate: 0.9 });   // 挑不到語音也照唸（交給系統）
   }
   function speak(text) {
     if (!S.set.speak || TEST === 'end' || !text) return;
@@ -248,7 +249,7 @@
     if (b.dataset.av != null) { const p = S.players[+b.dataset.av]; if (p.photo) delete p.photo; else p.avatar = (p.avatar + 1) % T.idCard.avatars.length; renderSetup(); return; }
     if (b.dataset.unphoto != null) { delete S.players[+b.dataset.unphoto].photo; renderSetup(); return; }
     if (b.id === 'startbtn') startGame();
-    if (b.id === 'voicetry') { const v = pickedVoice(); stopVoice(); if (window.ZhTTS) ZhTTS.speak('你好，我是減碳偵探的朗讀聲音。', { voice: v || undefined, rate: 0.9 }); }
+    if (b.id === 'voicetry') { const v = pickedVoice(); stopVoice(); if (window.ZhTTS) ZhTTS.speak('你好，我是減碳偵探的朗讀聲音。', { voice: v || ZhTTS.pickTW() || undefined, rate: 0.9 }); }
   }
   // 語音選單：只影響即時語音；有預錄的句子仍播預錄（每台聽起來一樣）
   function voicePickerHTML() {
@@ -257,7 +258,7 @@
     const opt = vs.map((v) => { const d = ZhTTS.describe(v); return `<option value="${esc(d.key)}"${d.key === cur ? ' selected' : ''}>${esc(d.engineLabel)}｜${esc(d.label)}（${esc(v.lang)}）</option>`; }).join('');
     const note = r.status === 'missing' ? '<p class="tierhelp">這個瀏覽器沒有你之前選的語音，已改回自動挑選，請重新指定。</p>'
       : r.status === 'downgraded' ? '<p class="tierhelp">這個瀏覽器沒有你之前選的那一版，改用同名的另一版，音質會不一樣。</p>' : '';
-    return `<div class="voicepick"><label for="voicesel">即時語音</label><select id="voicesel"><option value="">自動（挑這台最好的中文語音）</option>${opt}</select>
+    return `<div class="voicepick"><label for="voicesel">即時語音</label><select id="voicesel"><option value="">自動（Edge 用曉臻、Chrome 用雅婷）</option>${opt}</select>
       <button type="button" class="btn ghost" id="voicetry">試聽</button></div>${note}
       <p class="tierhelp">題目、回饋、機會卡有預錄的高品質語音，會優先播放；玩家名字、結果這些會變的句子用上面選的即時語音。☁️ 雲端語音（Edge）音質最好。</p>`;
   }

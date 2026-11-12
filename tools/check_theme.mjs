@@ -83,6 +83,10 @@ const R = T.resource || {};
 if (!R.goal || R.goal.keepAtMost == null) err('resource.goal.keepAtMost 沒填（一天結束時最多幾個單位就過關）');
 for (const k of ['unit', 'verbUp', 'verbDown']) if (!R[k]) err(`resource.${k} 沒填`);
 checkIcon(R.icon, 'resource（單位圖示）');
+for (const [k, f] of Object.entries(T.art || {})) {
+  if (!ICONS[k]) err(`art「${k}」不是 icons.js 裡的圖示（要先有向量圖當後備）`);
+  if (!fs.existsSync(path.join(dir, "art", f))) err(`art「${k}」的檔案 art/${f} 不存在`);
+}
 // 寫實照片（題目卡、機會卡用）：key 要是既有圖示（棋盤仍用圖示），檔案要存在
 for (const [k, f] of Object.entries(T.photos || {})) {
   if (!ICONS[k]) err(`photos「${k}」不是 icons.js 裡的圖示`);

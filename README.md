@@ -42,6 +42,8 @@ calculator/           第一節用的電費單碳排計算器（獨立單頁，�
 
 圖示三種寫法都可以：`icons.js` 裡的名稱、`images/` 資料夾裡的檔名（.svg／.png／.jpg）、或直接寫一個表情符號。
 
+**AI 扁平圖示（棋盤、碳雲、頭像）**：主題的 `art` 把圖示名稱對到 `art/` 裡的圖，`icon()` 有就優先用（向量圖留作後備）。`python tools/gen_sheet.py draw --project <帳戶>` 一次畫成 5×4 圖表（畫風一致，會花錢），`cut` 切格、去背、轉 WebP（不花錢）。
+
 **寫實照片（只用在大圖）**：主題的 `photos` 把圖示名稱對到 `images/` 裡的照片，題目卡選項與機會卡會改顯示照片；棋盤、狀態列、身分證仍用圖示（照片縮到格子大小反而不清楚）。
 照片由 `python tools/gen_icons.py --project <帳戶>` 呼叫 Vertex 圖片模型產生到 `_icon_trial/`（不進版控，會花錢：`--project` 沒有預設、`--max-calls` 限制次數），看過後用 `python tools/build_photos.py` 裁邊轉成 512px WebP。成對的圖（例如開燈／關燈）以前一張為底圖修改，兩張只差那一處。
 
@@ -68,5 +70,10 @@ calculator/           第一節用的電費單碳排計算器（獨立單頁，�
 
 ## 朗讀
 
-- 即時語音：`engine/tts-zh.js`（遊戲與計算器共用）。自動挑這台最好的中文語音（Edge 雲端神經語音 → Google 中文 → 系統語音），挑不到也照唸；設定頁「即時語音」可試聽、指定，記在這個瀏覽器（計算器沿用同一個選擇）。
+- 即時語音：`engine/tts-zh.js`（遊戲與計算器共用）。預設挑法（檔尾 `ZhTTS.pickTW`，唯一定義）：設定頁指定的 → Edge 雲端曉臻 → 雅婷（Chrome 上是 Windows 本機版）→ 品質優先，挑不到也照唸；設定頁「即時語音」可試聽、指定，記在這個瀏覽器（計算器沿用同一個選擇）。
 - 預錄語音（目前**沒有啟用**）：`python tools/gen_voice.py --project <帳戶>` 會從 `window.__voiceLines()` 拿固定句子（題目、回饋、機會卡、任務），用 Gemini 語音錄到 `themes/save-power/voice/`（檔名＝句子雜湊，附 `index.json`）。有 `index.json` 時引擎優先播預錄、沒有就用即時語音。會花錢：`--project` 沒有預設，`--dry-run` 只列句數不呼叫。
+
+## 音效與頭像照片
+
+- 音效全部由 Web Audio 即時合成（engine.js 的 `sfx`），音量偏小；設定頁與狀態列可關，朗讀會等音效結束才開始。
+- 頭像可用學生照片（設定頁 📷）：裁成正方形後只放在網頁記憶體，不上傳、不寫進 localStorage、不放網址，重新整理就消失。使用前請取得家長同意。

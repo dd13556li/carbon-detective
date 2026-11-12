@@ -317,3 +317,19 @@
   };
   global.ZhTTS = ZhTTS;
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* 減碳偵探的預設語音（遊戲與計算器共用，唯一定義）：
+ * 使用者在設定頁指定的 > Edge 雲端「曉臻」 > 「雅婷」（有雲端版用雲端版，Chrome 上是 Windows 本機版） > 模組的品質優先。 */
+(function () {
+  if (!window.ZhTTS) return;
+  const online = (v) => /online|natural/i.test(v.name);
+  window.ZhTTS.pickTW = function () {
+    const r = ZhTTS.resolvePreferred();
+    if (r.voice) return r.voice;
+    const L = ZhTTS.list();
+    return L.find((v) => /HsiaoChen/i.test(v.name) && online(v))
+        || L.find((v) => /Yating/i.test(v.name) && online(v))
+        || L.find((v) => /Yating/i.test(v.name))
+        || ZhTTS.best(null);
+  };
+})();

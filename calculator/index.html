@@ -230,7 +230,7 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
   // speech
   // 朗讀：和遊戲共用 ../engine/tts-zh.js，語音偏好也共用（遊戲設定頁選的語音，這裡一樣用）
   function say(t){
-    try{ if(!window.ZhTTS) return; const r=ZhTTS.resolvePreferred(); ZhTTS.speak(t,{voice:r.voice||undefined, rate:.85}); }catch(e){}
+    try{ if(!window.ZhTTS) return; ZhTTS.speak(t,{voice:ZhTTS.pickTW()||undefined, rate:.85}); }catch(e){}
   }
   if(window.ZhTTS){ ZhTTS.ready(); document.body.addEventListener('pointerdown',()=>ZhTTS.unlock(),{once:true}); }
   $('speakBill').onclick=()=>say(billSpeech());
