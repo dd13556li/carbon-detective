@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>看不見的碳雲</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../engine/activity.css">
+<style>
+/* 第一節 發展活動三的結尾：老師吹起透明袋之後播。袋子鼓起 → 飄上天 → 變成碳雲 */
+.fx{transform-box:fill-box;transform-origin:center bottom}
+.fxc{transform-box:fill-box;transform-origin:center}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <header><h1>看不見的碳雲</h1><p class="en">The Invisible Gas</p></header>
+    <a class="home" href="../lesson/index.html">← 活動選單</a>
+  </div>
+  <div class="scene"><svg class="stage" id="svg" viewBox="0 0 1600 900" role="img" aria-label="透明袋變成碳雲的動畫"></svg></div>
+  <div class="caption" id="cap" aria-live="polite">老師先吹起真的透明袋，再按「播放」。</div>
+  <div class="row"><button class="go" id="play">▶ 播放</button></div>
+  <p class="src" id="src"></p>
+  <details class="panel"><summary>朗讀與音效</summary><div id="opts"></div></details>
+</main>
+
+<script src="../engine/tts-zh.js"></script>
+<script src="../engine/sfx.js"></script>
+<script src="../themes/save-power/icons.js"></script>
+<script src="../themes/save-power/theme.js"></script>
+<script src="../engine/activity.js"></script>
+<script>
+(function () {
+  const { $, anim, sleep, sfx, TH } = Act;
+  const ART = '../themes/save-power/art/';
+  const C = TH.constants, BOTTLE = TH.compare[0];
+  const NS = 'http://www.w3.org/2000/svg', svg = $('svg');
+  const el = (tag, attr, parent = svg) => { const e = document.createElementNS(NS, tag);
+    for (const k in attr) String(attr[k]).startsWith('var(') ? e.style.setProperty(k, attr[k]) : e.setAttribute(k, attr[k]);
+    parent.appendChild(e); return e; };
+  $('src').textContent = `1 度電排出約 ${C.kgCO2PerKwh} 公斤二氧化碳（${C.source}），差不多 1 ${BOTTLE.label}（${BOTTLE.kg} 公斤）那麼重；遊戲裡 1 朵碳雲＝${C.kgPerUnit} 公斤。真正的二氧化碳是看不見的氣體，碳雲是把它畫出來。`;
+
+  function reset() {
+    svg.innerHTML = '';
+    el('rect', { x: 0, y: 760, width: 1600, height: 140, fill: 'var(--ground)' });
+    // 透明袋（一開始扁扁的）
+    const g = el('g', { id: 'bag', class: 'fx' });
+    el('path', { d: 'M640 760 C560 700 560 420 640 360 C700 320 900 320 960 360 C1040 420 1040 700 960 760 Z', fill: 'rgba(255,255,255,.35)', stroke: '#7aa7c7', 'stroke-width': 8, 'stroke-dasharray': '0' }, g);
+    el('path', { d: 'M700 420 C690 500 690 600 710 680', fill: 'none', stroke: 'rgba(255,255,255,.9)', 'stroke-width': 14, 'stroke-linecap': 'round' }, g);
+    el('path', { d: 'M760 760 L840 760 L820 800 L780 800 Z', fill: '#7aa7c7' }, g);
+    const gas = el('text', { x: 800, y: 580, 'text-anchor': 'middle', 'font-size': 60, 'font-weight': 900, fill: '#7aa7c7', opacity: 0, id: 'gas' }, g);
+    gas.textContent = 'CO₂';
+    g.style.transform = 'scaleY(.12)';
+    // 秤：左邊一瓶水
+    const w = el('g', { id: 'weigh', opacity: 0 });
+    el('image', { href: ART + TH.art.waterBottle, x: 180, y: 470, width: 220, height: 280 }, w);
+    el('text', { x: 290, y: 450, 'text-anchor': 'middle', 'font-size': 40, 'font-weight': 900, fill: 'var(--ink)' }, w).textContent = `約 ${BOTTLE.kg} 公斤`;
+    el('text', { x: 480, y: 640, 'text-anchor': 'middle', 'font-size': 110, 'font-weight': 900, fill: 'var(--ink)' }, w).textContent = '≈';
+    el('text', { x: 800, y: 300, 'text-anchor': 'middle', 'font-size': 40, 'font-weight': 900, fill: 'var(--ink)', id: 'one' }, w).textContent = '1 度電排出的二氧化碳';
+    // 碳雲（最後才出現）
+    const c = el('g', { id: 'cloud', opacity: 0, class: 'fxc' });
+    el('image', { href: ART + TH.art.cloud, x: 600, y: 60, width: 400, height: 300 }, c);
+    el('text', { x: 800, y: 420, 'text-anchor': 'middle', 'font-size': 52, 'font-weight': 900, fill: 'var(--ink)', stroke: 'var(--paper)', 'stroke-width': 8, 'paint-order': 'stroke' }, c).textContent = '碳雲 Carbon Cloud';
+  }
+  const steps = [
+    { say: '老師吹起一個透明袋，袋子鼓起來了。', run: async () => { sfx.rise(); await anim($('bag'), [{ transform: 'scaleY(.12)' }, { transform: 'scaleY(1)' }], 1600, { easing: 'cubic-bezier(.3,1.4,.5,1)' }); } },
+    { say: `1度電排出的二氧化碳，差不多1${BOTTLE.label}那麼重。`, run: async () => { await anim($('weigh'), [{ opacity: 0 }, { opacity: 1 }], 700); } },
+    { say: '這麼重的東西，是看不見的氣體。', run: async () => { await anim($('gas'), [{ opacity: 0 }, { opacity: .55 }, { opacity: .15 }, { opacity: .55 }], 1600); } },
+    { say: '它全部跑到天上去了。', run: async () => {
+        anim($('weigh'), [{ opacity: 1 }, { opacity: 0 }], 500);
+        sfx.rise();
+        await anim($('bag'), [{ transform: 'translateY(0) scale(1)', opacity: 1 }, { transform: 'translateY(-420px) scale(.7)', opacity: .15 }], 2000);
+      } },
+    { say: '我們把它畫成「碳雲」。', run: async () => {
+        sfx.good();
+        await anim($('cloud'), [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1.08)' }, { opacity: 1, transform: 'scale(1)' }], 900);
+        anim($('bag'), [{ opacity: .15 }, { opacity: 0 }], 300);
+      } },
+    { say: '記住：真正的二氧化碳是看不見的，碳雲是我們把它畫出來。', pause: 200 },
+  ];
+  Act.mountOptions($('opts'), '你好，我是朗讀的聲音。我們把它畫成碳雲。');
+  Act.story(steps, { caption: $('cap'), play: $('play'), reset });
+  reset();
+})();
+</script>
+</body>
+</html>

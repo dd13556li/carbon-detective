@@ -150,11 +150,9 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
   const CMP=TH.compare||[{label:'瓶 500 mL 礦泉水',kg:.5,icon:'waterBottle'},{label:'大桶 5 公升的水',kg:5,icon:'waterJug'},{label:'台機車',kg:102,icon:'scooter'}];
   $('coef').value=coef;
   const bill={A:'616',B:'836',active:'A',touched:{A:false,B:false}};
-  const apps=[
-    {ico:'ac',nm:'冷氣',w:900,h:8},{ico:'riceCooker',nm:'電鍋',w:800,h:1},{ico:'fridge',nm:'冰箱',w:150,h:24},
-    {ico:'tv',nm:'電視',w:100,h:4},{ico:'bulb',nm:'電燈',w:20,h:6},{ico:'phoneCharge',nm:'手機充電',w:10,h:3}
-  ];
-  let app={i:0,w:900,h:8};
+  // 家電清單與示例瓦數的唯一來源＝theme.js appliances（排排站遊戲、教案附錄六讀同一份）
+  const apps=(TH.appliances||[]).map(a=>({ico:a.key,nm:a.name,w:a.watts,h:a.hours}));
+  let app={i:0,w:apps[0].w,h:apps[0].h};
   const fmt=(n,d=1)=>Number(n.toFixed(d)).toLocaleString('zh-TW');
 
   // 圖示：主題有 AI 畫的圖（theme.js art）就用圖，沒有才用 icons.js 的向量圖（與遊戲引擎 icon() 同一規則）

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>我會說省電</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../engine/activity.css">
+<style>
+/* 第二節 發展活動二：抽一張省電卡，練習對家人說出那一句（口語、跟讀或指圖卡） */
+.deck{display:flex;justify-content:center;padding:10px 0}
+.flip{width:min(560px,100%);aspect-ratio:4/3;perspective:1200px;border:none;background:none;padding:0}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .7s;transform-style:preserve-3d}
+.flip.open .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:24px;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:18px;border:4px solid var(--line)}
+.face.back{background:repeating-linear-gradient(45deg,var(--accent),var(--accent) 18px,color-mix(in srgb,var(--accent) 80%,#fff) 18px,color-mix(in srgb,var(--accent) 80%,#fff) 36px);color:#fff;font-size:44px;font-weight:900;text-shadow:0 2px 4px rgba(0,0,0,.3)}
+.face.front{background:var(--paper);transform:rotateY(180deg)}
+.face.front img,.face.front svg{width:46%;max-height:58%;object-fit:contain}
+.face.front .short{font-size:30px;font-weight:900}
+.face.front .en2{font-size:22px;font-weight:900;color:var(--accent)}
+.line{font-size:clamp(26px,4.6vw,40px);font-weight:900;text-align:center;line-height:1.45;padding:14px;border-radius:16px;background:var(--paper);border:3px solid var(--accent)}
+.line.veil{color:transparent;text-shadow:0 0 14px var(--muted);user-select:none}
+.judge{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.judge button{font-size:22px;font-weight:900;padding:16px 8px;border-radius:16px;border:3px solid var(--line);background:var(--paper)}
+.judge button:first-child{border-color:var(--ok)}
+@media (max-width:560px){.judge{grid-template-columns:1fr}}
+@media (prefers-reduced-motion: reduce){.flip .in{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <header><h1>我會說省電</h1><p class="en">I Can Say It!</p>
+      <p class="sub">抽一張省電卡，練習對家人說：「……，好嗎？」</p></header>
+    <a class="home" href="../lesson/index.html">← 活動選單</a>
+  </div>
+
+  <section id="setup" class="panel">
+    <p>每張卡是棋盤遊戲裡學到的一個省電行動。學生抽到哪一張，就練習對家人說出那一句（口語、跟讀，或用溝通圖卡指出來）。</p>
+    <h2>朗讀與音效</h2>
+    <div id="opts"></div>
+    <button class="go" id="start">開始，第 1 位上台 ▶</button>
+    <p class="note">輪流上台：每位上台前老師按 A／B／C 選等級，畫面只顯示「第幾位」，不輸入名字，結果只留在這個分頁。</p>
+  </section>
+
+  <section id="turn" class="panel" hidden></section>
+
+  <section id="play" hidden>
+    <div class="wrap" style="gap:14px">
+      <div class="bar"><span class="prog" id="prog"></span><span class="sp"></span>
+        <button class="small" id="again">🔊 念這一句</button></div>
+      <div class="deck"><button class="flip" id="flip" aria-label="抽一張卡"><div class="in">
+        <div class="face back">抽一張！<br>Draw</div>
+        <div class="face front" id="front"></div></div></button></div>
+      <div class="msg" id="msg" aria-live="polite"></div>
+      <div id="say" hidden>
+        <div class="line" id="line"></div>
+        <div class="row" style="margin-top:12px" id="tools"></div>
+        <h2 style="margin-top:16px">老師按：這位同學怎麼說出來的？</h2>
+        <div class="judge" id="judge"><button data-how="獨立">自己說出來 👍</button><button data-how="提示">跟著念／看提示</button><button data-how="協助">指圖卡／協助</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="done" class="panel" hidden></section>
+</main>
+
+<script src="../engine/tts-zh.js"></script>
+<script src="../engine/sfx.js"></script>
+<script src="../themes/save-power/icons.js"></script>
+<script src="../themes/save-power/theme.js"></script>
+<script src="../engine/activity.js"></script>
+<script>
+(function () {
+  const { $, speak, sfx, icon, TH } = Act;
+  const CARDS = TH.sayCards;                                     // 唯一來源 theme.js
+  const TIERS = {
+    A: { name: 'A 層（獨立）', desc: '只看圖，用自己的話說；說完再看句子對一對' },
+    B: { name: 'B 層（提示）', desc: '看著句子、聽一次，再跟著說' },
+    C: { name: 'C 層（協助）', desc: '聽句子，用溝通圖卡指出來或說關鍵詞' },
+  };
+  const P = {};
+  let bag = [];
+  const draw = () => { if (!bag.length) bag = CARDS.map((_, i) => i).sort(() => Math.random() - 0.5); return CARDS[bag.pop()]; };
+
+  function play(tier, n, done) {
+    Object.assign(P, { tier, n, done, card: null });
+    $('prog').textContent = `第 ${n} 位・${TIERS[tier].name}`;
+    $('flip').classList.remove('open'); $('flip').disabled = false;
+    $('say').hidden = true; $('msg').textContent = '';
+    speak('點卡片，抽一張省電卡。');
+  }
+  $('flip').addEventListener('click', () => {
+    if (P.card) return;
+    const c = P.card = draw(); sfx.flip();
+    $('front').innerHTML = `${icon(c.icon, c.short)}<div class="short">${c.short}</div>${c.en ? `<div class="en2">${c.en}</div>` : ''}`;
+    $('flip').classList.add('open'); $('flip').disabled = true;
+    setTimeout(reveal, 750);
+  });
+  function reveal() {
+    const c = P.card, t = P.tier;
+    $('say').hidden = false;
+    $('line').textContent = c.line; $('line').classList.toggle('veil', t === 'A');
+    $('tools').innerHTML = (t === 'A' ? '<button class="go alt" id="peek">看句子對一對 👀</button>' : '') + '<button class="go alt" id="hear">🔊 聽這一句</button>';
+    const intro = { A: `你抽到「${c.short}」。請你用自己的話，對家人說說看。`, B: `你抽到「${c.short}」。聽一次：${c.line}。換你說說看。`, C: `你抽到「${c.short}」。${c.line}。用圖卡指給老師看，或說說看。` }[t];
+    $('msg').className = 'msg ok'; $('msg').textContent = `抽到：${c.short}`;
+    speak(intro);
+    $('hear').addEventListener('click', () => speak(c.line));
+    if ($('peek')) $('peek').addEventListener('click', () => { $('line').classList.remove('veil'); speak(c.line); });
+  }
+  $('judge').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b || !P.card) return;
+    sfx.good(); const card = P.card; P.card = null;
+    P.done({ card: card.short, how: b.dataset.how });
+  });
+  $('again').addEventListener('click', () => P.card ? speak(P.card.line) : speak('點卡片，抽一張省電卡。'));
+
+  Act.mountOptions($('opts'), '你好，我是朗讀的聲音。我們把冷氣調到二十六度，再開電扇，好嗎？');
+  const turns = Act.turns({ tiers: TIERS, play, resultCols: ['抽到的卡'], row: (x) => [x.card] });
+  $('start').addEventListener('click', () => { $('setup').hidden = true; turns.next(); });
+  window.__say = { P };
+})();
+</script>
+</body>
+</html>

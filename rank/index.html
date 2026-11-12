@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>吃電大戶排排站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../engine/activity.css">
+<style>
+/* 第一節 綜合活動：從最吃電的開始，依序點家電，排成「吃電多 → 吃電少」；排完看一個月各用幾度 */
+.slots{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:10px}
+.slot{border:3px dashed var(--line);border-radius:16px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;font-weight:900;text-align:center}
+.slot .rk{font-size:15px;color:var(--muted)}
+.slot img,.slot svg{width:64px;height:64px;object-fit:contain}
+.slot.filled{border-style:solid;border-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,var(--paper))}
+.ends{display:flex;justify-content:space-between;font-weight:900;color:var(--muted)}
+.wbar{width:100%;height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+.wbar i{display:block;height:100%;background:var(--warn)}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bars .b{display:grid;grid-template-columns:56px 130px 1fr 140px;gap:10px;align-items:center;font-size:20px;font-weight:700}
+.bars img,.bars svg{width:48px;height:48px;object-fit:contain}
+.bars .track{height:26px;border-radius:13px;background:var(--line);overflow:hidden}
+.bars .track i{display:block;height:100%;border-radius:13px;background:var(--accent);transition:width .8s}
+.bars .v{text-align:right;font-variant-numeric:tabular-nums}
+.aha{font-size:22px;font-weight:900;color:var(--warn)}
+@media (max-width:640px){.bars .b{grid-template-columns:40px 90px 1fr 100px;font-size:16px}.slot{min-height:110px}.slot img,.slot svg{width:44px;height:44px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <header><h1>吃電大戶排排站</h1><p class="en">Who Uses the Most Power?</p>
+      <p class="sub">從最吃電的開始，一個一個點，排成「吃電多 → 吃電少」！</p></header>
+    <a class="home" href="../lesson/index.html">← 活動選單</a>
+  </div>
+
+  <section id="setup" class="panel">
+    <p>卡片上是<b>示例瓦數</b>（常見機種的概略值），家裡的家電以標示為準。和紙本家電瓦數卡（教案附錄六）、碳排計算器的家電模式同一份數字。</p>
+    <h2>朗讀與音效</h2>
+    <div id="opts"></div>
+    <button class="go" id="start">開始，第 1 位上台 ▶</button>
+    <p class="note">輪流上台：每位上台前老師按 A／B／C 選等級，畫面只顯示「第幾位」，不輸入名字，結果只留在這個分頁。</p>
+  </section>
+
+  <section id="turn" class="panel" hidden></section>
+
+  <section id="play" hidden>
+    <div class="wrap" style="gap:14px">
+      <div class="bar"><span class="prog" id="prog"></span><span class="sp"></span>
+        <button class="small" id="again">🔊 再念一次</button><button class="small" id="hintbtn">💡 提示</button></div>
+      <div class="ends"><span>⚡ 吃電最多</span><span>吃電最少 🍃</span></div>
+      <div class="slots" id="slots"></div>
+      <div class="msg" id="msg" aria-live="polite"></div>
+      <div class="cards" id="cards"></div>
+      <div id="after"></div>
+    </div>
+  </section>
+
+  <section id="done" class="panel" hidden></section>
+</main>
+
+<script src="../engine/tts-zh.js"></script>
+<script src="../engine/sfx.js"></script>
+<script src="../themes/save-power/icons.js"></script>
+<script src="../themes/save-power/theme.js"></script>
+<script src="../engine/activity.js"></script>
+<script>
+(function () {
+  const { $, speak, sfx, icon, TH } = Act;
+  const APPS = TH.appliances;                                    // 唯一來源 theme.js
+  const MAXW = Math.max(...APPS.map((a) => a.watts));
+  const month = (a) => a.watts * a.hours * 30 / 1000;
+  const TIERS = {
+    A: { name: 'A 層（獨立）', desc: `${APPS.length} 張家電全部排好`, k: APPS.length, bars: false, hintAfter: 2 },
+    B: { name: 'B 層（提示）', desc: '3 張家電排好，點錯會亮提示', k: 3, bars: false, hintAfter: 1 },
+    C: { name: 'C 層（協助）', desc: '2 張家電，看長條選出比較吃電的', k: 2, bars: true, hintAfter: 0 },
+  };
+  const P = {};
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+  function play(tier, n, done) {
+    const t = TIERS[tier];
+    let pick; do { pick = shuffle(APPS).slice(0, t.k); } while (new Set(pick.map((a) => a.watts)).size < pick.length);
+    Object.assign(P, { tier, n, done, items: pick, order: pick.slice().sort((a, b) => b.watts - a.watts), placed: 0, wrong: 0, hinted: false });
+    $('prog').textContent = `第 ${n} 位・${t.name}`;
+    $('slots').style.setProperty('--n', t.k);
+    $('slots').innerHTML = P.order.map((_, i) => `<div class="slot" data-i="${i}"><span class="rk">第 ${i + 1}</span></div>`).join('');
+    $('cards').innerHTML = pick.map((a) => `<button class="card" data-k="${a.key}">${icon(a.key, a.name)}<span class="nm">${a.name}</span><span class="w">示例 ${a.watts} W</span>${t.bars ? `<span class="wbar"><i style="width:${a.watts / MAXW * 100}%"></i></span>` : ''}</button>`).join('');
+    $('msg').textContent = ''; $('after').innerHTML = '';
+    if (t.hintAfter === 0) hint();
+    speak(t.k === 2 ? `${pick[0].name}和${pick[1].name}，哪一個比較吃電？點一下。` : `從最吃電的開始，一個一個點。`);
+  }
+  const want = () => P.order[P.placed];
+  function hint() {
+    P.hinted = true;
+    $('cards').querySelectorAll('.card').forEach((c) => c.classList.toggle('hint', c.dataset.k === want().key));
+  }
+  $('cards').addEventListener('click', (e) => {
+    const c = e.target.closest('.card'); if (!c || c.disabled || P.placed >= P.order.length) return;
+    const a = APPS.find((x) => x.key === c.dataset.k), w = want();
+    if (a.key !== w.key) {
+      P.wrong++; c.classList.add('wrong'); setTimeout(() => c.classList.remove('wrong'), 450); sfx.gentle();
+      const say = `${a.name}是${a.watts}瓦，還有更吃電的喔。`;
+      $('msg').className = 'msg no'; $('msg').textContent = say; speak(say);
+      if (P.wrong >= Math.max(1, TIERS[P.tier].hintAfter)) hint();
+      return;
+    }
+    c.disabled = true; c.classList.remove('hint'); sfx.step();
+    const s = $('slots').children[P.placed];
+    s.classList.add('filled'); s.innerHTML = `<span class="rk">第 ${P.placed + 1}</span>${icon(a.key, a.name)}<span>${a.name}</span><span class="rk">${a.watts} W</span>`;
+    P.placed++;
+    if (P.tier === 'C' && P.placed === 1) { const rest = P.order[1], s2 = $('slots').children[1]; s2.classList.add('filled'); s2.innerHTML = `<span class="rk">第 2</span>${icon(rest.key, rest.name)}<span>${rest.name}</span><span class="rk">${rest.watts} W</span>`; $('cards').querySelector(`[data-k="${rest.key}"]`).disabled = true; P.placed = 2; }
+    if (P.placed < P.order.length) {
+      $('msg').className = 'msg ok'; $('msg').textContent = `對！${a.name} ${a.watts} 瓦。下一個呢？`;
+      speak(`對！${a.name}${a.watts}瓦。下一個呢？`);
+      if (P.hinted && P.tier === 'C') hint(); else $('cards').querySelectorAll('.hint').forEach((x) => x.classList.remove('hint'));
+      return;
+    }
+    finish();
+  });
+  function bars(list, val, unit) {
+    const m = Math.max(...list.map(val));
+    return `<div class="bars">${list.map((a) => `<div class="b">${icon(a.key, a.name)}<span>${a.name}</span><span class="track"><i style="width:${val(a) / m * 100}%"></i></span><span class="v">${unit(a)}</span></div>`).join('')}</div>`;
+  }
+  function finish() {
+    sfx.good();
+    const how = P.tier === 'C' ? '協助' : (P.wrong === 0 && !P.hinted ? '獨立' : '提示');
+    $('msg').className = 'msg ok'; $('msg').textContent = '排好了！';
+    $('cards').innerHTML = '';
+    const byMonth = P.order.slice().sort((a, b) => month(b) - month(a));
+    const jump = byMonth.find((a, i) => P.order.indexOf(a) > i);          // 瓦數排名後面、一個月卻用得多的
+    $('after').innerHTML = `<h2>瓦數（用電的力氣）</h2>${bars(P.order, (a) => a.watts, (a) => `${a.watts} W`)}
+      <div class="row" style="margin-top:14px"><button class="go alt" id="mon">一個月用多少度？📅</button><button class="go" id="next">下一位 ✓</button></div>
+      <div id="monbox"></div>`;
+    speak(`排好了！最吃電的是${P.order[0].name}，${P.order[0].watts}瓦。`);
+    $('mon').addEventListener('click', () => {
+      $('monbox').innerHTML = `<h2 style="margin-top:14px">一個月大約用幾度（瓦數 × 每天幾小時 × 30 天 ÷ 1000）</h2>
+        ${bars(byMonth, month, (a) => `${+month(a).toFixed(1)} 度`)}
+        <p class="note">每天使用時數：${byMonth.map((a) => `${a.name} ${a.hours} 小時`).join('、')}。可用碳排計算器的「家電模式」驗證。</p>
+        ${jump ? `<p class="aha">💡 ${jump.name}的瓦數不大，可是一天開 ${jump.hours} 小時，一個月反而用得比較多！</p>` : ''}`;
+      speak(jump ? `看一個月用多少度。${jump.name}的瓦數不大，可是一天開${jump.hours}小時，一個月反而用得比較多。` : `看一個月用多少度，最多的是${byMonth[0].name}。`);
+    });
+    $('next').addEventListener('click', () => P.done({ list: P.order.map((a) => a.name).join(' > '), how }), { once: true });
+  }
+  $('again').addEventListener('click', () => speak(P.order && P.placed < P.order.length ? '從最吃電的開始，一個一個點。' : '按下一位。'));
+  $('hintbtn').addEventListener('click', () => { if (P.placed < P.order.length) { hint(); speak(`找找看${want().name}。`); } });
+
+  Act.mountOptions($('opts'), '你好，我是朗讀的聲音。冷氣是九百瓦。');
+  const turns = Act.turns({ tiers: TIERS, play, resultCols: ['排出的順序'], row: (x) => [x.list] });
+  $('start').addEventListener('click', () => { $('setup').hidden = true; turns.next(); });
+  window.__rank = { P, want };
+})();
+</script>
+</body>
+</html>

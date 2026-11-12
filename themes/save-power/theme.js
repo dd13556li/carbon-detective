@@ -221,6 +221,28 @@ window.THEME = {
     ]
   },
 
+  // ⑨ 課堂小遊戲（第一節 spin/、rank/，第二節 say/）。計算器的家電模式與教案附錄六也讀這一份
+  // 家電：示例瓦數與每天使用時數（常見機種概略值，上課前以實物標示核對）
+  appliances: [
+    { key: "ac",          name: "冷氣",     watts: 900, hours: 8 },
+    { key: "riceCooker",  name: "電鍋",     watts: 800, hours: 1 },
+    { key: "fridge",      name: "冰箱",     watts: 150, hours: 24 },
+    { key: "tv",          name: "電視",     watts: 100, hours: 4 },
+    { key: "bulb",        name: "電燈",     watts: 20,  hours: 6 },
+    { key: "phoneCharge", name: "手機充電器", watts: 10,  hours: 3 }
+  ],
+  // 碳排有多重？轉盤上的度數：度數 × kgCO2PerKwh 四捨五入剛好是 1～5 公斤（現場準備 1～5 公斤的重物）
+  spin: { kwh: [2, 4, 6, 8, 11] },
+  // 我會說：抽一張，對家人說出這一句（icon＝art/ 的圖）
+  sayCards: [
+    { icon: "t26",       line: "我們把冷氣調到 26 度，再開電扇，好嗎？", short: "冷氣 26 度＋電扇" },
+    { icon: "lightsOff", line: "離開房間的時候，我們把燈關掉，好嗎？",   short: "隨手關燈", en: "Turn off!" },
+    { icon: "plug",      line: "電視看完了，我們把插頭拔掉，好嗎？",     short: "拔插頭", en: "Unplug!" },
+    { icon: "hanger",    line: "今天有太陽，我們把衣服晾在外面曬乾，好嗎？", short: "衣服曬太陽" },
+    { icon: "ledLamp",   line: "燈壞了，我們換成 LED 燈，好嗎？",       short: "換 LED 燈" },
+    { icon: "pcOn",      line: "電腦不用了，我們把它關掉，好嗎？",       short: "電腦關機", en: "Turn off!" }
+  ],
+
   // ⑧ 雙語字卡與圖片來源
   glossary: [
     { zh: "度", en: "kWh" }, { zh: "二氧化碳", en: "CO₂" }, { zh: "省電", en: "save power" },
