@@ -98,17 +98,54 @@
     card: () => tone([440, 660], 0.1),
     fanfare: () => tone([523, 659, 784, 1047, 784, 1047], 0.14)
   };
-  function speak(text) {
-    if (!S.set.speak || !window.speechSynthesis || TEST === 'end') return;
-    try {
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'zh-TW'; u.rate = 0.9;
-      const v = speechSynthesis.getVoices().find((x) => /zh[-_]TW/i.test(x.lang));
-      if (v) u.voice = v;
-      speechSynthesis.speak(u);
-    } catch (e) { /* 沒有語音也能玩 */ }
+  // 朗讀：預錄語音（themes/<主題>/voice/，檔名＝句子內容的雜湊）優先，沒有才用瀏覽器即時語音。
+  // 句子只在這支程式產生一次；tools/gen_voice.py 透過 window.__voiceLines() 拿同一批句子去錄，不另寫一份。
+  let VOICE = null, curAudio = null;
+  function voiceKey(text) {                     // FNV-1a 32 位元，16 進位 8 碼
+    let h = 0x811c9dc5;
+    for (const ch of String(text)) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
+    return h.toString(16).padStart(8, '0');
   }
+  function stopVoice() {
+    if (curAudio) { try { curAudio.pause(); } catch (e) {} curAudio = null; }
+    if (window.ZhTTS) ZhTTS.cancel();
+  }
+  function liveSpeak(text) {
+    if (!window.ZhTTS) return;
+    const r = ZhTTS.resolvePreferred();
+    ZhTTS.speak(text, { voice: r.voice || undefined, rate: 0.9 });   // 挑不到語音也照唸（交給系統）
+  }
+  function speak(text) {
+    if (!S.set.speak || TEST === 'end' || !text) return;
+    stopVoice();
+    const k = voiceKey(text);
+    if (VOICE && VOICE.has(k)) {
+      const a = new Audio(T.base + 'voice/' + k + '.mp3'); curAudio = a;
+      let failed = false;
+      const fail = () => { if (failed || curAudio !== a) return; failed = true; curAudio = null; liveSpeak(text); };
+      a.onerror = fail; a.play().catch(fail);
+      return;
+    }
+    liveSpeak(text);
+  }
+  async function loadVoiceIndex() {
+    try { const r = await fetch(T.base + 'voice/index.json', { cache: 'no-cache' }); if (r.ok) VOICE = new Set(await r.json()); } catch (e) { /* file:// 或沒有預錄：全用即時語音 */ }
+  }
+  // 固定句子（給錄音腳本用）：每題兩種選項順序、答對／答錯回饋、機會卡、任務
+  const promptText = (q, a, b) => q.say + '。' + a.label + '，還是，' + b.label + '？';
+  const VERDICT = { good: '👍 這是比較省電的選擇！', bad: '這個比較耗電，下次試試另一個。' };
+  const feedbackText = (q, better) => (better ? VERDICT.good : VERDICT.bad).replace('👍 ', '') + (q.feedback || '');
+  const chanceText = (c) => { const R = T.resource, save = c.effect === 'save'; return c.say + (save ? R.verbDown : R.verbUp) + fmtUnits(unitsOf(kwhOf(c.use))) + (R.unitName || ''); };
+  window.__voiceLines = () => {
+    const out = [];
+    for (const q of Object.values(T.questions)) {
+      const [a, b] = q.options;
+      out.push(promptText(q, a, b), promptText(q, b, a), feedbackText(q, true), feedbackText(q, false));
+    }
+    T.chance.forEach((c) => out.push(chanceText(c)));
+    T.board.filter((x) => x.task).forEach((x) => out.push(x.task));
+    return [...new Set(out)].map((text) => ({ key: voiceKey(text), text }));
+  };
 
   // ---------- 畫面切換 ----------
   function show(id) { ['setup', 'game', 'result'].forEach((x) => { $('#' + x).hidden = x !== id; }); window.scrollTo(0, 0); }
@@ -139,7 +176,7 @@
         <p class="tierhelp">A：自己選，選完說理由。B：先看提示再選。C：先看兩邊各${esc(T.resource.verbUp)}幾${esc(T.resource.unit)}${esc(T.resource.unitName || '')}再選。名字只留在這台電腦，不會上傳。</p>
       </div>
       <div class="panel"><h2>遊戲長度</h2>${seg('dice', [[3, '短（骰 1–3，約 10 分鐘）'], [2, '中（骰 1–2）'], [1, '完整（每一格都停）']], S.set.diceMax)}</div>
-      <div class="panel"><h2>朗讀題目</h2>${seg('speak', [[1, '開'], [0, '關']], S.set.speak ? 1 : 0)}</div>
+      <div class="panel"><h2>朗讀題目</h2>${seg('speak', [[1, '開'], [0, '關']], S.set.speak ? 1 : 0)}${voicePickerHTML()}</div>
       <div class="startrow"><button class="btn" id="startbtn">開始遊戲</button></div>`;
   }
   function setCount(n) {
@@ -160,6 +197,26 @@
     }
     if (b.dataset.av != null) { const p = S.players[+b.dataset.av]; p.avatar = (p.avatar + 1) % T.idCard.avatars.length; renderSetup(); return; }
     if (b.id === 'startbtn') startGame();
+    if (b.id === 'voicetry') { const v = pickedVoice(); stopVoice(); if (window.ZhTTS) ZhTTS.speak('你好，我是減碳偵探的朗讀聲音。', { voice: v || undefined, rate: 0.9 }); }
+  }
+  // 語音選單：只影響即時語音；有預錄的句子仍播預錄（每台聽起來一樣）
+  function voicePickerHTML() {
+    if (!window.ZhTTS) return '';
+    const vs = ZhTTS.list(), r = ZhTTS.resolvePreferred(), cur = r.voice ? ZhTTS.describe(r.voice).key : '';
+    const opt = vs.map((v) => { const d = ZhTTS.describe(v); return `<option value="${esc(d.key)}"${d.key === cur ? ' selected' : ''}>${esc(d.engineLabel)}｜${esc(d.label)}（${esc(v.lang)}）</option>`; }).join('');
+    const note = r.status === 'missing' ? '<p class="tierhelp">這個瀏覽器沒有你之前選的語音，已改回自動挑選，請重新指定。</p>'
+      : r.status === 'downgraded' ? '<p class="tierhelp">這個瀏覽器沒有你之前選的那一版，改用同名的另一版，音質會不一樣。</p>' : '';
+    return `<div class="voicepick"><label for="voicesel">即時語音</label><select id="voicesel"><option value="">自動（挑這台最好的中文語音）</option>${opt}</select>
+      <button type="button" class="btn ghost" id="voicetry">試聽</button></div>${note}
+      <p class="tierhelp">題目、回饋、機會卡有預錄的高品質語音，會優先播放；玩家名字、結果這些會變的句子用上面選的即時語音。☁️ 雲端語音（Edge）音質最好。</p>`;
+  }
+  function pickedVoice() {
+    const sel = $('#voicesel'); if (!sel || !sel.value || !window.ZhTTS) return ZhTTS && (ZhTTS.resolvePreferred().voice || null);
+    return ZhTTS.list().find((v) => ZhTTS.describe(v).key === sel.value) || null;
+  }
+  function onSetupChange(e) {
+    if (e.target.id !== 'voicesel' || !window.ZhTTS) return;
+    const v = pickedVoice(); ZhTTS.setPreferred(e.target.value ? v : null);
   }
   function onSetupInput(e) { const i = e.target.dataset.name; if (i != null) S.players[+i].name = e.target.value.trim() || '偵探 ' + (+i + 1); }
 
@@ -257,13 +314,13 @@
     sfx.card();
     openModal(`<div class="who">${esc(p.name)} 的題目</div><h2>${esc(q.say)}</h2><div class="en">${esc(q.en || '')}</div>${hint}
       <div class="opts">${opts.map((o, i) => optHTML(o, p.tier === 'C', '', '', true, i)).join('')}</div>`);
-    speak(q.say + '。' + opts[0].label + '，還是，' + opts[1].label + '？');
+    speak(promptText(q, opts[0], opts[1]));
     $('#card').onclick = (e) => {
       const b = e.target.closest('[data-pick]'); if (!b) return;
       const pick = opts[+b.dataset.pick], better = pick.kwh === min;
       spend(pick.b); p.choices.push({ q: qid, better, tag: pick.tag });
       better ? sfx.good() : sfx.bad();
-      const verdict = better ? '👍 這是比較省電的選擇！' : '這個比較耗電，下次試試另一個。';
+      const verdict = better ? VERDICT.good : VERDICT.bad;
       openModal(`<div class="who">${esc(p.name)} 的題目</div><h2>${esc(q.say)}</h2>
         <div class="opts">${opts.map((o) => optHTML(o, true, (o === pick ? 'picked ' : '') + (o.kwh === min ? 'best' : ''), o === pick ? '你選的' : (o.kwh === min ? '比較省' : ''), false)).join('')}</div>
         <div class="verdict ${better ? 'good' : 'bad'}">${verdict}</div>
@@ -271,7 +328,7 @@
         ${p.tier === 'A' ? '<p class="ask">說說看：為什麼這個比較省電？</p>' : ''}
         ${q.source ? `<p class="src">資料：${esc(q.source)}</p>` : ''}
         <div class="actions"><button class="btn" id="okbtn">好，繼續</button></div>`);
-      speak(verdict.replace('👍 ', '') + (q.feedback || ''));
+      speak(feedbackText(q, better));
       $('#card').onclick = (ev) => { if (ev.target.closest('#okbtn')) { $('#card').onclick = null; done(); } };
     };
   }
@@ -285,7 +342,7 @@
       <div class="en">${fmtSub(kwh)}</div>
       ${c.source ? `<p class="src">資料：${esc(c.source)}</p>` : ''}
       <div class="actions"><button class="btn" id="okbtn">好，繼續</button></div>`);
-    speak(c.say + (save ? R.verbDown : R.verbUp) + fmtUnits(b) + (R.unitName || ''));
+    speak(chanceText(c));
     $('#card').onclick = (e) => { if (e.target.closest('#okbtn')) { $('#card').onclick = null; nextTurn(); } };
   }
   function showAction(sq) {
@@ -406,15 +463,19 @@
     document.title = T.name;
     $('#setup').addEventListener('click', onSetupClick);
     $('#setup').addEventListener('input', onSetupInput);
+    $('#setup').addEventListener('change', onSetupChange);
     $('#result').addEventListener('click', onResultClick);
     $('#result').addEventListener('input', onResultInput);
     $('#game').addEventListener('click', (e) => {
       const b = e.target.closest('button'); if (!b) return;
       if (b.id === 'dicebtn') roll();
-      else if (b.id === 'speakbtn') { S.set.speak = !S.set.speak; if (!S.set.speak && window.speechSynthesis) speechSynthesis.cancel(); renderHUD(); }
+      else if (b.id === 'speakbtn') { S.set.speak = !S.set.speak; if (!S.set.speak) stopVoice(); renderHUD(); }
       else if (b.id === 'quitbtn') { renderSetup(); show('setup'); }
     });
+    await loadVoiceIndex();
     renderSetup();
+    if (window.ZhTTS) ZhTTS.ready().then(() => { if (!$('#setup').hidden) renderSetup(); });
+    document.body.addEventListener('pointerdown', () => window.ZhTTS && ZhTTS.unlock(), { once: true });
     if (TEST) startGame();
   }
   if (TEST) window.addEventListener('error', (e) => { document.body.insertAdjacentHTML('afterbegin', '<pre id="testerr">' + esc(e.message + ' @' + e.lineno) + '</pre>'); });

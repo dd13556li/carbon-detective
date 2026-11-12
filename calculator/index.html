@@ -136,6 +136,7 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
     <p class="note">物品重量：水 1 公升約 1 公斤；機車以三陽迪爵 125（2026 年式碟煞）整備重量 102 公斤為例（三陽官網規格表）。碳雲是把看不見的二氧化碳畫出來，真正的二氧化碳是看不見的氣體。</p>
   </details>
 </div>
+<script src="../engine/tts-zh.js"></script>
 <script src="../themes/save-power/icons.js"></script>
 <script src="../themes/save-power/theme.js"></script>
 
@@ -227,12 +228,11 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
   function appSpeech(){const {kwh,kg}=appCalc(); return `${apps[app.i].nm}，${app.w}瓦，一天用${app.h}小時，一個月大約用${fmt(kwh,0)}度電，排放${fmt(kg,1)}公斤的二氧化碳，是${clouds(kg)}朵碳雲，${objText(kg)}那麼重。`;}
 
   // speech
+  // 朗讀：和遊戲共用 ../engine/tts-zh.js，語音偏好也共用（遊戲設定頁選的語音，這裡一樣用）
   function say(t){
-    try{ if(!('speechSynthesis' in window)) return; speechSynthesis.cancel();
-      const u=new SpeechSynthesisUtterance(t); u.lang='zh-TW'; u.rate=.85;
-      const v=speechSynthesis.getVoices().find(v=>/zh[-_]TW/i.test(v.lang)); if(v) u.voice=v;
-      speechSynthesis.speak(u);}catch(e){}
+    try{ if(!window.ZhTTS) return; const r=ZhTTS.resolvePreferred(); ZhTTS.speak(t,{voice:r.voice||undefined, rate:.85}); }catch(e){}
   }
+  if(window.ZhTTS){ ZhTTS.ready(); document.body.addEventListener('pointerdown',()=>ZhTTS.unlock(),{once:true}); }
   $('speakBill').onclick=()=>say(billSpeech());
   $('speakApp').onclick=()=>say(appSpeech());
 

@@ -158,3 +158,6 @@ button.opt:hover { border-color: var(--blue); }
   .id { display: contents; animation: none; }
   .face { position: relative; inset: auto; width: 86mm; height: 68mm; transform: none !important; backface-visibility: visible; font-size: 9.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+.voicepick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.voicepick select { font: inherit; font-size: 16px; padding: 6px 8px; max-width: 100%; flex: 1 1 260px; border-radius: 10px; border: 2px solid #c9d6e3; }
