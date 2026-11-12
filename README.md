@@ -16,6 +16,9 @@ themes/list.js        主題清單
 themes/save-power/    節電主題：theme.js（內容）＋ icons.js（自繪圖示）＋ images/（題目卡寫實照片）
 tools/check_theme.mjs 主題檢查程式
 calculator/           第一節用的電費單碳排計算器（獨立單頁，與遊戲引擎無關）
+hunt/                 第一節用的「電費單尋寶」練習：在帳單上點出度數、金額、計費期間、電力排碳量（A／B／C 三層）
+                      帳單圖與寶藏位置 bills/、bills.js 由 淨零教案競賽/make_bills.py 產生，不要手改
+engine/sfx.js         合成音效，棋盤遊戲與尋寶遊戲共用
 ```
 
 ## 改題目或數字
