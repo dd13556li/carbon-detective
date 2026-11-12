@@ -10,7 +10,7 @@
   const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   let T, C; // 主題、換算常數
-  const S = { players: [], turn: 0, pos: 0, amt: 0, deck: [], ring: [], set: { diceMax: 3, speak: true } };
+  const S = { players: [], turn: 0, pos: 0, amt: 0, deck: [], ring: [], set: { diceMax: 3, speak: true, sfx: true } };
 
   // ---------- 換算 ----------
   function kwhOf(use) {
@@ -78,35 +78,57 @@
   const skyStyle = () => `--sky:${Math.round(Math.min(1, S.amt / (T.resource.max || 10)) * 100)}%`;
 
   // ---------- 聲音與朗讀 ----------
-  let actx;
-  function tone(freqs, dur = 0.12, type = 'sine') {
-    try {
-      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-      freqs.forEach((f, i) => {
-        const o = actx.createOscillator(), g = actx.createGain();
-        o.type = type; o.frequency.value = f;
-        const t0 = actx.currentTime + i * dur;
-        g.gain.setValueAtTime(0.18, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
-        o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + dur);
-      });
-    } catch (e) { /* 沒有聲音也能玩 */ }
+  // 音效：全部由 Web Audio 即時合成（沒有音檔）。音量偏小、不做刺耳或像處罰的聲音（有些學生對聲音敏感）。
+  let actx, sfxUntil = 0;
+  const VOL = 0.13;
+  function ac() { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); return actx; } catch (e) { return null; } }
+  function note(f, t, dur, { type = 'sine', vol = 1, to = 0 } = {}) {
+    const c = ac(); if (!c) return;
+    const o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + t;
+    o.type = type; o.frequency.setValueAtTime(f, t0);
+    if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(VOL * vol, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(c.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+  }
+  function noise(t, dur, { freq = 2000, q = 1, vol = 1, to = 0 } = {}) {
+    const c = ac(); if (!c) return;
+    const n = Math.max(1, Math.floor(c.sampleRate * dur)), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), t0 = c.currentTime + t;
+    src.buffer = buf; f.type = 'bandpass'; f.Q.value = q; f.frequency.setValueAtTime(freq, t0);
+    if (to) f.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+    g.gain.value = VOL * vol; src.connect(f).connect(g).connect(c.destination); src.start(t0);
+  }
+  function play(fn, dur) {
+    if (!S.set.sfx) return;
+    try { fn(); } catch (e) { /* 沒有聲音也能玩 */ }
+    sfxUntil = Math.max(sfxUntil, performance.now() + dur * 1000);   // 朗讀等音效結束才開始
   }
   const sfx = {
-    tick: () => tone([520], 0.06, 'square'),
-    good: () => tone([523, 659, 784], 0.12),
-    bad: () => tone([330, 247], 0.18, 'triangle'),
-    card: () => tone([440, 660], 0.1),
-    fanfare: () => tone([523, 659, 784, 1047, 784, 1047], 0.14)
+    rattle: () => play(() => { noise(0, 0.05, { freq: 2600, q: 4, vol: 0.9 }); }, 0.05),                         // 骰子滾動：喀
+    land: () => play(() => { note(180, 0, 0.12, { vol: 1.4 }); noise(0, 0.04, { freq: 1200, vol: 0.6 }); }, 0.12), // 骰子停下：咚
+    step: () => play(() => { note(620, 0, 0.07, { to: 900 }); }, 0.07),                                          // 走一格：啵
+    flip: () => play(() => { noise(0, 0.16, { freq: 900, to: 3800, q: 0.8, vol: 0.8 }); }, 0.16),                // 翻卡：唰
+    good: () => play(() => { note(1046, 0, 0.18, { type: 'triangle' }); note(1568, 0.08, 0.22, { type: 'triangle', vol: 0.7 }); }, 0.3), // 叮
+    rise: () => play(() => { note(330, 0, 0.45, { to: 740, vol: 0.8 }); noise(0, 0.4, { freq: 500, to: 1600, q: 0.7, vol: 0.35 }); }, 0.45), // 碳雲飄上：咻～
+    block: () => play(() => { note(1175, 0, 0.16, { type: 'triangle' }); note(780, 0.1, 0.35, { to: 330, vol: 0.7 }); }, 0.45),            // 擋下：叮＋往下收
+    click: () => play(() => { noise(0, 0.025, { freq: 3500, q: 2, vol: 1.2 }); note(1318, 0.12, 0.12, { type: 'triangle', vol: 0.6 }); note(1760, 0.22, 0.2, { type: 'triangle', vol: 0.6 }); }, 0.42), // 關開關：喀＋好
+    stamp: () => play(() => { note(110, 0, 0.18, { vol: 1.6 }); noise(0, 0.06, { freq: 700, vol: 0.8 }); }, 0.18),  // 蓋章：碰
+    fanfare: () => play(() => { [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => note(f, i * 0.13, 0.22, { type: 'triangle' })); }, 1.1),
+    gentle: () => play(() => { note(523, 0, 0.3, { vol: 0.7 }); note(440, 0.22, 0.3, { vol: 0.6 }); note(523, 0.44, 0.4, { vol: 0.6 }); }, 0.85) // 再試一次（溫和，不像處罰）
   };
+
   // 朗讀：預錄語音（themes/<主題>/voice/，檔名＝句子內容的雜湊）優先，沒有才用瀏覽器即時語音。
   // 句子只在這支程式產生一次；tools/gen_voice.py 透過 window.__voiceLines() 拿同一批句子去錄，不另寫一份。
-  let VOICE = null, curAudio = null;
+  let VOICE = null, curAudio = null, speakSeq = 0;
   function voiceKey(text) {                     // FNV-1a 32 位元，16 進位 8 碼
     let h = 0x811c9dc5;
     for (const ch of String(text)) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
     return h.toString(16).padStart(8, '0');
   }
   function stopVoice() {
+    speakSeq++;
     if (curAudio) { try { curAudio.pause(); } catch (e) {} curAudio = null; }
     if (window.ZhTTS) ZhTTS.cancel();
   }
@@ -118,6 +140,12 @@
   function speak(text) {
     if (!S.set.speak || TEST === 'end' || !text) return;
     stopVoice();
+    const wait = sfxUntil - performance.now();
+    const my = speakSeq;
+    if (wait > 20) { setTimeout(() => { if (my === speakSeq) speakNow(text); }, wait); return; }
+    speakNow(text);
+  }
+  function speakNow(text) {
     const k = voiceKey(text);
     if (VOICE && VOICE.has(k)) {
       const a = new Audio(T.base + 'voice/' + k + '.mp3'); curAudio = a;
@@ -177,6 +205,7 @@
       </div>
       <div class="panel"><h2>遊戲長度</h2>${seg('dice', [[3, '短（骰 1–3，約 10 分鐘）'], [2, '中（骰 1–2）'], [1, '完整（每一格都停）']], S.set.diceMax)}</div>
       <div class="panel"><h2>朗讀題目</h2>${seg('speak', [[1, '開'], [0, '關']], S.set.speak ? 1 : 0)}${voicePickerHTML()}</div>
+      <div class="panel"><h2>音效</h2>${seg('sfx', [[1, '開'], [0, '關']], S.set.sfx ? 1 : 0)}<p class="tierhelp">音效都很小聲，朗讀時會等音效結束再開始。對聲音敏感的學生可以關掉。</p></div>
       <div class="startrow"><button class="btn" id="startbtn">開始遊戲</button></div>`;
   }
   function setCount(n) {
@@ -192,6 +221,7 @@
       if (k === 'count') setCount(+v);
       else if (k === 'dice') S.set.diceMax = +v;
       else if (k === 'speak') S.set.speak = v === '1';
+      else if (k === 'sfx') { S.set.sfx = v === '1'; if (S.set.sfx) sfx.good(); }
       else if (k.startsWith('tier')) S.players[+k.slice(4)].tier = v;
       renderSetup(); return;
     }
@@ -246,7 +276,7 @@
       <div class="goal">一天結束時，不超過 ${R.goal.keepAtMost} ${R.unit}就過關</div>
       <div id="turn"><span class="av">${icon(T.idCard.avatars[p.avatar])}</span><span>輪到 ${esc(p.name)}</span><span class="tier">${p.tier} 層</span></div>
       <button class="btn" id="dicebtn" ${rolling ? 'disabled' : ''}><span id="die">?</span><span>擲骰子</span></button>
-      <div class="hudtools"><button id="speakbtn">朗讀：${S.set.speak ? '開' : '關'}</button><button id="quitbtn">回設定</button></div>`;
+      <div class="hudtools"><button id="speakbtn">朗讀：${S.set.speak ? '開' : '關'}</button><button id="sfxbtn">音效：${S.set.sfx ? '開' : '關'}</button><button id="quitbtn">回設定</button></div>`;
     document.querySelectorAll('.sq').forEach((x) => x.classList.remove('here'));
     const here = $('#sq' + S.pos); here.classList.add('here');
     const old = $('#token'); if (old) old.remove();
@@ -272,13 +302,13 @@
     const n = 1 + Math.floor(Math.random() * S.set.diceMax), die = $('#die');
     if (S.set.diceMax > 1) {
       die.classList.add('rolling');
-      for (let i = 0; i < 6; i++) { die.textContent = 1 + Math.floor(Math.random() * S.set.diceMax); sfx.tick(); await wait(90); }
+      for (let i = 0; i < 6; i++) { die.textContent = 1 + Math.floor(Math.random() * S.set.diceMax); sfx.rattle(); await wait(90); }
       die.classList.remove('rolling');
     }
-    die.textContent = n; await wait(350);
+    die.textContent = n; sfx.land(); await wait(350);
     for (let i = 0; i < n; i++) {
       S.pos = (S.pos + 1) % S.ring.length;
-      renderHUD(true); $('#die').textContent = n; sfx.tick(); await wait(380);
+      renderHUD(true); $('#die').textContent = n; sfx.step(); await wait(380);
       if (S.pos === 0) break; // 回到起點＝一天結束
     }
     resolve();
@@ -311,7 +341,7 @@
     const opts = shuffle(q.options.map((o) => { const kwh = kwhOf(o.use); return { ...o, kwh, b: unitsOf(kwh) }; }));
     const min = Math.min(...opts.map((o) => o.kwh));
     const hint = p.tier === 'B' ? `<div class="hint">💡 ${esc((q.hint && q.hint.B) || '想一想：哪一個用的電比較少？')}</div>` : '';
-    sfx.card();
+    sfx.flip();
     openModal(`<div class="who">${esc(p.name)} 的題目</div><h2>${esc(q.say)}</h2><div class="en">${esc(q.en || '')}</div>${hint}
       <div class="opts">${opts.map((o, i) => optHTML(o, p.tier === 'C', '', '', true, i)).join('')}</div>`);
     speak(promptText(q, opts[0], opts[1]));
@@ -319,7 +349,7 @@
       const b = e.target.closest('[data-pick]'); if (!b) return;
       const pick = opts[+b.dataset.pick], better = pick.kwh === min;
       spend(pick.b); p.choices.push({ q: qid, better, tag: pick.tag });
-      better ? sfx.good() : sfx.bad();
+      better ? sfx.good() : sfx.rise();
       const verdict = better ? VERDICT.good : VERDICT.bad;
       openModal(`<div class="who">${esc(p.name)} 的題目</div><h2>${esc(q.say)}</h2>
         <div class="opts">${opts.map((o) => optHTML(o, true, (o === pick ? 'picked ' : '') + (o.kwh === min ? 'best' : ''), o === pick ? '你選的' : (o.kwh === min ? '比較省' : ''), false)).join('')}</div>
@@ -336,7 +366,7 @@
     if (!S.deck.length) S.deck = shuffle(T.chance.slice());
     const c = S.deck.pop(), kwh = kwhOf(c.use), b = unitsOf(kwh), save = c.effect === 'save', R = T.resource;
     save ? gain(b) : spend(b);
-    save ? sfx.good() : sfx.bad();
+    save ? sfx.block() : sfx.rise();
     openModal(`<div class="who">機會卡</div><div class="bigpic">${photo(c.icon)}</div><h2>${esc(c.say)}</h2>
       <div class="delta ${save ? 'save' : 'cost'}"><span>${save ? R.verbDown : R.verbUp}</span>${costRow(b, save ? 'blocked' : '')}<span>${fmtUnits(b)}${esc(R.unitName || '')}</span></div>
       <div class="en">${fmtSub(kwh)}</div>
@@ -347,13 +377,13 @@
   }
   function showAction(sq) {
     const p = cur(), b = unitsOf(kwhOf(sq.use)), R = T.resource;
-    sfx.card();
+    sfx.flip();
     openModal(`<div class="who">${esc(p.name)} 的任務</div><div class="bigpic">${icon(sq.icon)}</div><h2>${esc(sq.task)}</h2><div class="en">${esc(sq.en || '')}</div>
       <div class="delta save"><span>做到了可以${R.verbDown}</span>${costRow(b, 'blocked')}<span>${fmtUnits(b)}${esc(R.unitName || '')}</span></div>
       <div class="actions"><button class="btn" id="didbtn">做到了！</button><button class="btn ghost" id="skipbtn">這次先跳過</button></div>`);
     speak(sq.task);
     $('#card').onclick = (e) => {
-      if (e.target.closest('#didbtn')) { gain(b); p.patrol = true; sfx.good(); $('#card').onclick = null; nextTurn(); }
+      if (e.target.closest('#didbtn')) { gain(b); p.patrol = true; sfx.click(); $('#card').onclick = null; nextTurn(); }
       else if (e.target.closest('#skipbtn')) { $('#card').onclick = null; nextTurn(); }
     };
   }
@@ -428,13 +458,13 @@
       <div class="actions"><button class="btn" id="printbtn">列印身分證</button><button class="btn ghost" id="againbtn">再玩一次</button><button class="btn ghost" id="backbtn">回設定</button></div>
       <p class="src">${esc(C.wattsNote || '')}</p>`;
     show('result');
-    pass ? sfx.fanfare() : sfx.card();
+    pass ? sfx.fanfare() : sfx.gentle();
     speak((pass ? (R.passText || '過關了！') : (R.failText || '一天結束了，再挑戰一次吧')).replace('🎉 ', '') + '。碳約' + fmtKg(kg) + '公斤，' + compareText(kg) + '。');
   }
   function onResultClick(e) {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.flip != null) { const c = $('#id' + b.dataset.flip); c.classList.toggle('flip'); b.textContent = c.classList.contains('flip') ? '翻回正面' : '翻到背面'; }
-    else if (b.dataset.stamp) { const [i, id] = b.dataset.stamp.split(':'); const p = S.players[+i]; p.stamps[id] = !p.stamps[id]; b.classList.toggle('on', p.stamps[id]); if (p.stamps[id]) sfx.good(); }
+    else if (b.dataset.stamp) { const [i, id] = b.dataset.stamp.split(':'); const p = S.players[+i]; p.stamps[id] = !p.stamps[id]; b.classList.toggle('on', p.stamps[id]); if (p.stamps[id]) sfx.stamp(); }
     else if (b.id === 'printbtn') window.print();
     else if (b.id === 'againbtn') startGame();
     else if (b.id === 'backbtn') { renderSetup(); show('setup'); }
@@ -470,6 +500,7 @@
       const b = e.target.closest('button'); if (!b) return;
       if (b.id === 'dicebtn') roll();
       else if (b.id === 'speakbtn') { S.set.speak = !S.set.speak; if (!S.set.speak) stopVoice(); renderHUD(); }
+      else if (b.id === 'sfxbtn') { S.set.sfx = !S.set.sfx; renderHUD(); }
       else if (b.id === 'quitbtn') { renderSetup(); show('setup'); }
     });
     await loadVoiceIndex();
