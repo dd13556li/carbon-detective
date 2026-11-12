@@ -36,7 +36,7 @@
   </div>
 
   <section id="setup" class="panel">
-    <p>卡片上是<b>示例瓦數</b>（常見機種的概略值），家裡的家電以標示為準。和紙本家電瓦數卡（教案附錄六）、碳排計算器的家電模式同一份數字。</p>
+    <p>卡片上是<b>示例瓦數</b>（常見機種的概略值），家裡的家電以標示為準。和紙本家電瓦數卡（教案附錄六）、用電碳排計算器的家電模式同一份數字。</p>
     <h2>朗讀與音效</h2>
     <div id="opts"></div>
     <button class="go" id="start">開始，第 1 位上台 ▶</button>
@@ -138,7 +138,7 @@
     $('mon').addEventListener('click', () => {
       $('monbox').innerHTML = `<h2 style="margin-top:14px">一個月大約用幾度（瓦數 × 每天幾小時 × 30 天 ÷ 1000）</h2>
         ${bars(byMonth, month, (a) => `${+month(a).toFixed(1)} 度`)}
-        <p class="note">每天使用時數：${byMonth.map((a) => `${a.name} ${a.hours} 小時`).join('、')}。可用碳排計算器的「家電模式」驗證。</p>
+        <p class="note">每天使用時數：${byMonth.map((a) => `${a.name} ${a.hours} 小時`).join('、')}。可用「用電碳排計算器」的「家電模式」驗證。</p>
         ${jump ? `<p class="aha">💡 ${jump.name}的瓦數不大，可是一天開 ${jump.hours} 小時，一個月反而用得比較多！</p>` : ''}`;
       speak(jump ? `看一個月用多少度。${jump.name}的瓦數不大，可是一天開${jump.hours}小時，一個月反而用得比較多。` : `看一個月用多少度，最多的是${byMonth[0].name}。`);
     });

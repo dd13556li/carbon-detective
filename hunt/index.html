@@ -339,7 +339,7 @@ a{color:var(--accent)}
     $('done').innerHTML = `<div class="score">🎉 找到 ${tot} 個寶藏！</div>
       <p class="sub">${tier().name}・${['獨立', '提示', '協助'].map((h) => [h, S.log.filter((x) => x.how === h).length]).filter(([, c]) => c).map(([h, c]) => `${h === '獨立' ? '自己找到' : h === '提示' ? '看提示找到' : '在協助下找到'} ${c} 個`).join('、')}</p>${rows}
       <div class="row"><button class="go" id="replay">再玩一次</button><button class="go alt" id="back">換等級</button></div>
-      <p class="note">教師紀錄：依協助程度（獨立／提示／協助）記入紀錄表。下一步：用 <a href="../calculator/index.html">碳排計算器</a> 把度數換成碳排。</p>`;
+      <p class="note">教師紀錄：依協助程度（獨立／提示／協助）記入紀錄表。下一步：用 <a href="../calculator/index.html">用電碳排計算器</a> 把度數換成碳排。</p>`;
     show('done');
     speak(`太棒了！你找到了${tot}個寶藏。`);
     $('replay').addEventListener('click', startSolo);

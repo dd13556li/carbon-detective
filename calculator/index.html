@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>電費單碳排計算器</title>
+<title>用電碳排計算器</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
 <style>
@@ -117,8 +117,8 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
 </aside>
 <div class="wrap">
   <header>
-    <h1>電費單碳排計算器</h1>
-    <p class="en">Electricity Bill → CO2 Calculator</p>
+    <h1>用電碳排計算器</h1>
+    <p class="en">Electricity → CO2 Calculator</p>
     <p class="sub">用了幾度電，就排了多少二氧化碳？輸入電費單上的度數看看。</p>
   </header>
 
@@ -298,7 +298,7 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
     const hd=t=>`<div class="sh-hd"><h1>${t}</h1><div class="who">抽到的同學：＿＿＿＿＿＿</div></div>`;
     $('printArea').innerHTML=list.map(b=>`<section class="sheet">${hd(`隨機電費單 第 ${b.key} 張`)}
       <div class="bill-fit" data-i="${b.key}"></div>
-      <p>找到度數：<span class="blank"></span> 度　→ 用「碳排計算器」算：<span class="blank"></span> 公斤</p></section>`).join('')+
+      <p>找到度數：<span class="blank"></span> 度　→ 用「用電碳排計算器」算：<span class="blank"></span> 公斤</p></section>`).join('')+
       `<section class="sheet">${hd('隨機電費單 教師答案')}<table><thead><tr><th>第幾張</th><th>度數</th><th>碳排（度數×${CDBill.COEF}）</th><th>約幾朵碳雲</th><th>${'計費期間'}</th></tr></thead>
       <tbody>${list.map(b=>{const kg=b.kwh*CDBill.COEF; return `<tr><td>${b.key}</td><td>${b.kwh} 度</td><td>${fmt(kg,1)} 公斤</td><td>${clouds(kg)} 朵</td><td>${b.period}${b.summer?'（夏月）':''}</td></tr>`;}).join('')}</tbody></table>
       <p class="foot">每次列印都重新隨機產生，答案只對這一批。電費單上的電力排碳量四捨五入到整數公斤。</p></section>`;
