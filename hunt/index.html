@@ -83,7 +83,10 @@ a{color:var(--accent)}
 .log th{color:var(--muted)}
 .top{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
 .home{font-size:16px;font-weight:700;color:var(--accent);text-decoration:none;border:2px solid var(--line);border-radius:12px;padding:6px 12px;background:var(--paper)}
+.printbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.printbar button{padding:10px 16px;border-radius:12px;border:2px solid var(--line);background:var(--paper);font-weight:700}
 </style>
+<link rel="stylesheet" href="../engine/print.css">
 </head>
 <body>
 <main class="wrap">
@@ -101,7 +104,10 @@ a{color:var(--accent)}
     <h2>朗讀與音效</h2>
     <div class="seg" id="opts"></div>
     <button class="go" id="start">開始尋寶 Start</button>
-    <p class="note">輪流上台：每位上台前老師按 A／B／C 選等級，每人找一張帳單（三張輪流），畫面只顯示「第幾位」，不輸入名字。</p>
+    <p class="note">輪流上台：每位上台前老師按 A／B／C 選等級，每人隨機抽一張帳單（不與上一位重複，要找的項目順序也每次打亂），畫面只顯示「第幾位」，不輸入名字。</p>
+    <h2>🖨️ 列印紙本練習單</h2>
+    <div class="printbar" id="printbar"><button data-print="A">A 練習單</button><button data-print="B">B 練習單</button><button data-print="C">C 練習單</button><button data-print="key">教師答案</button></div>
+    <p class="note">每個等級印 3 頁（三張範例帳單各一頁，A4 直式），題目同遊戲；教師答案 1 頁。課後或回家再練習一次。</p>
     <p class="note">三張帳單都是教學範例（已去除個資），和教案附錄十四同一批。學生的作答只留在這個分頁，不會上傳。</p>
   </section>
 
@@ -119,6 +125,7 @@ a{color:var(--accent)}
 
   <section id="done" class="panel" hidden></section>
 </main>
+<div id="printArea"></div>
 
 <script src="../engine/tts-zh.js"></script>
 <script src="../engine/sfx.js"></script>
@@ -188,6 +195,33 @@ a{color:var(--accent)}
     if (S.rot && turns) { Act.S.speak = S.speak; $('setup').hidden = true; turns.next(); return; }
     startSolo();
   });
+  // ---- 列印練習單：用遊戲同一份帳單圖與題目（T），一張帳單一頁 ----
+  const PRINTQ = {
+    A: (b) => [1, 2, 3, 4].map((n) => `<li><span class="n" style="background:${T[n].c}">${n}</span>${T[n].zh}：${n === 3 ? '<span class="blank"></span> 至 <span class="blank"></span>' : `<span class="blank"></span> ${{ 1: '度', 2: '元', 4: '公斤' }[n]}`}</li>`),
+    B: (b) => [1, 2].map((n) => `<li><span class="n" style="background:${T[n].c}">${n}</span>照${n === 1 ? '紅' : '藍'}框 ${n} 找到${T[n].zh}：<span class="blank"></span> ${n === 1 ? '度' : '元'}</li>`),
+    C: (b) => [`<li><span class="n" style="background:${T[1].c}">1</span>用筆把紅框 1 圈起來。</li>`, `<li><span class="n" style="background:${T[1].c}">1</span>度數是 <span class="blank"></span> 度</li>`],
+  };
+  const sheetHd = (title) => `<div class="sh-hd"><h1>${title}</h1><div class="who">姓名：＿＿＿＿＿＿　日期：＿＿＿＿＿</div></div>`;
+  function printSheets(which) {
+    let h;
+    if (which === 'key') {
+      h = `<section class="sheet">${sheetHd('電費單尋寶 教師答案')}
+        <table><thead><tr><th>範例帳單</th>${[1, 2, 3, 4].map((n) => `<th>${n} ${T[n].zh}</th>`).join('')}</tr></thead>
+        <tbody>${BILLS.map((b) => `<tr><td>${b.key}：${b.title}</td>${[1, 2, 3, 4].map((n) => `<td>${T[n].val(b)}</td>`).join('')}</tr>`).join('')}</tbody></table>
+        <p class="foot">A 找 1–4 四項（原版帳單）；B 找 1、2（重點標示版）；C 找 1 並圈出紅框（重點標示版）。</p></section>`;
+    } else {
+      const tr = TIERS[which];
+      h = BILLS.map((b) => `<section class="sheet">${sheetHd(`電費單尋寶 練習單・${tr.name}`)}
+        <img class="billimg" src="${b[tr.ver].img}" alt="範例帳單 ${b.key}">
+        <ol class="qs">${PRINTQ[which](b).join('')}</ol>
+        <p class="self">我是：☐ 自己找到　☐ 看提示找到　☐ 老師幫忙找到</p>
+        <p class="foot">教學範例帳單，非真實帳單。</p></section>`).join('');
+    }
+    $('printArea').innerHTML = h;
+    const imgs = [...$('printArea').querySelectorAll('img')];
+    Promise.all(imgs.map((i) => i.complete ? 0 : new Promise((r) => { i.onload = i.onerror = r; }))).then(() => window.print());
+  }
+  $('printbar').addEventListener('click', (e) => { const b = e.target.closest('button[data-print]'); if (b) printSheets(b.dataset.print); });
   $('quit').addEventListener('click', () => { try { speechSynthesis.cancel(); } catch (e) {} show('setup'); });
   function show(id) { ['setup', 'turn', 'play', 'done'].forEach((x) => { $(x).hidden = x !== id; }); window.scrollTo(0, 0); }
 

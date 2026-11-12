@@ -84,10 +84,37 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
 .objs .part{opacity:.45}
 .legend svg,.legend img{width:30px;height:30px;flex:none;object-fit:contain}
 .legend{flex-direction:column;align-items:flex-start;gap:6px}
+/* 左欄：隨機電費單（寬螢幕在左、窄螢幕在上） */
+.layout{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.layout>.wrap{max-width:none;margin:0;width:100%}
+@media (min-width:1100px){.layout{max-width:1400px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,640px);align-items:start}
+  .rand{position:sticky;top:12px}}
+.rand .go{font:inherit;font-size:22px;font-weight:900;padding:14px;border-radius:14px;border:none;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.rand .opts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.rand .opts button{font:inherit;font-size:16px;font-weight:700;padding:8px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.rand .opts button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.rand select{font:inherit;font-size:16px;padding:6px 10px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+.billbox{width:100%;overflow:hidden;border-radius:10px;border:2px solid var(--line);background:#fff}
+.billbox[data-empty]{display:none}
 </style>
+<link rel="stylesheet" href="../engine/print.css">
 </head>
 <body>
 
+<div class="layout">
+<aside class="panel rand" id="rand" aria-label="隨機電費單">
+  <div class="step"><b>🎲</b>隨機電費單<small>Random Bill</small></div>
+  <p class="note">點一下產生一張新的教學範例電費單，找到「度數」，再輸入右邊的計算器。</p>
+  <button class="go" id="newBill">🎲 隨機電費單</button>
+  <div class="opts" id="randOpts"></div>
+  <div class="billbox" id="billbox" data-empty></div>
+  <div class="opts" id="randUse" hidden><button id="useA">把度數填進第一張</button><button id="useB">填進第二張</button></div>
+  <details><summary>🖨️ 列印紙本電費單（讓學生抽）</summary>
+    <label>張數 <select id="pN"><option>4</option><option selected>6</option><option>8</option><option>10</option><option>12</option></select></label>
+    <p class="note">每張 A4 一頁、各有編號；版本與「蓋住排碳量」照上面的設定。最後附一頁教師答案（度數、碳排、碳雲）。</p>
+    <button class="go" id="printBills" style="margin-top:10px">🖨️ 列印</button>
+  </details>
+</aside>
 <div class="wrap">
   <header>
     <h1>電費單碳排計算器</h1>
@@ -137,9 +164,12 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
     <p class="note">物品重量：水 1 公升約 1 公斤；機車以三陽迪爵 125（2026 年式碟煞）整備重量 102 公斤為例（三陽官網規格表）。碳雲是把看不見的二氧化碳畫出來，真正的二氧化碳是看不見的氣體。</p>
   </details>
 </div>
+</div>
+<div id="printArea"></div>
 <script src="../engine/tts-zh.js"></script>
 <script src="../themes/save-power/icons.js"></script>
 <script src="../themes/save-power/theme.js"></script>
+<script src="../engine/bill.js"></script>
 
 <script>
 (function(){
@@ -247,6 +277,35 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
   $('tab-bill').onclick=()=>show('bill'); $('tab-app').onclick=()=>show('app');
 
   $('coef').addEventListener('input',e=>{const v=parseFloat(e.target.value); if(v>0){coef=v;renderBill();renderApp();}});
+
+  // ---- 隨機電費單（電價、金額、版面＝engine/bill.js，與尋寶的三張範例同一支） ----
+  const R={cur:null,marked:false,hide:true};
+  function drawOpts(){
+    $('randOpts').innerHTML=[['marked',false,'原版'],['marked',true,'重點標示版'],['hide',true,'蓋住排碳量'],['hide',false,'顯示排碳量']]
+      .map(([k,v,l])=>`<button data-k="${k}" data-v="${v}" aria-pressed="${R[k]===v}">${l}</button>`).join('');
+  }
+  const billOpt=()=>({marked:R.marked,hideCo2:R.hide,random:true,label:`隨機電費單${R.cur?` 第 ${R.cur.key} 張`:''}`});
+  function fit(){const box=$('billbox'), c=box.shadowRoot&&box.shadowRoot.querySelector('.cdb'); if(!c) return; const k=box.clientWidth/900;
+    c.style.transformOrigin='0 0'; c.style.transform=`scale(${k})`; box.style.height=(c.offsetHeight*k)+'px';}
+  function drawBill(){ if(!R.cur) return; CDBill.mount($('billbox'),R.cur,billOpt()); $('billbox').removeAttribute('data-empty'); $('randUse').hidden=false; fit(); }
+  $('newBill').onclick=()=>{R.cur=CDBill.random(); drawBill(); say('新的電費單來了，找找看度數是多少？');};
+  $('randOpts').addEventListener('click',e=>{const b=e.target.closest('button[data-k]'); if(!b) return; R[b.dataset.k]=b.dataset.v==='true'; drawOpts(); drawBill();});
+  ['A','B'].forEach(x=>$('use'+x).onclick=()=>{ if(!R.cur) return; bill[x]=String(R.cur.kwh); bill.touched[x]=true; $('sample'+x).hidden=true; bill.active=x; show('bill'); renderBill(); });
+  if(window.ResizeObserver) new ResizeObserver(fit).observe($('billbox')); else addEventListener('resize',fit);
+  drawOpts();
+  $('printBills').onclick=()=>{
+    const n=+$('pN').value, list=Array.from({length:n},(_,i)=>CDBill.random({n:i+1}));
+    const hd=t=>`<div class="sh-hd"><h1>${t}</h1><div class="who">抽到的同學：＿＿＿＿＿＿</div></div>`;
+    $('printArea').innerHTML=list.map(b=>`<section class="sheet">${hd(`隨機電費單 第 ${b.key} 張`)}
+      <div class="bill-fit" data-i="${b.key}"></div>
+      <p>找到度數：<span class="blank"></span> 度　→ 用「碳排計算器」算：<span class="blank"></span> 公斤</p></section>`).join('')+
+      `<section class="sheet">${hd('隨機電費單 教師答案')}<table><thead><tr><th>第幾張</th><th>度數</th><th>碳排（度數×${CDBill.COEF}）</th><th>約幾朵碳雲</th><th>${'計費期間'}</th></tr></thead>
+      <tbody>${list.map(b=>{const kg=b.kwh*CDBill.COEF; return `<tr><td>${b.key}</td><td>${b.kwh} 度</td><td>${fmt(kg,1)} 公斤</td><td>${clouds(kg)} 朵</td><td>${b.period}${b.summer?'（夏月）':''}</td></tr>`;}).join('')}</tbody></table>
+      <p class="foot">每次列印都重新隨機產生，答案只對這一批。電費單上的電力排碳量四捨五入到整數公斤。</p></section>`;
+    $('printArea').querySelectorAll('.bill-fit').forEach((el,i)=>{const c=CDBill.mount(el,list[i],{marked:R.marked,hideCo2:R.hide,random:true,label:`隨機電費單 第 ${list[i].key} 張`}); c.style.zoom=.78;});
+    window.print();
+  };
+  window.__calc={R,bill,renderBill};
 
   renderBill(); renderApp();
 })();

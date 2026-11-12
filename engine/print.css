@@ -1,0 +1,25 @@
+/* 列印練習單共用（hunt/ 尋寶練習單、calculator/ 隨機電費單）。
+   畫面上看不到 #printArea；列印時只印 #printArea，一張 .sheet 一頁 A4。 */
+#printArea{display:none}
+@page{size:A4;margin:12mm}
+@media print{
+  body{background:#fff!important;color:#000!important;padding:0!important;margin:0!important;font-size:14pt}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block!important}
+  .sheet{break-after:page;page-break-after:always;display:flex;flex-direction:column;gap:5mm;color:#000}
+  .sheet:last-child{break-after:auto;page-break-after:auto}
+  .sheet *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.sheet .sh-hd{display:flex;justify-content:space-between;align-items:flex-end;gap:6mm;border-bottom:2px solid #000;padding-bottom:2mm}
+.sheet .sh-hd h1{font-size:20pt;margin:0;font-weight:900}
+.sheet .sh-hd .who{font-size:13pt;white-space:nowrap}
+.sheet .billimg{width:100%;height:auto;display:block;border:1px solid #999}
+.sheet .bill-fit{width:186mm;overflow:hidden;border:1px solid #999}
+.sheet .qs{display:flex;flex-direction:column;gap:4mm;font-size:15pt;margin:0;padding:0;list-style:none}
+.sheet .qs li{display:flex;align-items:baseline;gap:3mm;flex-wrap:wrap}
+.sheet .qs .n{display:inline-grid;place-items:center;width:9mm;height:9mm;border-radius:50%;color:#fff;font-weight:900;flex:none}
+.sheet .blank{display:inline-block;min-width:38mm;border-bottom:1.5px solid #000;height:1.2em}
+.sheet .self{font-size:12pt;color:#333}
+.sheet table{width:100%;border-collapse:collapse;font-size:13pt}
+.sheet th,.sheet td{border:1px solid #555;padding:2mm 3mm;text-align:left}
+.sheet .foot{font-size:10pt;color:#444}

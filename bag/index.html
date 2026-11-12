@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
 <link rel="stylesheet" href="../engine/activity.css">
 <style>
-/* 第一節 發展活動三的結尾：老師吹起透明袋之後播。袋子鼓起 → 飄上天 → 變成碳雲 */
+/* 第一節 發展活動三的結尾：在家用電 → 發電廠送電 → 燒煤、燒天然氣排出二氧化碳 → 看不見、飄上天 → 畫成碳雲 */
 .fx{transform-box:fill-box;transform-origin:center bottom}
 .fxc{transform-box:fill-box;transform-origin:center}
 </style>
@@ -19,8 +19,8 @@
     <header><h1>看不見的碳雲</h1><p class="en">The Invisible Gas</p></header>
     <a class="home" href="../lesson/index.html">← 活動選單</a>
   </div>
-  <div class="scene"><svg class="stage" id="svg" viewBox="0 0 1600 900" role="img" aria-label="透明袋變成碳雲的動畫"></svg></div>
-  <div class="caption" id="cap" aria-live="polite">老師先吹起真的透明袋，再按「播放」。</div>
+  <div class="scene"><svg class="stage" id="svg" viewBox="0 0 1600 900" role="img" aria-label="用電、發電、排出二氧化碳，變成碳雲的動畫"></svg></div>
+  <div class="caption" id="cap" aria-live="polite">按「播放」，看看用電和二氧化碳有什麼關係。</div>
   <div class="row"><button class="go" id="play">▶ 播放</button></div>
   <p class="src" id="src"></p>
   <details class="panel"><summary>朗讀與音效</summary><div id="opts"></div></details>
@@ -40,47 +40,103 @@
   const el = (tag, attr, parent = svg) => { const e = document.createElementNS(NS, tag);
     for (const k in attr) String(attr[k]).startsWith('var(') ? e.style.setProperty(k, attr[k]) : e.setAttribute(k, attr[k]);
     parent.appendChild(e); return e; };
-  $('src').textContent = `1 度電排出約 ${C.kgCO2PerKwh} 公斤二氧化碳（${C.source}），差不多 1 ${BOTTLE.label}（${BOTTLE.kg} 公斤）那麼重；遊戲裡 1 朵碳雲＝${C.kgPerUnit} 公斤。真正的二氧化碳是看不見的氣體，碳雲是把它畫出來。`;
+  const txt = (x, y, s, size, parent, extra = {}) => { const t = el('text', { x, y, 'text-anchor': 'middle', 'font-size': size, 'font-weight': 900, fill: 'var(--ink)', stroke: 'var(--paper)', 'stroke-width': 8, 'paint-order': 'stroke', ...extra }, parent); t.textContent = s; return t; };
+  $('src').textContent = `1 度電排出約 ${C.kgCO2PerKwh} 公斤二氧化碳（${C.source}），差不多 1 ${BOTTLE.label}（${BOTTLE.kg} 公斤）那麼重；遊戲裡 1 朵碳雲＝${C.kgPerUnit} 公斤。台灣的電大多來自燃煤、燃氣發電（經濟部能源署能源統計）。真正的二氧化碳是看不見的氣體，碳雲是把它畫出來。`;
 
+  const WIRE = 'M1130 330 L960 300 L800 330 L640 300 L560 360';   // 發電廠 → 電線桿 → 家
   function reset() {
     svg.innerHTML = '';
     el('rect', { x: 0, y: 760, width: 1600, height: 140, fill: 'var(--ground)' });
-    // 透明袋（一開始扁扁的）
-    const g = el('g', { id: 'bag', class: 'fx' });
-    el('path', { d: 'M640 760 C560 700 560 420 640 360 C700 320 900 320 960 360 C1040 420 1040 700 960 760 Z', fill: 'rgba(255,255,255,.35)', stroke: '#7aa7c7', 'stroke-width': 8, 'stroke-dasharray': '0' }, g);
-    el('path', { d: 'M700 420 C690 500 690 600 710 680', fill: 'none', stroke: 'rgba(255,255,255,.9)', 'stroke-width': 14, 'stroke-linecap': 'round' }, g);
-    el('path', { d: 'M760 760 L840 760 L820 800 L780 800 Z', fill: '#7aa7c7' }, g);
-    const gas = el('text', { x: 800, y: 580, 'text-anchor': 'middle', 'font-size': 60, 'font-weight': 900, fill: '#7aa7c7', opacity: 0, id: 'gas' }, g);
-    gas.textContent = 'CO₂';
-    g.style.transform = 'scaleY(.12)';
-    // 秤：左邊一瓶水
+    // 家：屋子＋三個在用電的家電
+    const home = el('g', { id: 'home' });
+    el('path', { d: 'M110 430 L360 250 L610 430 Z', fill: '#c9604a' }, home);
+    el('rect', { x: 150, y: 430, width: 420, height: 330, fill: '#f6efe2', stroke: '#8a6b4a', 'stroke-width': 6 }, home);
+    const glow = el('rect', { id: 'glow', x: 165, y: 445, width: 390, height: 300, fill: '#ffe27a', opacity: 0 }, home);
+    const apps = el('g', { id: 'apps' }, home);
+    [['bulb', 175, 455], ['tv', 290, 560], ['ac', 420, 455]].forEach(([k, x, y], i) =>
+      el('image', { href: ART + TH.art[k], x, y, width: 130, height: 130, opacity: 0, class: 'fxc', id: 'app' + i }, apps));
+    txt(360, 810, '我們的家', 44, home);
+    // 電線桿與電線
+    [[960, 300], [640, 300]].forEach(([x, y]) => el('rect', { x: x - 8, y, width: 16, height: 760 - y, fill: '#7b6a58' }));
+    const wire = el('path', { id: 'wire', d: WIRE, fill: 'none', stroke: '#555', 'stroke-width': 6 });
+    // 發電廠：廠房＋兩根煙囪＋火
+    const plant = el('g', { id: 'plant', opacity: 0 });
+    el('rect', { x: 1130, y: 470, width: 360, height: 290, fill: '#9aa5ad', stroke: '#5d676e', 'stroke-width': 6 }, plant);
+    el('rect', { x: 1180, y: 250, width: 70, height: 220, fill: '#b9c1c6', stroke: '#5d676e', 'stroke-width': 6 }, plant);
+    el('rect', { x: 1350, y: 210, width: 70, height: 260, fill: '#b9c1c6', stroke: '#5d676e', 'stroke-width': 6 }, plant);
+    el('path', { d: 'M1290 620 l-30 50 l20 0 l-25 60 l60 -75 l-22 0 l25 -35 Z', fill: '#f5c400', stroke: '#8a6d00', 'stroke-width': 4 }, plant);
+    txt(1310, 810, '發電廠', 44, plant);
+    const fire = el('g', { id: 'fire', opacity: 0, class: 'fx' }, plant);
+    el('path', { d: 'M1160 760 C1150 720 1185 700 1180 660 C1205 690 1215 715 1205 760 Z', fill: '#ff7a1a' }, fire);
+    el('path', { d: 'M1410 760 C1400 725 1430 705 1428 670 C1450 700 1458 720 1450 760 Z', fill: '#ff7a1a' }, fire);
+    txt(1310, 455, '燒煤、燒天然氣', 40, fire);
+    // 電流（沿著電線跑的光點）
+    for (let i = 0; i < 4; i++) el('circle', { class: 'spark', r: 14, fill: '#f5c400', stroke: '#8a6d00', 'stroke-width': 3, opacity: 0 });
+    // 煙囪冒出的二氧化碳（半透明的氣）
+    const gas = el('g', { id: 'gas', opacity: 0 });
+    [[1215, 200], [1385, 160], [1300, 120]].forEach(([x, y], i) => {
+      const g = el('g', { class: 'puff fxc' }, gas);
+      el('circle', { cx: x, cy: y, r: 62, fill: 'rgba(160,170,180,.45)' }, g);
+      txt(x, y + 16, 'CO₂', 44, g, { fill: '#4d5a66', 'stroke-width': 6 });
+    });
+    // 秤：一瓶水 ≈ 1 度電的二氧化碳
     const w = el('g', { id: 'weigh', opacity: 0 });
-    el('image', { href: ART + TH.art.waterBottle, x: 180, y: 470, width: 220, height: 280 }, w);
-    el('text', { x: 290, y: 450, 'text-anchor': 'middle', 'font-size': 40, 'font-weight': 900, fill: 'var(--ink)' }, w).textContent = `約 ${BOTTLE.kg} 公斤`;
-    el('text', { x: 480, y: 640, 'text-anchor': 'middle', 'font-size': 110, 'font-weight': 900, fill: 'var(--ink)' }, w).textContent = '≈';
-    el('text', { x: 800, y: 300, 'text-anchor': 'middle', 'font-size': 40, 'font-weight': 900, fill: 'var(--ink)', id: 'one' }, w).textContent = '1 度電排出的二氧化碳';
+    el('rect', { x: 340, y: 60, width: 740, height: 340, rx: 30, fill: 'var(--paper)', stroke: 'var(--line)', 'stroke-width': 6 }, w);
+    el('image', { href: ART + TH.art.waterBottle, x: 390, y: 95, width: 200, height: 260 }, w);
+    txt(490, 385, `約 ${BOTTLE.kg} 公斤`, 34, w);
+    txt(670, 250, '≈', 110, w);
+    txt(895, 215, '用 1 度電', 48, w);
+    txt(895, 285, '排出的二氧化碳', 40, w);
     // 碳雲（最後才出現）
     const c = el('g', { id: 'cloud', opacity: 0, class: 'fxc' });
-    el('image', { href: ART + TH.art.cloud, x: 600, y: 60, width: 400, height: 300 }, c);
-    el('text', { x: 800, y: 420, 'text-anchor': 'middle', 'font-size': 52, 'font-weight': 900, fill: 'var(--ink)', stroke: 'var(--paper)', 'stroke-width': 8, 'paint-order': 'stroke' }, c).textContent = '碳雲 Carbon Cloud';
+    el('image', { href: ART + TH.art.cloud, x: 600, y: 20, width: 400, height: 300 }, c);
+    txt(800, 360, '碳雲 Carbon Cloud', 52, c);
   }
+  // 光點沿電線從發電廠跑到家（跑兩輪）
+  async function flow() {
+    const path = $('wire'), L = path.getTotalLength(), sp = [...svg.querySelectorAll('.spark')];
+    for (let round = 0; round < 2; round++) {
+      await Promise.all(sp.map(async (s, i) => {
+        await sleep(i * 260);
+        const frames = Array.from({ length: 11 }, (_, k) => { const p = path.getPointAtLength(L * k / 10); return { transform: `translate(${p.x}px,${p.y}px)`, opacity: k === 10 ? 0 : 1 }; });
+        await anim(s, frames, 1300, { easing: 'linear' });
+      }));
+    }
+  }
+  const pop = (id) => anim($(id), [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1.1)' }, { opacity: 1, transform: 'scale(1)' }], 500);
   const steps = [
-    { say: '老師吹起一個透明袋，袋子鼓起來了。', run: async () => { sfx.rise(); await anim($('bag'), [{ transform: 'scaleY(.12)' }, { transform: 'scaleY(1)' }], 1600, { easing: 'cubic-bezier(.3,1.4,.5,1)' }); } },
-    { say: `1度電排出的二氧化碳，差不多1${BOTTLE.label}那麼重。`, run: async () => { await anim($('weigh'), [{ opacity: 0 }, { opacity: 1 }], 700); } },
-    { say: '這麼重的東西，是看不見的氣體。', run: async () => { await anim($('gas'), [{ opacity: 0 }, { opacity: .55 }, { opacity: .15 }, { opacity: .55 }], 1600); } },
-    { say: '它全部跑到天上去了。', run: async () => {
-        anim($('weigh'), [{ opacity: 1 }, { opacity: 0 }], 500);
+    { say: '我們在家開燈、看電視、吹冷氣，都要用電。', run: async () => {
+        for (let i = 0; i < 3; i++) { sfx.good(); await pop('app' + i); }
+        await anim($('glow'), [{ opacity: 0 }, { opacity: .35 }], 600);
+      } },
+    { say: '電是從發電廠，順著電線送到家裡的。', run: async () => {
+        await anim($('plant'), [{ opacity: 0 }, { opacity: 1 }], 700);
+        await flow();
+      } },
+    { say: '很多發電廠要燒煤、燒天然氣來發電，燒的時候，會排出二氧化碳。', run: async () => {
         sfx.rise();
-        await anim($('bag'), [{ transform: 'translateY(0) scale(1)', opacity: 1 }, { transform: 'translateY(-420px) scale(.7)', opacity: .15 }], 2000);
+        await anim($('fire'), [{ opacity: 0, transform: 'scaleY(.3)' }, { opacity: 1, transform: 'scaleY(1.1)' }, { opacity: 1, transform: 'scaleY(1)' }], 700);
+        await anim($('gas'), [{ opacity: 0 }, { opacity: 1 }], 900);
+      } },
+    { say: `用1度電，大約排出${C.kgCO2PerKwh}公斤的二氧化碳，差不多1${BOTTLE.label}那麼重。`, run: async () => {
+        anim($('home'), [{ opacity: 1 }, { opacity: .3 }], 500);
+        await anim($('weigh'), [{ opacity: 0 }, { opacity: 1 }], 700);
+      } },
+    { say: '這麼重的東西，卻是看不見的氣體，全部飄到天上去了。', run: async () => {
+        anim($('weigh'), [{ opacity: 1 }, { opacity: 0 }], 500);
+        anim($('home'), [{ opacity: .3 }, { opacity: 1 }], 500);
+        sfx.rise();
+        await Promise.all([...svg.querySelectorAll('.puff')].map((p, i) =>
+          anim(p, [{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${-260 - i * 120}px,-60px) scale(1.4)`, opacity: .12 }], 2000 + i * 200)));
       } },
     { say: '我們把它畫成「碳雲」。', run: async () => {
         sfx.good();
         await anim($('cloud'), [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1.08)' }, { opacity: 1, transform: 'scale(1)' }], 900);
-        anim($('bag'), [{ opacity: .15 }, { opacity: 0 }], 300);
+        anim($('gas'), [{ opacity: 1 }, { opacity: 0 }], 400);
       } },
-    { say: '記住：真正的二氧化碳是看不見的，碳雲是我們把它畫出來。', pause: 200 },
+    { say: '記住：用電的時候，看不見的二氧化碳就跑到天上了。碳雲是我們把它畫出來。', pause: 200 },
   ];
-  Act.mountOptions($('opts'), '你好，我是朗讀的聲音。我們把它畫成碳雲。');
+  Act.mountOptions($('opts'));
   Act.story(steps, { caption: $('cap'), play: $('play'), reset });
   reset();
 })();
