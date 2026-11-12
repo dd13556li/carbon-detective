@@ -100,7 +100,6 @@ a{color:var(--accent)}
     <div class="tiers" id="tiers"></div></div>
     <h2>朗讀與音效</h2>
     <div class="seg" id="opts"></div>
-    <div class="voicepick" id="voicepick"></div>
     <button class="go" id="start">開始尋寶 Start</button>
     <p class="note">輪流上台：每位上台前老師按 A／B／C 選等級，每人找一張帳單（三張輪流），畫面只顯示「第幾位」，不輸入名字。</p>
     <p class="note">三張帳單都是教學範例（已去除個資），和教案附錄十四同一批。學生的作答只留在這個分頁，不會上傳。</p>
@@ -148,9 +147,9 @@ a{color:var(--accent)}
   };
   // 三層（同教案附錄五的任務卡）：A 原版找四項；B 標示版找兩項；C 標示版只找度數，一開始就亮出位置
   const TIERS = {
-    A: { name: 'A 層（獨立）', desc: '原版帳單，找出度數、金額、計費期間、電力排碳量', ver: 'plain', tasks: [1, 2, 3, 4], hintAfter: 2, pad: 12 },
-    B: { name: 'B 層（提示）', desc: '重點標示版，照紅框①、藍框②找度數和金額', ver: 'marked', tasks: [1, 2], hintAfter: 1, pad: 18 },
-    C: { name: 'C 層（協助）', desc: '重點標示版，跟著閃動的紅框找度數', ver: 'marked', tasks: [1], hintAfter: 0, pad: 30 },
+    A: { name: 'A', desc: '原版帳單，找出度數、金額、計費期間、電力排碳量', ver: 'plain', tasks: [1, 2, 3, 4], hintAfter: 2, pad: 12 },
+    B: { name: 'B', desc: '重點標示版，照紅框①、藍框②找度數和金額', ver: 'marked', tasks: [1, 2], hintAfter: 1, pad: 18 },
+    C: { name: 'C', desc: '重點標示版，跟著閃動的紅框找度數', ver: 'marked', tasks: [1], hintAfter: 0, pad: 30 },
   };
   const S = { tier: 'B', speak: true, sfx: true, rot: true, bi: 0, ti: 0, wrong: 0, hinted: false, log: [] };
   window.GameSfx.enabled = () => S.sfx;
@@ -310,7 +309,6 @@ a{color:var(--accent)}
   // 測試用：寶藏中心點（帳單座標）
   window.__hunt = { S, center: (n) => { const r = ver().boxes[n][0]; return [r[0] + r[2] / 2, r[1] + r[3] / 2]; }, answer, hit, next };
   renderSetup();
-  if (window.ZhTTS) ZhTTS.mountPicker($('voicepick'), { sample: '你好，我是電費單尋寶的朗讀聲音。請找出度數。' });
 })();
 </script>
 </body>

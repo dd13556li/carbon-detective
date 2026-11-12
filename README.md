@@ -83,7 +83,8 @@ engine/activity.js    共用小工具：朗讀、圖示、輪流上台（Act.tur
 
 ## 朗讀
 
-- 即時語音：`engine/tts-zh.js`（遊戲與計算器共用）。預設挑法（檔尾 `ZhTTS.pickTW`，唯一定義）：設定頁指定的 → Edge 雲端曉臻 → 雅婷（Chrome 上是 Windows 本機版）→ 品質優先，挑不到也照唸；設定頁「即時語音」可試聽、指定，記在這個瀏覽器（計算器、尋寶遊戲沿用同一個選擇；尋寶遊戲設定頁也有同一個選單，`ZhTTS.mountPicker`）。
+- 二選一三級作答（`engine/engine.js` showChoice，仿金錢小達人；畫面只標 A／B／C）：C 簡單＝兩邊顯示朵數、少的閃動、選錯引導再選一次；B 普通＝提示＋兩邊度數與電費；A 困難＝只看圖，選完理由蓋成「❓ 為什麼？」，老師點開才顯示並朗讀。
+- 即時語音：`engine/tts-zh.js`（棋盤、尋寶、計算器、課堂活動共用）。一律自動、不給選單（2026-11-12 定案）：檔尾 `ZhTTS.pickTW`（唯一定義）挑 Edge 雲端曉臻 → 雅婷（Chrome 上是 Windows 本機版）→ 品質優先，挑不到也照唸。
 - 預錄語音（目前**沒有啟用**）：`python tools/gen_voice.py --project <帳戶>` 會從 `window.__voiceLines()` 拿固定句子（題目、回饋、機會卡、任務），用 Gemini 語音錄到 `themes/save-power/voice/`（檔名＝句子雜湊，附 `index.json`）。有 `index.json` 時引擎優先播預錄、沒有就用即時語音。會花錢：`--project` 沒有預設，`--dry-run` 只列句數不呼叫。
 
 ## 音效與頭像照片

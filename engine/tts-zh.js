@@ -318,47 +318,17 @@
   global.ZhTTS = ZhTTS;
 })(typeof window !== 'undefined' ? window : globalThis);
 
-/* 減碳偵探的預設語音（遊戲與計算器共用，唯一定義）：
- * 使用者在設定頁指定的 > Edge 雲端「曉臻」 > 「雅婷」（有雲端版用雲端版，Chrome 上是 Windows 本機版） > 模組的品質優先。 */
+/* 減碳偵探的預設語音（棋盤、尋寶、計算器、課堂活動共用，唯一定義）：一律自動，不給選單。
+ * Edge 雲端「曉臻」 > 「雅婷」（有雲端版用雲端版，Chrome 上是 Windows 本機版） > 模組的品質優先。
+ * （2026-11-12 使用者定案：不用選擇。之前存過的偏好一律不看。） */
 (function () {
   if (!window.ZhTTS) return;
   const online = (v) => /online|natural/i.test(v.name);
   window.ZhTTS.pickTW = function () {
-    const r = ZhTTS.resolvePreferred();
-    if (r.voice) return r.voice;
     const L = ZhTTS.list();
     return L.find((v) => /HsiaoChen/i.test(v.name) && online(v))
         || L.find((v) => /Yating/i.test(v.name) && online(v))
         || L.find((v) => /Yating/i.test(v.name))
         || ZhTTS.best(null);
-  };
-
-  /* 語音選單（尋寶遊戲用；棋盤遊戲設定頁自己畫，存的是同一份偏好）。
-   * ZhTTS.mountPicker(容器, { sample: '試聽句' })：選了就存成這個瀏覽器的偏好，pickTW() 之後都用它。
-   * 偏好存在瀏覽器（同網站共用）：在棋盤遊戲選的語音，尋寶遊戲也會用。 */
-  window.ZhTTS.mountPicker = function (el, opt = {}) {
-    if (!el) return;
-    const Z = window.ZhTTS, esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-    const draw = () => {
-      const r = Z.resolvePreferred(), cur = r.voice ? Z.describe(r.voice).key : '';
-      const opts = Z.list().map((v) => { const d = Z.describe(v); return `<option value="${esc(d.key)}"${d.key === cur ? ' selected' : ''}>${esc(d.engineLabel)}｜${esc(d.label)}（${esc(v.lang)}）</option>`; }).join('');
-      const note = r.status === 'missing' ? '這個瀏覽器沒有你之前選的語音，已改回自動挑選，請重新指定。'
-        : r.status === 'downgraded' ? '這個瀏覽器沒有你之前選的那一版，改用同名的另一版，音質會不一樣。' : '';
-      const now = Z.pickTW();
-      el.innerHTML = `<label for="zhvoice">即時語音</label> <select id="zhvoice"><option value="">自動（Edge 用曉臻、Chrome 用雅婷）</option>${opts}</select>
-        <button type="button" id="zhvoicetry">試聽</button>
-        <p class="voicenote">${note ? esc(note) + '<br>' : ''}目前使用：${now ? esc(Z.describe(now).engineLabel + '｜' + Z.describe(now).label) : '系統預設（這個瀏覽器還沒載入中文語音）'}。☁️ 雲端語音（Edge）音質最好。</p>`;
-    };
-    el.addEventListener('change', (e) => {
-      if (e.target.id !== 'zhvoice') return;
-      const v = Z.list().find((x) => Z.describe(x).key === e.target.value) || null;
-      Z.setPreferred(e.target.value ? v : null); draw();
-    });
-    el.addEventListener('click', (e) => {
-      if (e.target.id !== 'zhvoicetry') return;
-      try { speechSynthesis.cancel(); } catch (x) {}
-      Z.speak(opt.sample || '你好，我是減碳偵探的朗讀聲音。', { voice: Z.pickTW() || undefined, rate: 0.9 });
-    });
-    draw(); Z.ready().then(draw);
   };
 })();

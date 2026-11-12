@@ -186,10 +186,10 @@
             ${seg('tier' + i, [['A', 'A'], ['B', 'B'], ['C', 'C']], p.tier)}
           </div>`).join('')}
         </div>
-        <p class="tierhelp">A：自己選，選完說理由。B：先看提示再選。C：先看兩邊各${esc(T.resource.verbUp)}幾${esc(T.resource.unit)}${esc(T.resource.unitName || '')}再選。名字和照片只留在這次開啟的網頁裡，不上傳、不儲存，重新整理就消失。使用學生照片前，請先取得家長同意。</p>
+        <p class="tierhelp">${tierHelp()}名字和照片只留在這次開啟的網頁裡，不上傳、不儲存，重新整理就消失。使用學生照片前，請先取得家長同意。</p>
       </div>
       <div class="panel"><h2>遊戲長度</h2>${seg('dice', [[3, '短（骰 1–3，約 10 分鐘）'], [2, '中（骰 1–2）'], [1, '完整（每一格都停）']], S.set.diceMax)}</div>
-      <div class="panel"><h2>朗讀題目</h2>${seg('speak', [[1, '開'], [0, '關']], S.set.speak ? 1 : 0)}${voicePickerHTML()}</div>
+      <div class="panel"><h2>朗讀題目</h2>${seg('speak', [[1, '開'], [0, '關']], S.set.speak ? 1 : 0)}<p class="tierhelp">即時語音自動選用：Edge 用雲端「曉臻」、Chrome 用「雅婷」。</p></div>
       <div class="panel"><h2>音效</h2>${seg('sfx', [[1, '開'], [0, '關']], S.set.sfx ? 1 : 0)}<p class="tierhelp">音效都很小聲，朗讀時會等音效結束再開始。對聲音敏感的學生可以關掉。</p></div>
       <div class="startrow"><button class="btn" id="startbtn">開始遊戲</button></div>`;
   }
@@ -213,27 +213,9 @@
     if (b.dataset.av != null) { const p = S.players[+b.dataset.av]; if (p.photo) delete p.photo; else p.avatar = (p.avatar + 1) % T.idCard.avatars.length; renderSetup(); return; }
     if (b.dataset.unphoto != null) { delete S.players[+b.dataset.unphoto].photo; renderSetup(); return; }
     if (b.id === 'startbtn') startGame();
-    if (b.id === 'voicetry') { const v = pickedVoice(); stopVoice(); if (window.ZhTTS) ZhTTS.speak('你好，我是減碳偵探的朗讀聲音。', { voice: v || ZhTTS.pickTW() || undefined, rate: 0.9 }); }
-  }
-  // 語音選單：只影響即時語音；有預錄的句子仍播預錄（每台聽起來一樣）
-  function voicePickerHTML() {
-    if (!window.ZhTTS) return '';
-    const vs = ZhTTS.list(), r = ZhTTS.resolvePreferred(), cur = r.voice ? ZhTTS.describe(r.voice).key : '';
-    const opt = vs.map((v) => { const d = ZhTTS.describe(v); return `<option value="${esc(d.key)}"${d.key === cur ? ' selected' : ''}>${esc(d.engineLabel)}｜${esc(d.label)}（${esc(v.lang)}）</option>`; }).join('');
-    const note = r.status === 'missing' ? '<p class="tierhelp">這個瀏覽器沒有你之前選的語音，已改回自動挑選，請重新指定。</p>'
-      : r.status === 'downgraded' ? '<p class="tierhelp">這個瀏覽器沒有你之前選的那一版，改用同名的另一版，音質會不一樣。</p>' : '';
-    return `<div class="voicepick"><label for="voicesel">即時語音</label><select id="voicesel"><option value="">自動（Edge 用曉臻、Chrome 用雅婷）</option>${opt}</select>
-      <button type="button" class="btn ghost" id="voicetry">試聽</button></div>${note}
-      <p class="tierhelp">題目、回饋、機會卡有預錄的高品質語音，會優先播放；玩家名字、結果這些會變的句子用上面選的即時語音。☁️ 雲端語音（Edge）音質最好。</p>`;
-  }
-  function pickedVoice() {
-    const sel = $('#voicesel'); if (!sel || !sel.value || !window.ZhTTS) return ZhTTS && (ZhTTS.resolvePreferred().voice || null);
-    return ZhTTS.list().find((v) => ZhTTS.describe(v).key === sel.value) || null;
   }
   function onSetupChange(e) {
     if (e.target.dataset.photo != null) { const p = S.players[+e.target.dataset.photo]; readPhoto(e.target.files[0], (d) => { p.photo = d; renderSetup(); }); return; }
-    if (e.target.id !== 'voicesel' || !window.ZhTTS) return;
-    const v = pickedVoice(); ZhTTS.setPreferred(e.target.value ? v : null);
   }
   function onSetupInput(e) { const i = e.target.dataset.name; if (i != null) S.players[+i].name = e.target.value.trim() || '偵探 ' + (+i + 1); }
 
@@ -261,7 +243,7 @@
       <div class="sky" style="${skyStyle()}">${unitRow(S.amt, R.max || 10, R.goal.keepAtMost)}</div>
       <div class="leftnum ${over ? 'low' : ''}">現在有 ${r1(S.amt)} ${R.unit}${esc(R.unitName || '')}</div>
       <div class="goal">一天結束時，不超過 ${R.goal.keepAtMost} ${R.unit}就過關</div>
-      <div id="turn"><span class="av">${avatarHTML(p)}</span><span>輪到 ${esc(p.name)}</span><span class="tier">${p.tier} 層</span></div>
+      <div id="turn"><span class="av">${avatarHTML(p)}</span><span>輪到 ${esc(p.name)}</span><span class="tier">${p.tier}</span></div>
       <button class="btn" id="dicebtn" ${rolling ? 'disabled' : ''}><span id="die">?</span><span>擲骰子</span></button>
       <div class="hudtools"><button id="speakbtn">朗讀：${S.set.speak ? '開' : '關'}</button><button id="sfxbtn">音效：${S.set.sfx ? '開' : '關'}</button><button id="quitbtn">回設定</button></div>`;
     document.querySelectorAll('.sq').forEach((x) => x.classList.remove('here'));
@@ -318,35 +300,57 @@
   function gain(b) { S.amt = Math.max(0, S.amt - b); }   // 省電：擋下 b 個單位
 
   // ---------- 三種卡 ----------
-  function optHTML(o, showCost, cls, tag, asButton, idx) {
-    const cost = showCost ? `<div class="cost">${costRow(o.b)}<div class="amt">${fmtUnits(o.b)}${o.b >= 0.1 ? esc(T.resource.unitName || '') : ''}</div><div class="sub">${fmtSub(o.kwh)}</div></div>` : '';
+  function optHTML(o, showCost, cls, tag, asButton, idx, showKwh) {
+    const cost = showCost ? `<div class="cost">${costRow(o.b)}<div class="amt">${fmtUnits(o.b)}${o.b >= 0.1 ? esc(T.resource.unitName || '') : ''}</div><div class="sub">${fmtSub(o.kwh)}</div></div>`
+      : showKwh ? `<div class="cost"><div class="amt kwh">${fmtSub(o.kwh)}</div></div>` : '';
     const inner = `${tag ? `<span class="tag">${tag}</span>` : ''}<div class="pic">${photo(o.icon)}</div><div class="lb">${esc(o.label)}</div>${cost}`;
-    return asButton ? `<button type="button" class="opt" data-pick="${idx}">${inner}</button>` : `<div class="opt ${cls}">${inner}</div>`;
+    return asButton ? `<button type="button" class="opt ${cls || ''}" data-pick="${idx}">${inner}</button>` : `<div class="opt ${cls}">${inner}</div>`;
   }
+  // 三級作答（仿金錢小達人：C＝簡單、B＝普通、A＝困難；畫面只寫 A／B／C，不在全班面前寫「簡單」）
+  //   C：系統幫你數——兩邊直接顯示幾朵碳雲、語音念出朵數、比較少的那張閃動；選錯不扣，引導再選一次
+  //   B：給線索——提示句＋兩邊的度數與電費，自己比較後選
+  //   A：自己想——只看圖選；選完理由先蓋成「❓ 為什麼？」，學生說完，老師點開才顯示並朗讀
+  const tierHelp = () => { const R0 = T.resource; return `A：只看圖自己選，選完先說理由，老師再點「❓」翻開說明。B：看提示和兩邊的度數再選。C：兩邊直接顯示各${esc(R0.verbUp)}幾${esc(R0.unit)}${esc(R0.unitName || '')}、比較少的那張會閃動，選錯可以再選一次。`; };
+  const cloudSay = (o) => `${o.label}，${T.resource.verbUp}${o.b >= 0.1 ? fmtUnits(o.b) : '不到一' + T.resource.unit}`;
   function showChoice(qid, done) {
     const q = T.questions[qid], p = cur();
     const opts = shuffle(q.options.map((o) => { const kwh = kwhOf(o.use); return { ...o, kwh, b: unitsOf(kwh) }; }));
     const min = Math.min(...opts.map((o) => o.kwh));
+    const R0 = T.resource;
     const hint = p.tier === 'B' ? `<div class="hint">💡 ${esc((q.hint && q.hint.B) || '想一想：哪一個用的電比較少？')}</div>` : '';
     sfx.flip();
-    openModal(`<div class="who">${esc(p.name)} 的題目</div><h2>${esc(q.say)}</h2><div class="en">${esc(q.en || '')}</div>${hint}
-      <div class="opts">${opts.map((o, i) => optHTML(o, p.tier === 'C', '', '', true, i)).join('')}</div>`);
-    speak(promptText(q, opts[0], opts[1]));
+    const askHTML = (wrongIdx) => `<div class="who">${esc(p.name)} 的題目</div><h2>${esc(q.say)}</h2><div class="en">${esc(q.en || '')}</div>${hint}
+      ${wrongIdx != null ? `<div class="hint retry">再看看，哪一邊的${esc(R0.unitName || R0.unit)}比較少？</div>` : ''}
+      <div class="opts">${opts.map((o, i) => optHTML(o, p.tier === 'C', (p.tier === 'C' && o.kwh === min ? 'guide ' : '') + (i === wrongIdx ? 'tried' : ''), '', true, i, p.tier === 'B')).join('')}</div>`;
+    openModal(askHTML(null));
+    speak(p.tier === 'C' ? `${q.say.replace(/[。！？!?]$/, '')}。${cloudSay(opts[0])}；${cloudSay(opts[1])}。哪一邊比較少？` : promptText(q, opts[0], opts[1]));
+    let retried = false;
     $('#card').onclick = (e) => {
-      const b = e.target.closest('[data-pick]'); if (!b) return;
+      const b = e.target.closest('[data-pick]'); if (!b || b.disabled) return;
       const pick = opts[+b.dataset.pick], better = pick.kwh === min;
-      spend(pick.b); p.choices.push({ q: qid, better, tag: pick.tag });
+      if (p.tier === 'C' && !better && !retried) {          // C：選錯先不算，引導再選一次
+        retried = true; sfx.gentle();
+        openModal(askHTML(+b.dataset.pick));
+        $('#card').querySelector('.opt.tried').disabled = true;
+        speak(`再看看，${cloudSay(pick)}。另一邊比較少喔。`);
+        return;
+      }
+      spend(pick.b); p.choices.push({ q: qid, better, tag: pick.tag, retried });
       better ? sfx.good() : sfx.rise();
       const verdict = better ? VERDICT.good : VERDICT.bad;
+      const hide = p.tier === 'A' && q.feedback;
       openModal(`<div class="who">${esc(p.name)} 的題目</div><h2>${esc(q.say)}</h2>
         <div class="opts">${opts.map((o) => optHTML(o, true, (o === pick ? 'picked ' : '') + (o.kwh === min ? 'best' : ''), o === pick ? '你選的' : (o.kwh === min ? '比較省' : ''), false)).join('')}</div>
         <div class="verdict ${better ? 'good' : 'bad'}">${verdict}</div>
-        <p class="fb">${esc(q.feedback || '')}</p>
-        ${p.tier === 'A' ? '<p class="ask">說說看：為什麼這個比較省電？</p>' : ''}
+        ${hide ? `<button type="button" class="why" id="whybtn"><span class="q">❓</span><span>為什麼？先說說看，<br>說完再點我</span></button><p class="fb" id="fb" hidden>${esc(q.feedback)}</p>`
+               : `<p class="fb">${esc(q.feedback || '')}</p>`}
         ${q.source ? `<p class="src">資料：${esc(q.source)}</p>` : ''}
         <div class="actions"><button class="btn" id="okbtn">好，繼續</button></div>`);
-      speak(feedbackText(q, better));
-      $('#card').onclick = (ev) => { if (ev.target.closest('#okbtn')) { $('#card').onclick = null; done(); } };
+      speak(hide ? verdict.replace('👍 ', '') + '為什麼呢？先說說看。' : feedbackText(q, better));
+      $('#card').onclick = (ev) => {
+        if (ev.target.closest('#whybtn')) { $('#whybtn').hidden = true; $('#fb').hidden = false; sfx.flip(); speak(q.feedback); return; }
+        if (ev.target.closest('#okbtn')) { $('#card').onclick = null; done(); }
+      };
     };
   }
   function showChance() {

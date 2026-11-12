@@ -1,7 +1,7 @@
 // 課堂小遊戲與動畫共用的小工具（spin/ rank/ say/ overshoot/ bag/）。需先載入 tts-zh.js、sfx.js、theme.js。
 //   Act.speak(text)          朗讀（等音效結束；用 ZhTTS.pickTW 挑高品質語音，與棋盤遊戲同一個選擇）
 //   Act.icon(key)            theme art/ 的圖，沒有就用 icons.js 向量圖
-//   Act.mountOptions(el)     朗讀／音效開關＋語音選單
+//   Act.mountOptions(el)     朗讀／音效開關（語音自動選，不給選單）
 //   Act.turns({...})         輪流上台：第 n 位 → 老師按 A／B／C → 玩一回 → 下一位；結果只留在這個分頁
 (function () {
   const TH = window.THEME || {}, ART = TH.art || {}, IC = window.THEME_ICONS || {};
@@ -30,13 +30,12 @@
         `<button data-opt="${k}" data-v="${v}" aria-pressed="${S[k] === v}">${l}</button>`).join('');
       el.querySelector('.seg').innerHTML = seg('speak', '朗讀') + '<span style="width:16px"></span>' + seg('sfx', '音效');
     };
-    el.innerHTML = '<div class="seg"></div><div class="voicepick"></div>';
+    el.innerHTML = '<div class="seg"></div><p class="note">即時語音自動選用：Edge 用雲端「曉臻」、Chrome 用「雅婷」。</p>';
     el.addEventListener('click', (e) => {
       const b = e.target.closest('button[data-opt]'); if (!b) return;
       S[b.dataset.opt] = b.dataset.v === 'true'; draw(); if (b.dataset.opt === 'sfx' && S.sfx) window.GameSfx.sfx.good();
     });
     draw();
-    if (window.ZhTTS) ZhTTS.mountPicker(el.querySelector('.voicepick'), { sample: sample || '你好，我是朗讀的聲音。' });
   }
 
   // 輪流上台。opt：tiers {A:{name,desc},B,C}；play(tier, n, done(result))；resultCols ['欄名']；row(result)→[欄值]

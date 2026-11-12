@@ -165,3 +165,13 @@ button.opt:hover { border-color: var(--blue); }
 .av, #token { overflow: hidden; }
 .photobtn { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #c9d6e3; background: #fff; font-size: 20px; cursor: pointer; }
 .photos { display: flex; gap: 4px; }
+
+/* 三級作答：C 閃動引導、選錯的那張變淡；B 顯示度數；A 的「❓ 為什麼？」翻開卡 */
+.opt.guide { border-color: var(--green-d); animation: guide 1.1s ease-in-out infinite; }
+@keyframes guide { 50% { box-shadow: 0 0 0 10px rgba(46, 160, 90, .28); } }
+.opt.tried { opacity: .45; border-style: dashed; }
+#card .hint.retry { background: #ffe9d6; font-weight: 700; }
+.opt .amt.kwh { font-size: 1.15em; color: var(--blue); }
+.why { display: flex; gap: 14px; align-items: center; justify-content: center; margin: 10px auto; padding: 14px 26px; border-radius: 20px; border: 4px dashed var(--orange); background: #fff7e8; font: inherit; font-size: 1.15em; font-weight: 700; cursor: pointer; color: inherit; }
+.why .q { font-size: 2.4em; line-height: 1; }
+@media (prefers-reduced-motion: reduce) { .opt.guide { animation: none; } }

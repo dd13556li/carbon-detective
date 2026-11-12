@@ -72,9 +72,9 @@
   const MAXW = Math.max(...APPS.map((a) => a.watts));
   const month = (a) => a.watts * a.hours * 30 / 1000;
   const TIERS = {
-    A: { name: 'A 層（獨立）', desc: `${APPS.length} 張家電全部排好`, k: APPS.length, bars: false, hintAfter: 2 },
-    B: { name: 'B 層（提示）', desc: '3 張家電排好，點錯會亮提示', k: 3, bars: false, hintAfter: 1 },
-    C: { name: 'C 層（協助）', desc: '2 張家電，看長條選出比較吃電的', k: 2, bars: true, hintAfter: 0 },
+    A: { name: 'A', desc: `${APPS.length} 張家電全部排好`, k: APPS.length, bars: false, hintAfter: 2 },
+    B: { name: 'B', desc: '3 張家電排好，點錯會亮提示', k: 3, bars: false, hintAfter: 1 },
+    C: { name: 'C', desc: '2 張家電，看長條選出比較吃電的', k: 2, bars: true, hintAfter: 0 },
   };
   const P = {};
   const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
