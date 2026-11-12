@@ -31,7 +31,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 4px s
 .seg button { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 8px 16px; min-width: 52px; }
 .seg button[aria-pressed="true"] { background: var(--blue); color: #fff; border-color: var(--blue); font-weight: 700; }
 .players { display: grid; gap: 8px; }
-.prow { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; }
+.prow { display: grid; grid-template-columns: 56px auto 1fr auto; gap: 10px; align-items: center; }
 .prow .av { width: 56px; height: 56px; border: 2px solid var(--line); border-radius: 50%; background: #fff; padding: 3px; }
 .prow input { border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; min-width: 0; width: 100%; }
 .tierhelp { color: var(--sub); font-size: .8em; margin: 8px 0 0; line-height: 1.6; }
@@ -161,3 +161,7 @@ button.opt:hover { border-color: var(--blue); }
 
 .voicepick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
 .voicepick select { font: inherit; font-size: 16px; padding: 6px 8px; max-width: 100%; flex: 1 1 260px; border-radius: 10px; border: 2px solid #c9d6e3; }
+.ic.avphoto { border-radius: 50%; object-fit: cover; aspect-ratio: 1; max-width: 100%; max-height: 100%; min-width: 0; }
+.av, #token { overflow: hidden; }
+.photobtn { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #c9d6e3; background: #fff; font-size: 20px; cursor: pointer; }
+.photos { display: flex; gap: 4px; }

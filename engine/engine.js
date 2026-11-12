@@ -184,6 +184,25 @@
   }
   function closeModal() { $('#modal').hidden = true; $('#card').innerHTML = ''; }
 
+  // ---------- 頭像：卡通圖或學生照片 ----------
+  // 照片只存在這個變數（這次開啟的網頁記憶體）：不上傳、不寫進瀏覽器儲存、不放網址，重新整理就消失。
+  function avatarHTML(p) {
+    return p.photo ? `<img class="ic avphoto" src="${p.photo}" alt="">` : icon(T.idCard.avatars[p.avatar]);
+  }
+  function readPhoto(file, done) {
+    if (!file || !/^image\//.test(file.type)) return;
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.naturalWidth, img.naturalHeight), cv = document.createElement('canvas');
+      cv.width = cv.height = 256;
+      cv.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 256, 256);
+      URL.revokeObjectURL(url);
+      done(cv.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => URL.revokeObjectURL(url);
+    img.src = url;
+  }
+
   // ---------- 設定頁 ----------
   function renderSetup() {
     const av = T.idCard.avatars;
@@ -193,15 +212,16 @@
       <h1>${esc(T.name)}</h1><div class="en">${esc(T.en || '')}</div>
       <p class="intro">${esc(T.intro || '')}</p>
       <div class="panel"><h2>幾個人玩？</h2>${seg('count', [1, 2, 3, 4, 5, 6, 7, 8].map((n) => [n, n]), S.players.length)}</div>
-      <div class="panel"><h2>偵探名單（點頭像可以換）</h2>
+      <div class="panel"><h2>偵探名單（點頭像可以換，📷 可用照片）</h2>
         <div class="players">${S.players.map((p, i) => `
           <div class="prow">
-            <button type="button" class="av" data-av="${i}" aria-label="換頭像">${icon(av[p.avatar])}</button>
+            <button type="button" class="av" data-av="${i}" aria-label="換頭像">${avatarHTML(p)}</button>
+            <span class="photos"><label class="photobtn" title="用照片當頭像">📷<input type="file" accept="image/*" capture="user" data-photo="${i}" hidden></label>${p.photo ? `<button type="button" class="photobtn" data-unphoto="${i}" title="改回卡通頭像">✕</button>` : ''}</span>
             <input data-name="${i}" value="${esc(p.name)}" maxlength="8" aria-label="第 ${i + 1} 位的名字">
             ${seg('tier' + i, [['A', 'A'], ['B', 'B'], ['C', 'C']], p.tier)}
           </div>`).join('')}
         </div>
-        <p class="tierhelp">A：自己選，選完說理由。B：先看提示再選。C：先看兩邊各${esc(T.resource.verbUp)}幾${esc(T.resource.unit)}${esc(T.resource.unitName || '')}再選。名字只留在這台電腦，不會上傳。</p>
+        <p class="tierhelp">A：自己選，選完說理由。B：先看提示再選。C：先看兩邊各${esc(T.resource.verbUp)}幾${esc(T.resource.unit)}${esc(T.resource.unitName || '')}再選。名字和照片只留在這次開啟的網頁裡，不上傳、不儲存，重新整理就消失。使用學生照片前，請先取得家長同意。</p>
       </div>
       <div class="panel"><h2>遊戲長度</h2>${seg('dice', [[3, '短（骰 1–3，約 10 分鐘）'], [2, '中（骰 1–2）'], [1, '完整（每一格都停）']], S.set.diceMax)}</div>
       <div class="panel"><h2>朗讀題目</h2>${seg('speak', [[1, '開'], [0, '關']], S.set.speak ? 1 : 0)}${voicePickerHTML()}</div>
@@ -225,7 +245,8 @@
       else if (k.startsWith('tier')) S.players[+k.slice(4)].tier = v;
       renderSetup(); return;
     }
-    if (b.dataset.av != null) { const p = S.players[+b.dataset.av]; p.avatar = (p.avatar + 1) % T.idCard.avatars.length; renderSetup(); return; }
+    if (b.dataset.av != null) { const p = S.players[+b.dataset.av]; if (p.photo) delete p.photo; else p.avatar = (p.avatar + 1) % T.idCard.avatars.length; renderSetup(); return; }
+    if (b.dataset.unphoto != null) { delete S.players[+b.dataset.unphoto].photo; renderSetup(); return; }
     if (b.id === 'startbtn') startGame();
     if (b.id === 'voicetry') { const v = pickedVoice(); stopVoice(); if (window.ZhTTS) ZhTTS.speak('你好，我是減碳偵探的朗讀聲音。', { voice: v || undefined, rate: 0.9 }); }
   }
@@ -245,6 +266,7 @@
     return ZhTTS.list().find((v) => ZhTTS.describe(v).key === sel.value) || null;
   }
   function onSetupChange(e) {
+    if (e.target.dataset.photo != null) { const p = S.players[+e.target.dataset.photo]; readPhoto(e.target.files[0], (d) => { p.photo = d; renderSetup(); }); return; }
     if (e.target.id !== 'voicesel' || !window.ZhTTS) return;
     const v = pickedVoice(); ZhTTS.setPreferred(e.target.value ? v : null);
   }
@@ -274,13 +296,13 @@
       <div class="sky" style="${skyStyle()}">${unitRow(S.amt, R.max || 10, R.goal.keepAtMost)}</div>
       <div class="leftnum ${over ? 'low' : ''}">現在有 ${r1(S.amt)} ${R.unit}${esc(R.unitName || '')}</div>
       <div class="goal">一天結束時，不超過 ${R.goal.keepAtMost} ${R.unit}就過關</div>
-      <div id="turn"><span class="av">${icon(T.idCard.avatars[p.avatar])}</span><span>輪到 ${esc(p.name)}</span><span class="tier">${p.tier} 層</span></div>
+      <div id="turn"><span class="av">${avatarHTML(p)}</span><span>輪到 ${esc(p.name)}</span><span class="tier">${p.tier} 層</span></div>
       <button class="btn" id="dicebtn" ${rolling ? 'disabled' : ''}><span id="die">?</span><span>擲骰子</span></button>
       <div class="hudtools"><button id="speakbtn">朗讀：${S.set.speak ? '開' : '關'}</button><button id="sfxbtn">音效：${S.set.sfx ? '開' : '關'}</button><button id="quitbtn">回設定</button></div>`;
     document.querySelectorAll('.sq').forEach((x) => x.classList.remove('here'));
     const here = $('#sq' + S.pos); here.classList.add('here');
     const old = $('#token'); if (old) old.remove();
-    here.insertAdjacentHTML('beforeend', `<div id="token">${icon(T.idCard.avatars[p.avatar])}</div>`);
+    here.insertAdjacentHTML('beforeend', `<div id="token">${avatarHTML(p)}</div>`);
   }
   function startGame() {
     S.amt = T.resource.start || 0; S.pos = 0; S.turn = 0; S.deck = shuffle(T.chance.slice());
@@ -426,7 +448,7 @@
     return `<div class="idwrap"><div class="id" id="id${i}" style="animation-delay:${i * 0.15}s">
       <div class="face front">
         <div class="idhead"><b>${esc(ID.title)}</b><span class="en">${esc(ID.en || '')}</span></div>
-        <div class="idmain"><div class="av">${icon(ID.avatars[p.avatar])}</div>
+        <div class="idmain"><div class="av">${avatarHTML(p)}</div>
           <div><div class="idname">${esc(p.name)}</div>
             <div class="idtitle"><span class="tic">${icon(t.icon)}</span>${esc(t.name)}</div>
             <div class="en">${esc(t.en || '')}</div></div></div>
