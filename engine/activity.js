@@ -62,7 +62,7 @@
         `<button data-opt="${k}" data-v="${v}" aria-pressed="${S[k] === v}">${l}</button>`).join('');
       el.querySelector('.seg').innerHTML = seg('speak', '朗讀') + '<span style="width:16px"></span>' + seg('sfx', '音效');
     };
-    el.innerHTML = '<div class="seg"></div><p class="note">即時語音自動選用：Edge 用雲端「曉臻」、Chrome 用「雅婷」。</p>';
+    el.innerHTML = '<div class="seg"></div>';
     el.addEventListener('click', (e) => {
       const b = e.target.closest('button[data-opt]'); if (!b) return;
       S[b.dataset.opt] = b.dataset.v === 'true'; draw(); if (b.dataset.opt === 'sfx' && S.sfx) window.GameSfx.sfx.good();

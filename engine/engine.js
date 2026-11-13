@@ -177,7 +177,7 @@
         <p class="tierhelp">${tierHelp()}名字和照片只留在這次開啟的網頁裡，不上傳、不儲存，重新整理就消失。使用學生照片前，請先取得家長同意。</p>
       </div>
       <div class="panel"><h2>遊戲長度</h2>${seg('dice', [[3, '短（骰 1–3，約 10 分鐘）'], [2, '中（骰 1–2）'], [1, '完整（每一格都停）']], S.set.diceMax)}</div>
-      <div class="panel"><h2>朗讀題目</h2>${seg('speak', [[1, '開'], [0, '關']], S.set.speak ? 1 : 0)}<p class="tierhelp">即時語音自動選用：Edge 用雲端「曉臻」、Chrome 用「雅婷」。</p></div>
+      <div class="panel"><h2>朗讀題目</h2>${seg('speak', [[1, '開'], [0, '關']], S.set.speak ? 1 : 0)}</div>
       <div class="panel"><h2>音效</h2>${seg('sfx', [[1, '開'], [0, '關']], S.set.sfx ? 1 : 0)}<p class="tierhelp">音效都很小聲，朗讀時會等音效結束再開始。對聲音敏感的學生可以關掉。</p></div>
       <div class="startrow"><button class="btn" id="startbtn">開始遊戲</button></div>`;
   }
