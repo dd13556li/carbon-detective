@@ -50,12 +50,12 @@ button:focus-visible{outline:4px solid var(--accent);outline-offset:2px}
 .task .q small{font-size:.6em;font-weight:700;color:var(--muted);margin-left:8px}
 .msg{min-height:30px;font-size:20px;font-weight:700}
 .msg.ok{color:var(--ok)} .msg.no{color:var(--warn)}
-.stage{position:relative;width:100%;max-width:max(320px,calc((100dvh - 350px) * 900 / 765));margin:0 auto;border-radius:12px;overflow:hidden;border:2px solid var(--line);background:#fff;touch-action:manipulation;cursor:crosshair;user-select:none}
+.stage{position:relative;width:100%;max-width:max(320px,calc((100dvh - 350px) * 900 / 765));margin:0 auto;border-radius:12px;overflow:hidden;border:2px solid var(--line);background:#fff;touch-action:manipulation;cursor:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><line x1='29' y1='29' x2='44' y2='44' stroke='%23333' stroke-width='9' stroke-linecap='round'/><line x1='29' y1='29' x2='44' y2='44' stroke='%233a7bd5' stroke-width='5' stroke-linecap='round'/><circle cx='18' cy='18' r='14' fill='rgba(200,230,255,.35)' stroke='%23333' stroke-width='5'/><circle cx='18' cy='18' r='14' fill='none' stroke='%233a7bd5' stroke-width='2.5'/></svg>") 18 18,zoom-in;user-select:none}
 .stage img.bill{display:block;width:100%;height:auto;pointer-events:none}
 .ov{position:absolute;pointer-events:none;border-radius:10px}
 .ov.found{border:5px solid var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
 .ov.hint{border:5px dashed var(--c);animation:pulse 1s ease-in-out infinite}
-.ov .stk{position:absolute;left:-30px;top:-30px;width:46px;height:46px;animation:pop .35s ease-out}
+.ov .stk{position:absolute;left:-34px;top:-38px;width:56px;height:56px;animation:pop .35s ease-out}
 .dot{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:4px solid var(--warn);pointer-events:none;animation:fade 1s ease-out forwards}
 @keyframes pulse{50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--c) 35%,transparent)}}
 @keyframes pop{from{transform:scale(.2)}to{transform:scale(1)}}
@@ -137,7 +137,7 @@ a{color:var(--accent)}
   const $ = (id) => document.getElementById(id);
   const BILLS = window.HUNT_BILLS || [];
   const ART = (window.THEME && window.THEME.art) || {};
-  const STICKER = ART.patrol ? '../themes/save-power/art/' + ART.patrol : '';
+  const STICKER = '<svg class="stk" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 26 L32 6 L50 26" fill="#ffe27a" opacity=".55"/><circle cx="24" cy="14" r="3" fill="#fff6c2"/><circle cx="42" cy="12" r="2.5" fill="#fff6c2"/><path d="M8 28 Q8 16 32 16 Q56 16 56 28 Z" fill="#b8692e" stroke="#5a3214" stroke-width="3"/><ellipse cx="32" cy="27" rx="20" ry="4" fill="#f5c400" stroke="#8a6d00" stroke-width="2"/><rect x="8" y="28" width="48" height="28" rx="3" fill="#c97a3a" stroke="#5a3214" stroke-width="3"/><rect x="8" y="36" width="48" height="5" fill="#f5c400" stroke="#8a6d00" stroke-width="1.5"/><rect x="27" y="33" width="10" height="12" rx="2" fill="#f5c400" stroke="#8a6d00" stroke-width="2"/><circle cx="32" cy="38" r="1.8" fill="#5a3214"/></svg>';   // 找到寶藏：寶箱符號（內嵌，不靠外部圖檔）
   const fmt = (n) => Number(n).toLocaleString('zh-TW');
   const sayDate = (p) => p.replace(/(\d+)\/(\d+)\/(\d+)/g, (_, y, m, d) => `${+y}年${+m}月${+d}日`).replace('至', '到');
 
@@ -286,7 +286,7 @@ a{color:var(--accent)}
       $('stage').querySelectorAll(`.ov.hint[data-hint="${n}"]`).forEach((h) => h.remove());
       ver().boxes[n].forEach((r, i) => {
         const el = document.createElement('div'); el.className = 'ov found'; el.style.setProperty('--c', t.c); place(el, r);
-        if (i === 0 && STICKER) el.innerHTML = `<img class="stk" src="${STICKER}" alt="">`;
+        if (i === 0) el.innerHTML = STICKER;
         $('stage').appendChild(el);
       });
       const how = S.wrong === 0 && !S.hinted ? '獨立' : '提示';
