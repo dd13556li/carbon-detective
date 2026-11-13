@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>雙語關鍵字卡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../engine/activity.css">
+<style>
+/* 中英雙語關鍵字卡：點卡片先念中文、再念英文。內容在 theme.js 的 words（教案附錄十三讀同一份） */
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.wc{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;background:var(--paper);border:3px solid var(--line);border-radius:20px;padding:14px;cursor:pointer;color:var(--ink);font:inherit}
+.wc:hover,.wc:focus-visible{border-color:var(--accent)}
+.wc.on{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+.wc img{width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:12px}
+.wc .zh{font-size:30px;font-weight:900;line-height:1.25}
+.wc .en{font-size:24px;font-weight:700;color:var(--accent);line-height:1.25}
+.wc .when{font-size:14px;color:var(--muted)}
+.wc .note{font-size:12px;color:var(--muted)}
+/* 大卡：一次一張，給觸控電視 */
+#big{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}
+#big .wc{cursor:pointer;max-width:560px;width:100%;margin:0 auto}
+#big .wc img{max-height:48vh;width:auto;max-width:100%}
+#big .wc .zh{font-size:clamp(36px,7vw,60px)}
+#big .wc .en{font-size:clamp(28px,5vw,44px)}
+#big .nav{font-size:34px;font-weight:900;padding:18px 16px;border-radius:16px;border:3px solid var(--line);background:var(--paper)}
+#count{text-align:center;color:var(--muted);font-weight:700}
+@media (max-width:600px){#big{grid-template-columns:1fr 1fr}#big .wc{grid-column:1/-1;grid-row:1}}
+@media print{
+  .top .home,.tabs,.bar,#big,.note{display:none!important}
+  #all{display:grid!important;grid-template-columns:1fr 1fr;gap:10mm}
+  body{background:#fff;padding:0}
+  .wc{break-inside:avoid;border-color:#999}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <header><h1>雙語關鍵字卡</h1><p class="en">Key Words in Chinese &amp; English</p>
+      <p class="sub">點卡片：先念中文，再念英文。可以一次看全部，也可以一張一張放大。</p></header>
+    <a class="home" href="../lesson/index.html">← 活動選單</a>
+  </div>
+  <div class="bar">
+    <div class="tabs" id="tabs"></div>
+    <span class="sp"></span>
+    <button class="small" id="mode">🔍 一張一張放大</button>
+    <button class="small" id="print">🖨 列印字卡</button>
+  </div>
+  <section id="big" hidden>
+    <button class="nav" id="prev" aria-label="上一張">◀</button>
+    <div id="one"></div>
+    <button class="nav" id="next" aria-label="下一張">▶</button>
+  </section>
+  <p id="count" hidden></p>
+  <section id="all" class="grid"></section>
+  <p class="note">英文用瀏覽器的英文語音朗讀；找不到英文語音時交給系統挑。電費單圖是教學範例帳單（非真實帳單）。</p>
+</main>
+<script src="../engine/tts-zh.js"></script>
+<script src="../engine/sfx.js"></script>
+<script src="../themes/save-power/icons.js"></script>
+<script src="../themes/save-power/theme.js"></script>
+<script src="../engine/activity.js"></script>
+<script>
+(function () {
+  const { $, speak, stop } = window.Act;
+  const W = window.THEME.words;
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const TABS = [['全部', () => true], ['第一節', (w) => w.when.startsWith('第一節')], ['第二節', (w) => w.when.startsWith('第二節')]];
+  let filt = 0, big = false, idx = 0, cur = -1;
+
+  // 英文：每次念之前重抓語音清單（物件會過期）；挑不到也照念，交給系統挑
+  function speakEn(text) {
+    if (!Act.S.speak || !window.speechSynthesis) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US'; u.rate = 0.85;
+    const vs = speechSynthesis.getVoices().filter((v) => /^en[-_]/i.test(v.lang));
+    const v = vs.find((x) => /online|natural/i.test(x.name) && /en[-_]us/i.test(x.lang)) || vs.find((x) => /google/i.test(x.name) && /en[-_]us/i.test(x.lang)) || vs.find((x) => /en[-_]us/i.test(x.lang)) || vs[0];
+    try { if (v) u.voice = v; } catch (e) {}
+    speechSynthesis.speak(u);
+  }
+  function say(i) {
+    stop(); cur = i; mark();
+    const w = W[i];
+    speak(w.zh.replace(/（.*?）/g, ''), { onEnd: () => setTimeout(() => speakEn(w.say || w.en), 250) });
+  }
+  const card = (w, i) => `<button class="wc" data-i="${i}" aria-label="${esc(w.zh)} ${esc(w.en)}"><img src="../${esc(w.img)}" alt="">` +
+    `<span class="zh">${esc(w.zh)}</span><span class="en">${esc(w.en)}</span><span class="when">${esc(w.when)}</span>${w.note ? `<span class="note">${esc(w.note)}</span>` : ''}</button>`;
+  const list = () => W.map((w, i) => [w, i]).filter(([w]) => TABS[filt][1](w));
+  function mark() { document.querySelectorAll('.wc').forEach((el) => el.classList.toggle('on', +el.dataset.i === cur)); }
+  function render() {
+    $('tabs').innerHTML = TABS.map(([n], k) => `<button class="small" data-t="${k}" aria-pressed="${k === filt}">${n}</button>`).join('');
+    const L = list();
+    $('all').innerHTML = L.map(([w, i]) => card(w, i)).join('');
+    $('all').hidden = big; $('big').hidden = !big; $('count').hidden = !big;
+    $('mode').textContent = big ? '▦ 看全部' : '🔍 一張一張放大';
+    if (big) { idx = Math.min(idx, L.length - 1); const [w, i] = L[idx]; $('one').innerHTML = card(w, i); $('count').textContent = `第 ${idx + 1} 張／共 ${L.length} 張`; }
+    mark();
+  }
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-t]'); if (t) { filt = +t.dataset.t; idx = 0; return render(); }
+    const c = e.target.closest('.wc'); if (c) say(+c.dataset.i);
+  });
+  $('mode').addEventListener('click', () => { big = !big; idx = 0; render(); });
+  const step = (d) => { const n = list().length; idx = (idx + d + n) % n; render(); say(list()[idx][1]); };
+  $('prev').addEventListener('click', () => step(-1));
+  $('next').addEventListener('click', () => step(1));
+  $('print').addEventListener('click', () => { if (big) { big = false; render(); } window.print(); });
+  render();
+  window.__cards = { W, say, render };
+})();
+</script>
+</body>
+</html>

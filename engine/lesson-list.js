@@ -10,7 +10,7 @@ window.LESSON = [
     ] },
     { title: '第二節　減碳偵探的一天', items: [
       { href: '../overshoot/index.html', icon: 'earth', step: '引起動機', nm: '地球吸不完的碳雲', kind: '動畫', d: '一年 12 朵碳雲，到 7 月 30 日地球就吸不完了（地球超載日）' },
-      { href: '../index.html', icon: 'chance', step: '發展活動一', nm: '減碳偵探的一天', kind: '遊戲', d: '全班擲骰走完「我的一天」，把碳雲擋在 4 朵以內，拿到減碳身分證' },
+      { href: '../index.html', icon: 'chance', step: '發展活動一', nm: '減碳偵探的一天', kind: '遊戲', d: '全班擲骰走完「我的一天」，把碳雲擋在 4 朵以內，結束看作答總結' },
       { href: '../say/index.html', icon: 't26', step: '發展活動二', nm: '我會說省電', kind: '遊戲', d: '抽一張省電卡，練習對家人說：「……，好嗎？」' },
     ] },
   ];
