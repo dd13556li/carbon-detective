@@ -20,7 +20,6 @@
 .face.front .short{font-size:30px;font-weight:900}
 .face.front .en2{font-size:22px;font-weight:900;color:var(--accent)}
 .line{font-size:clamp(26px,4.6vw,40px);font-weight:900;text-align:center;line-height:1.45;padding:14px;border-radius:16px;background:var(--paper);border:3px solid var(--accent)}
-.line.veil{color:transparent;text-shadow:0 0 14px var(--muted);user-select:none}
 .judge{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .judge button{font-size:22px;font-weight:900;padding:16px 8px;border-radius:16px;border:3px solid var(--line);background:var(--paper)}
 .judge button:first-child{border-color:var(--ok)}
@@ -37,7 +36,7 @@
   </div>
 
   <section id="setup" class="panel">
-    <p>每張卡是棋盤遊戲裡學到的一個省電行動。學生抽到哪一張，就練習對家人說出那一句（口語、跟讀，或用溝通圖卡指出來）。</p>
+    <p>每張卡是棋盤遊戲裡學到的一個省電行動。學生抽到哪一張，就練習對家人說出那一句。A：看句子自己說；B：點圖片出現句子並唸一次，跟著複誦；C：點圖片就唸一次，跟著說或用溝通圖卡指出來。</p>
     <h2>朗讀與音效</h2>
     <div id="opts"></div>
     <button class="go" id="start">開始，第 1 位上台 ▶</button>
@@ -49,7 +48,7 @@
   <section id="play" hidden>
     <div class="wrap" style="gap:14px">
       <div class="bar"><span class="prog" id="prog"></span><span class="sp"></span>
-        <button class="small" id="again">🔊 念這一句</button></div>
+        <button class="small" id="again">🔊 老師再念一次</button></div>
       <div class="deck"><button class="flip" id="flip" aria-label="抽一張卡"><div class="in">
         <div class="face back">抽一張！<br>Draw</div>
         <div class="face front" id="front"></div></div></button></div>
@@ -76,9 +75,9 @@
   const { $, speak, sfx, icon, TH } = Act;
   const CARDS = TH.sayCards;                                     // 唯一來源 theme.js
   const TIERS = {
-    A: { name: 'A', desc: '只看圖，用自己的話說；說完再看句子對一對' },
-    B: { name: 'B', desc: '看著句子、聽一次，再跟著說' },
-    C: { name: 'C', desc: '聽句子，用溝通圖卡指出來或說關鍵詞' },
+    A: { name: 'A', desc: '卡片翻開就有句子，自己看著說出來（不播語音）' },
+    B: { name: 'B', desc: '點圖片，出現句子並唸一次，跟著複誦' },
+    C: { name: 'C', desc: '點圖片就唸一次（可以一直點），跟著說或用溝通圖卡指出來' },
   };
   const P = {};
   let bag = [];
@@ -87,33 +86,43 @@
   function play(tier, n, done) {
     Object.assign(P, { tier, n, done, card: null, said: [] });
     $('prog').textContent = `第 ${n} 位・${TIERS[tier].name}`;
-    $('flip').classList.remove('open'); $('flip').disabled = false;
+    $('flip').classList.remove('open'); $('flip').disabled = false; $('flip').setAttribute('aria-label', '抽一張卡');
     $('say').hidden = true; $('msg').textContent = '';
     speak('點卡片，抽一張省電卡。');
   }
+  // 抽卡：第一次點＝翻牌；翻開後再點圖片＝B 顯示句子並唸一次、C 唸一次（可重複）
   $('flip').addEventListener('click', () => {
-    if (P.card) return;
-    const c = P.card = draw(); P.said.push(c.short); sfx.flip();
+    if (P.card) return tapImage();
+    const c = P.card = draw(); P.said.push(c.short); P.heard = false; sfx.flip();
     $('front').innerHTML = `${icon(c.icon, c.short)}<div class="short">${c.short}</div>${c.en ? `<div class="en2">${c.en}</div>` : ''}`;
-    $('flip').classList.add('open'); $('flip').disabled = true;
+    $('flip').classList.add('open'); $('flip').setAttribute('aria-label', '點圖片聽這一句');
     setTimeout(reveal, 750);
   });
   function reveal() {
     const c = P.card, t = P.tier;
     $('say').hidden = false;
-    $('line').textContent = c.line; $('line').classList.toggle('veil', t === 'A');
-    $('tools').innerHTML = (t === 'A' ? '<button class="go alt" id="peek">看句子對一對 👀</button>' : '') + '<button class="go alt" id="hear">🔊 聽這一句</button><button class="go alt" id="nextline">下一句 ▶</button>';
-    const intro = { A: `你抽到「${c.short}」。請你用自己的話，對家人說說看。`, B: `你抽到「${c.short}」。聽一次：${c.line}。換你說說看。`, C: `你抽到「${c.short}」。${c.line}。用圖卡指給老師看，或說說看。` }[t];
-    $('msg').className = 'msg ok'; $('msg').textContent = `抽到：${c.short}`;
-    speak(intro);
-    $('hear').addEventListener('click', () => speak(c.line));
-    if ($('peek')) $('peek').addEventListener('click', () => { $('line').classList.remove('veil'); speak(c.line); });
+    $('line').textContent = c.line;
+    $('line').hidden = t === 'B';                       // B：點圖片才出現句子
+    $('tools').innerHTML = '<button class="go alt" id="nextline">下一句 ▶</button>';
     $('nextline').addEventListener('click', nextLine);
+    $('msg').className = 'msg ok';
+    $('msg').textContent = { A: `抽到：${c.short}。看著句子，自己說說看！`, B: `抽到：${c.short}。點圖片，看句子、聽一次，再跟著說。`, C: `抽到：${c.short}。點圖片聽一次，跟著說。` }[t];
+    speak({ A: `你抽到${c.short}。看著句子，自己說說看。`, B: `你抽到${c.short}。點一下圖片。`, C: `你抽到${c.short}。點一下圖片。` }[t]);
+  }
+  function tapImage() {
+    const c = P.card, t = P.tier;
+    if (t === 'A') return;
+    if (t === 'B') {
+      if (P.heard) return;                              // B：只唸一次，之後學生自己複誦
+      P.heard = true; $('line').hidden = false; $('msg').textContent = '換你跟著說一次！';
+      return speak(c.line);
+    }
+    speak(c.line);                                      // C：每點一次唸一次
   }
   // 下一句：同一位同學再抽一張練習（翻回背面再抽），老師最後按一次完成方式
   function nextLine() {
     P.card = null; $('say').hidden = true; $('msg').textContent = `已練習 ${P.said.length} 句，再抽一張！`;
-    $('flip').classList.remove('open'); $('flip').disabled = false; sfx.step();
+    $('flip').classList.remove('open'); $('flip').setAttribute('aria-label', '抽一張卡'); sfx.step();
     speak('再抽一張，練習下一句。');
   }
   $('judge').addEventListener('click', (e) => {
@@ -121,7 +130,8 @@
     sfx.good(); const card = P.card; P.card = null;
     P.done({ card: P.said.join('、'), how: b.dataset.how });
   });
-  $('again').addEventListener('click', () => P.card ? speak(P.card.line) : speak('點卡片，抽一張省電卡。'));
+  // 🔊 給老師用：任何層級都可以再念一次
+  $('again').addEventListener('click', () => { if (!P.card) return speak('點卡片，抽一張省電卡。'); if (P.tier === 'B') $('line').hidden = false; speak(P.card.line); });
 
   Act.mountOptions($('opts'), '你好，我是朗讀的聲音。我們把冷氣調到二十六度，再開電扇，好嗎？');
   const turns = Act.turns({ tiers: TIERS, play, resultCols: ['練習的句子'], row: (x) => [x.card] });

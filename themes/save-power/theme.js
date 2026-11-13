@@ -246,7 +246,7 @@ window.THEME = {
   sayCards: [
     { icon: "t26",       line: "我們把冷氣調到 26 度，再開電扇，好嗎？", short: "冷氣 26 度＋電扇" },
     { icon: "lightsOff", line: "離開房間的時候，我們把燈關掉，好嗎？",   short: "隨手關燈", en: "Turn off!" },
-    { icon: "plug",      line: "電視看完了，我們把插頭拔掉，好嗎？",     short: "拔插頭", en: "Unplug!" },
+    { icon: "phoneCharge", line: "手機充飽電了，我們把充電器拔下來，好嗎？", short: "拔充電器", en: "Unplug!" },
     { icon: "hanger",    line: "今天有太陽，我們把衣服晾在外面曬乾，好嗎？", short: "衣服曬太陽" },
     { icon: "ledLamp",   line: "燈壞了，我們換成 LED 燈，好嗎？",       short: "換 LED 燈" },
     { icon: "pcOn",      line: "電腦不用了，我們把它關掉，好嗎？",       short: "電腦關機", en: "Turn off!" }
