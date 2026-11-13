@@ -52,8 +52,13 @@ ITEMS = [
     ('ebill', '一支智慧型手機正面，螢幕亮著顯示一張帳單畫面：上方一個綠色區塊、下面幾條灰色橫線代表文字（不要真的文字、不要數字、不要標誌），旁邊放著一張被打叉不用的紙本信封。'),
     ('meter', '台灣住家牆上常見的白色電子式電表（瓦時計），正面，液晶螢幕亮著顯示幾位數字，不要品牌字樣。'),
     ('co2', '遠方一座火力發電廠，高高的煙囪冒出大量灰色的煙飄向天空，藍天下，畫面簡單。'),
-    ('certBadge', '一枚綠色的獎章徽章：圓形、中間是一片綠葉和一個勾勾，下方垂著兩條綠色緞帶。不要文字。'),
-    ('netZero', '一個平衡的天秤，左邊盤子上是一小朵灰色的煙雲，右邊盤子上是一棵綠色小樹，兩邊高度一樣、完全平衡。不要文字。'),
+    # 2026-11-13 使用者：舊徽章是寫實照片＋白底、緞帶細長，放在身分證上很怪 → 改成跟卡通頭像同一種畫風、圓形、可去背
+    ('certBadge', ('sheet_raw_1', '只參考這張圖的畫風（粗深色外框線、飽和平塗色塊、可愛的兒童教材卡通插畫），不要修改或重畫這張圖。'
+                   '另外畫一個新的圖示：一枚圓形的「減碳認證」徽章，外圈是金黃色的鋸齒圓邊，中間是綠色圓底，'
+                   '圓底裡一片白色葉子和一個白色打勾；下方只露出兩小段短短的綠色緞帶尾巴（不要長緞帶、不要繩子）。'
+                   '徽章置中、完整入鏡、四周留白，背景純白、不要陰影。只畫這一個徽章，不要文字、不要數字。', 'nostyle')),
+    # 2026-11-13 使用者：天秤看不懂 → 改成空氣清新的自然環境（字卡改名「淨零排放」）
+    ('netZero', '寫實照片：晴朗的自然風景，青翠的山丘和森林、一條清澈的小河，湛藍的天空和白雲，空氣清新透亮、看得很遠。遠方山坡上有兩三架白色風力發電機（小小的，表示用乾淨的電）。完全沒有煙囪、沒有煙、沒有霧霾。這張不用純白背景，整張是風景。不要人物、不要文字。'),
     # 試畫用（不在題目卡）
     ('scooter', '一台台灣常見的 125cc 速克達機車，側面視角，整台入鏡，沒有騎士，不要品牌標誌與車牌號碼。'),
     ('waterBottle', '一瓶 500 毫升的透明寶特瓶礦泉水，藍色瓶蓋，沒有標籤文字。'),
@@ -81,11 +86,13 @@ for key, spec in ITEMS:
         print('達呼叫上限，停止'); break
     contents = [f'{STYLE}\n\n【物品】{spec}'] if isinstance(spec, str) else None
     if contents is None:
-        base, edit = spec
+        base, edit = spec[0], spec[1]
         src = OUT / f'{base}.png'
         if not src.exists():
             print(key, '缺底圖', src.name, '略過'); continue
-        contents = [types.Part.from_bytes(data=src.read_bytes(), mime_type='image/png'), f'{STYLE}\n\n【修改】{edit}']
+        # 第三個值 'nostyle'：底圖只當畫風參考，不套寫實 STYLE（例：身分證徽章要跟卡通頭像同畫風）
+        text = edit if len(spec) > 2 and spec[2] == 'nostyle' else f'{STYLE}\n\n【修改】{edit}'
+        contents = [types.Part.from_bytes(data=src.read_bytes(), mime_type='image/png'), text]
     calls += 1
     for attempt in range(4):
         try:

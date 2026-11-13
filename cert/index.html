@@ -42,7 +42,7 @@ table.chk{border-collapse:collapse;width:100%;min-width:640px}
 .cert .ch{grid-column:1/-1;display:flex;align-items:center;gap:10px;border-bottom:2px solid color-mix(in srgb,var(--c) 25%,transparent);padding-bottom:8px}
 .cert .ch b{font-size:24px;font-weight:900;color:var(--c)}
 .cert .ch .en{font-size:14px;font-weight:700;color:var(--muted);letter-spacing:.06em}
-.cert .ch .seal{margin-left:auto;width:54px;height:54px;flex:none}
+.cert .ch .seal{width:56px;height:56px;flex:none}   /* 徽章＝證件的標誌，放在標題左邊（2026-11-13 使用者定；去背卡通圖） */
 .cert .ch .seal img,.cert .ch .seal svg{width:100%;height:100%;object-fit:contain}
 .cert .who{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
 .cert .av{width:130px;height:130px;border-radius:50%;overflow:hidden;border:5px solid var(--c);background:var(--bg);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 18%,transparent)}
@@ -178,7 +178,7 @@ table.chk{border-collapse:collapse;width:100%;min-width:640px}
                               : `<li class="no"><span class="ai">${icon(a.icon, '')}</span>${esc(a.nm)}<span class="mk">○</span></li>`;
     const secs = [1, 2].map((n) => { const L = A.filter((a) => a.sec === n); return L.length ? `<div class="sec">第${n}節</div><ul>${L.map(li).join('')}</ul>` : ''; }).join('');
     return `<div class="cert ${all ? 'all' : 'part'}"><div class="in">
-      <div class="ch"><b>減碳身分認證</b><span class="en">NET-ZERO DETECTIVE</span><span class="seal"><img src="../themes/save-power/images/certBadge.webp" alt=""></span></div>
+      <div class="ch"><span class="seal"><img src="../themes/save-power/images/certBadge.webp" alt=""></span><b>減碳身分認證</b><span class="en">NET-ZERO DETECTIVE</span></div>
       <div class="who"><div class="av">${avOf(r.i)}</div><div class="nm">${nameOf(r.i)}</div>
         <div class="big">完成 ${r.ok.length}／${A.length} 項</div><div class="meter"><i style="width:${pct}%"></i></div>
         ${all ? '<div class="badge">🏅 認證通過</div>' : '<div class="hint">○ 的活動補做後再勾</div>'}</div>
