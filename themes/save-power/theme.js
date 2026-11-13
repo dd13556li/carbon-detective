@@ -249,7 +249,15 @@ window.THEME = {
     { icon: "phoneCharge", line: "手機充飽電了，我們把充電器拔下來，好嗎？", short: "拔充電器", en: "Unplug!" },
     { icon: "hanger",    line: "今天有太陽，我們把衣服晾在外面曬乾，好嗎？", short: "衣服曬太陽" },
     { icon: "ledLamp",   line: "燈壞了，我們換成 LED 燈，好嗎？",       short: "換 LED 燈" },
-    { icon: "pcOn",      line: "電腦不用了，我們把它關掉，好嗎？",       short: "電腦關機", en: "Turn off!" }
+    { icon: "pcOn",      line: "電腦不用了，我們把它關掉，好嗎？",       short: "電腦關機", en: "Turn off!" },
+    // 2026-11-13 加：生活中做得到的省電行動（與棋盤題目、校本「生活家電概論」的內容對得上，不含數字）
+    { icon: "tv",        line: "沒有人在看的時候，我們把電視關掉，好嗎？", short: "沒人看就關電視", en: "Turn off!" },
+    { icon: "fridge",    line: "拿完東西，我們把冰箱門馬上關好，好嗎？",   short: "冰箱門關好" },
+    { icon: "fan",       line: "天氣不太熱，我們先開電扇就好，好嗎？",     short: "先開電扇" },
+    { icon: "curtain",   line: "白天很亮，我們拉開窗簾，不用開燈，好嗎？", short: "拉開窗簾用陽光" },
+    { icon: "towel",     line: "洗完頭，先用毛巾擦乾，再用吹風機吹，好嗎？", short: "先擦乾再吹" },
+    { icon: "kettle",    line: "要喝熱水的時候再煮，好嗎？",               short: "要喝再煮水" },
+    { icon: "filter",    line: "冷氣濾網髒了，我們把它洗乾淨，好嗎？",     short: "洗冷氣濾網" }
   ],
 
   // ⑧ 雙語字卡與圖片來源
