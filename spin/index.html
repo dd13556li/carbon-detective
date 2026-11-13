@@ -96,7 +96,7 @@
   });
   const kgShow = (kwh) => (Math.round(kwh * COEF * 100) / 100).toFixed(2);   // 0.99、1.98…（2.1 的倍數 × 0.471）
   const COLORS = ['#f6c344', '#5bb8f5', '#7ccf7a', '#f2955b', '#b99be8', '#f28bb0'];
-  $('table').textContent = '轉盤：' + ACTS.map((a) => `${a.label} → ${a.kwh} 度 → ${kgShow(a.kwh)} ≈ ${a.k} 公斤`).join('；') + `（瓦數 × 小時 × ${DAYS} 天 ÷ 1000 ＝ 度數；度數 × ${COEF} ＝ 公斤）`;
+  $('table').textContent = '轉盤：' + ACTS.map((a) => `${a.label} → ${a.kwh} 度 → ${kgShow(a.kwh)}（大約 ${a.k} 公斤）`).join('；') + `（瓦數 × 小時 × ${DAYS} 天 ÷ 1000 ＝ 度數；度數 × ${COEF} ＝ 公斤）`;
 
   const TIERS = {
     A: { name: 'A', desc: '畫面告訴你一個月共用幾度，自己在計算器輸入完整算式（度數 × 0.471）算出幾公斤，再從五個重量選一個' },
@@ -143,7 +143,7 @@
   const small = (k, alt) => icon(k, alt).replace(/^<(img|svg)/, '<$1 style="width:34px;height:34px;vertical-align:middle"');
   const lineHTML = (a, show, kg) => a.uses.map((u) => `<li>${small(u.key, u.name)} ${u.name} ${u.w} 瓦 × ${u.hours} 小時 × ${DAYS} 天 ÷ 1000 ＝ <span class="ans">${show ? u.kwh + ' 度' : '？ 度'}</span></li>`).join('')
     + (a.uses.length > 1 ? `<li>合起來：<span class="ans">${show ? a.uses.map((u) => u.kwh).join(' ＋ ') + ' ＝ ' + a.kwh + ' 度' : '？ 度'}</span></li>` : '')
-    + (kg ? `<li>${a.kwh} 度 × ${COEF} ＝ ${kgShow(a.kwh)} 公斤 ≈ <span class="ans">${a.k} 公斤</span></li>` : '');
+    + (kg ? `<li>${a.kwh} 度 × ${COEF} ＝ ${kgShow(a.kwh)}（大約 <span class="ans">${a.k} 公斤</span>）</li>` : '');
   const sayUses = (a) => a.uses.map((u) => `${u.name}${u.w}瓦，用${u.hours}小時`).join('，');
   const weightSVG = (kg) => `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 20a10 10 0 1 1 20 0" fill="none" stroke="#4a5568" stroke-width="6"/><path d="M14 24h36l6 32H8z" fill="#5a6678" stroke="#2d3748" stroke-width="2.5" stroke-linejoin="round"/><text x="32" y="47" text-anchor="middle" font-size="18" font-weight="900" fill="#fff" font-family="sans-serif">${kg}kg</text></svg>`;
   const weightsHTML = () => [1, 2, 3, 4, 5].map((g) => `<button class="card" data-kg="${g}">${weightSVG(g)}<span class="nm">${g} 公斤</span></button>`).join('');
@@ -169,7 +169,7 @@
     $('lines').innerHTML = lineHTML(a, true, weights);
     if (weights) { const c = $('cards').querySelector(`[data-kg="${a.k}"]`); if (c) c.classList.add('hint'); }
     $('hint').hidden = false; $('hint').className = 'hintline';
-    $('hint').textContent = weights ? `提示：${a.kwh} 度 × ${COEF} ≈ ${a.k} 公斤，找出 ${a.k} 公斤。`
+    $('hint').textContent = weights ? `提示：${a.kwh} 度 × ${COEF} ＝ ${kgShow(a.kwh)}（大約 ${a.k} 公斤），找出 ${a.k} 公斤。`
       : P.tier === 'A' ? `提示：計算器依序按「${a.kwh}」「×」「${COEF}」，再按「＝」。` : `提示：計算器輸入「${a.kwh}」。`;
   }
   $('cards').addEventListener('click', (e) => {
@@ -200,8 +200,8 @@
   }
   function calcDone(v) {           // 算對了：顯示幾公斤，再從五個重量選
     const a = P.act;
-    drawMini(`<span class="big">${kgShow(v)} ≈ ${a.k} 公斤</span>`);   // A、B 都顯示「0.99 ≈ 1 公斤」
-    $('msg').className = 'msg ok'; $('msg').textContent = `${a.kwh} 度 × ${COEF} ＝ ${kgShow(a.kwh)} 公斤，大約 ${a.k} 公斤。從下面五個重量選一個。`;
+    drawMini(`<span class="big">${kgShow(v)}（大約 ${a.k} 公斤）</span>`);   // A、B 都顯示「0.99（大約 1 公斤）」（2026-11-13 使用者定的寫法）
+    $('msg').className = 'msg ok'; $('msg').textContent = `${a.kwh} 度 × ${COEF} ＝ ${kgShow(a.kwh)}（大約 ${a.k} 公斤）。從下面五個重量選一個。`;
     if (!$('cards').querySelector('[data-kg]')) $('cards').innerHTML = weightsHTML();
     P.calcOK = true;
     speak(`${a.kwh}度乘以${COEF}，等於${kgShow(a.kwh)}公斤，大約${a.k}公斤。請從五個重量選一個。`);
@@ -243,7 +243,7 @@
     P.lock = true; const a = P.act, k = a.k;
     const how = P.tier === 'C' ? '協助' : (P.wrong === 0 && !P.hinted ? '獨立' : '提示');
     $('msg').className = 'msg ok'; $('msg').textContent = P.tier === 'C' ? '' : '答對了！';
-    $('after').innerHTML = `<div class="formula">${a.kwh} 度 × ${COEF} ＝ ${kgShow(a.kwh)} 公斤 ≈ ${k} 公斤</div>
+    $('after').innerHTML = `<div class="formula">${a.kwh} 度 × ${COEF} ＝ ${kgShow(a.kwh)}（大約 ${k} 公斤）</div>
       <div class="lift">🏋️ 到桌上拿起「${k} 公斤」那一個，提提看有多重！</div>
       <div class="row" style="margin-top:12px"><button class="go" id="lifted">提過了，下一位 ✓</button></div>`;
     speak(`${lead}每天${a.label}，一個月排出的碳大約${k}公斤。請到桌上拿起${k}公斤那一個，提提看有多重。`);
