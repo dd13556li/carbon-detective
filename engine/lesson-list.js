@@ -5,7 +5,7 @@ window.LESSON = [
       { href: '../hunt/index.html', icon: 'patrol', step: '發展活動一', nm: '電費單尋寶', kind: '遊戲', d: '在帳單上點出度數、金額、計費期間、電力排碳量（A／B／C 三層）' },
       { href: '../mission/index.html', icon: 'bulb', step: '發展活動二', nm: '用電碳排計算器', kind: '工具', d: '照任務選家電、輸入瓦數和一天幾小時，算出一個月幾度、排出幾公斤（舊版輸入度數的計算器仍在 calculator/）' },
       { href: '../spin/index.html', icon: 'waterJug', step: '發展活動三', nm: '碳排有多重？', kind: '遊戲', d: '轉盤轉到生活用電活動（看電視、開燈，也有同時用好幾樣），算出一個月共用幾度、排出幾公斤，再拿起那個重量提提看' },
-      { href: '../bag/index.html', icon: 'cloud', step: '發展活動三', nm: '看不見的碳雲', kind: '動畫', d: '用電→發電廠燒煤燒天然氣→看不見的二氧化碳飄上天，畫成「碳雲」' },
+      { href: '../bag/index.html', icon: 'cloud', step: '發展活動三', nm: '看不見的碳雲', kind: '動畫', d: '用電→發電廠燒煤燒天然氣→看不見的二氧化碳跑到空氣裡，畫成「碳雲」' },
       { href: '../rank/index.html', icon: 'ac', step: '綜合活動', nm: '吃電大戶排排站', kind: '遊戲', d: '把家電排成「吃電多 → 吃電少」，再看一個月各用幾度' },
     ] },
     { title: '第二節　減碳偵探的一天', items: [

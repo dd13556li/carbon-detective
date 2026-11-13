@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
 <link rel="stylesheet" href="../engine/activity.css">
 <style>
-/* 第一節 發展活動三的結尾：在家用電 → 發電廠送電 → 燒煤、燒天然氣排出二氧化碳 → 看不見、飄上天 → 畫成碳雲 */
+/* 第一節 發展活動三的結尾：在家用電 → 發電廠送電 → 燒煤、燒天然氣排出二氧化碳 → 看不見、跑到空氣裡 → 畫成碳雲 */
 .fx{transform-box:fill-box;transform-origin:center bottom}
 .fxc{transform-box:fill-box;transform-origin:center}
 </style>
@@ -122,7 +122,7 @@
         anim($('home'), [{ opacity: 1 }, { opacity: .3 }], 500);
         await anim($('weigh'), [{ opacity: 0 }, { opacity: 1 }], 700);
       } },
-    { say: '這麼重的東西，卻是看不見的氣體，全部飄到天上去了。', run: async () => {
+    { say: '這麼重的東西，卻是看不見的氣體，跑到空氣裡了。', run: async () => {
         anim($('weigh'), [{ opacity: 1 }, { opacity: 0 }], 500);
         anim($('home'), [{ opacity: .3 }, { opacity: 1 }], 500);
         sfx.rise();
@@ -134,7 +134,7 @@
         await anim($('cloud'), [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1.08)' }, { opacity: 1, transform: 'scale(1)' }], 900);
         anim($('gas'), [{ opacity: 1 }, { opacity: 0 }], 400);
       } },
-    { say: '記住：用電的時候，看不見的二氧化碳就跑到天上了。碳雲是我們把它畫出來。', pause: 200 },
+    { say: '記住：用電的時候，看不見的二氧化碳就跑到空氣裡了。碳雲是我們把它畫出來。', pause: 200 },
   ];
   Act.mountOptions($('opts'));
   Act.story(steps, { caption: $('cap'), play: $('play'), reset });

@@ -22,8 +22,8 @@
   <div class="scene"><svg class="stage" id="svg" viewBox="0 0 1600 900" role="img" aria-label="一年十二個月的碳雲動畫"></svg></div>
   <div class="caption" id="cap" aria-live="polite">按「播放」開始。</div>
   <div class="row"><button class="go" id="play">▶ 播放</button></div>
-  <p class="src">資料：2026 年地球超載日是 7 月 30 日（全球足跡網絡 Global Footprint Network）；碳約占人類生態足跡的 6 成。<br>
-    示意動畫：每個月從城市（大樓、工廠、住家）上空冒出 1 朵超大碳雲，代表全世界 1 個月排出的碳（一定數量，和棋盤遊戲「1 朵≈1 度電的碳」的單位不同）；前 7 朵被地球吸掉，等於到 7 月底就用完地球一整年吸得掉的量。真正的二氧化碳是看不見的氣體。</p>
+  <p class="src">資料：2026 年地球超載日是 7 月 30 日，這是全球足跡網絡（Global Footprint Network）依聯合國等統計資料<b>估算</b>出來的日子，每年會隨資料修正而變動。它算的是人類的整體生態足跡（食物、木材、漁獲、碳排放），碳約占 6 成。<br>
+    示意動畫：每個月從城市（大樓、工廠、住家）上空冒出 1 朵超大碳雲，代表全世界 1 個月排出的碳（一定數量，和棋盤遊戲「1 朵≈1 度電的碳」的單位不同）。為了好看懂，畫面把地球一整年吸得掉的量畫成「前 7 朵被吸掉」；真實世界裡，海洋和森林是一整年邊排邊吸，人類排出的二氧化碳大約只有一半被吸收，其餘留在空氣中，所以空氣裡的二氧化碳年年增加（這一點有長期實際測量）。真正的二氧化碳是看不見的氣體。</p>
   <details class="panel"><summary>朗讀與音效</summary><div id="opts"></div></details>
 </main>
 
@@ -49,8 +49,8 @@
   function reset() {
     svg.innerHTML = '';
     el('rect', { x: 0, y: 700, width: 1600, height: 200, fill: 'var(--ground)' });
-    el('image', { href: EARTH, x: 70, y: 470, width: 280, height: 280, id: 'earth', class: 'fx' });
-    el('text', { x: 210, y: 790, 'text-anchor': 'middle', 'font-size': 34, 'font-weight': 900, fill: 'var(--ink)' }).textContent = '地球';
+    el('image', { href: EARTH, x: 70, y: 380, width: 280, height: 280, id: 'earth', class: 'fx' });   // 2026-11-13 往上移 90，離開地面與時間軸
+    el('text', { x: 210, y: 700, 'text-anchor': 'middle', 'font-size': 34, 'font-weight': 900, fill: 'var(--ink)' }).textContent = '地球';
     // 地球吸得掉的量：7 格
     el('text', { x: 420, y: 520, 'font-size': 30, 'font-weight': 900, fill: 'var(--ink)' }).textContent = '地球一年吸得掉的';
     for (let i = 0; i < CAP; i++) el('rect', { x: 420 + i * 62, y: 540, width: 54, height: 54, rx: 12, fill: 'var(--paper)', stroke: 'var(--accent)', 'stroke-width': 4, id: 'slot' + i });
@@ -120,15 +120,18 @@
     sfx.block();
     const t = el('text', { x: 800, y: 420, 'text-anchor': 'middle', 'font-size': 64, 'font-weight': 900, fill: 'var(--warn)', class: 'fx', stroke: 'var(--paper)', 'stroke-width': 8, 'paint-order': 'stroke' });
     t.textContent = '7月30日 地球超載日！';
-    await anim(t, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1 }, { transform: 'scale(1)', opacity: 1 }], 700);
-    await sleep(900);
-    await anim(t, [{ opacity: 1 }, { opacity: 0 }], 500);
+    const n = el('text', { x: 800, y: 475, 'text-anchor': 'middle', 'font-size': 30, 'font-weight': 700, fill: 'var(--ink)', class: 'fx', stroke: 'var(--paper)', 'stroke-width': 6, 'paint-order': 'stroke' });
+    n.textContent = '（科學家估算的日子）';
+    const pop = [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1 }, { transform: 'scale(1)', opacity: 1 }];
+    await Promise.all([anim(t, pop, 700), anim(n, pop, 700)]);
+    await sleep(1200);
+    await Promise.all([anim(t, [{ opacity: 1 }, { opacity: 0 }], 500), anim(n, [{ opacity: 1 }, { opacity: 0 }], 500)]);
   }
   const months = (a, b, f) => async () => { for (let m = a; m <= b; m++) await f(m); };
   const steps = [
     { say: '城市裡的大樓、工廠，還有家家戶戶，都在用電、用油。這裡的一朵超大碳雲，是全世界的人一個月排出的碳，非常非常多。地球每年只吸得掉一定的數量。', run: async () => { await anim($('earth'), [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], 800); } },
     { say: '一月、二月、三月……每個月全世界排出一朵超大碳雲，地球把它吸掉了。', run: months(1, 7, absorb) },
-    { say: '今年到7月30日，人類排的，就已經超過地球一整年吸得掉的量了。', run: overshoot },
+    { say: '科學家估算，今年到7月30日，人類排的，就已經超過地球一整年吸得掉的量了。', run: overshoot },
     { say: '後面排的碳雲，地球吸不完，就一直留在天上。', run: months(8, 12, linger) },
     { say: '碳雲越來越多，地球就越來越熱。今天我們要過一天，看看能不能少排一點碳雲。', run: async () => { await anim($('earth'), [{ filter: 'none' }, { filter: 'sepia(.6) saturate(2) hue-rotate(-20deg)' }], 1200); } },
   ];

@@ -19,6 +19,7 @@
 .face.front img,.face.front svg{width:46%;max-height:58%;object-fit:contain}
 .face.front .short{font-size:30px;font-weight:900}
 .face.front .en2{font-size:22px;font-weight:900;color:var(--accent)}
+.cue{font-size:clamp(20px,3vw,26px);font-weight:900;text-align:center;margin:0 0 8px;color:var(--accent)}
 .line{font-size:clamp(26px,4.6vw,40px);font-weight:900;text-align:center;line-height:1.45;padding:14px;border-radius:16px;background:var(--paper);border:3px solid var(--accent)}
 .judge{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .judge button{font-size:22px;font-weight:900;padding:16px 8px;border-radius:16px;border:3px solid var(--line);background:var(--paper)}
@@ -31,12 +32,12 @@
 <main class="wrap">
   <div class="top">
     <header><h1>我會說省電</h1><p class="en">I Can Say It!</p>
-      <p class="sub">抽一張省電卡，練習對家人說：「……，好嗎？」</p></header>
+      <p class="sub">抽一張省電卡，練習對家人說一句省電的話</p></header>
     <a class="home" href="../lesson/index.html">← 活動選單</a>
   </div>
 
   <section id="setup" class="panel">
-    <p>每張卡是棋盤遊戲裡學到的一個省電行動。學生抽到哪一張，就練習對家人說出那一句。A：看句子自己說；B：點圖片出現句子並唸一次，跟著複誦；C：點圖片就唸一次，跟著說或用溝通圖卡指出來。</p>
+    <p>每張卡是棋盤遊戲裡學到的一個省電行動。學生抽到哪一張，就練習對家人說出那一句；三層的句子長短不同（A 是自然的完整句子，先叫一聲自己的家人再說；B 是「我們……，好嗎？」；C 是兩三個字的關鍵詞）。A：看句子自己說；B：點圖片出現句子並唸一次，跟著複誦；C：點圖片就唸一次，跟著說或用溝通圖卡指出來。</p>
     <h2>朗讀與音效</h2>
     <div id="opts"></div>
     <button class="go" id="start">開始，第 1 位上台 ▶</button>
@@ -54,6 +55,7 @@
         <div class="face front" id="front"></div></div></button></div>
       <div class="msg" id="msg" aria-live="polite"></div>
       <div id="say" hidden>
+        <p class="cue" id="cue" hidden>👋 先叫一聲你的家人，再說：</p>
         <div class="line" id="line"></div>
         <div class="row" style="margin-top:12px" id="tools"></div>
         <h2 style="margin-top:16px">換下一學生，並選擇適合的作答方式</h2>
@@ -79,6 +81,8 @@
     B: { name: 'B', desc: '點圖片，出現句子並唸一次，跟著複誦' },
     C: { name: 'C', desc: '點圖片就唸一次（可以一直點），跟著說或用溝通圖卡指出來' },
   };
+  // 三層各有自己的句子（theme.js：lineA 自然口語／line 固定句型／lineC 關鍵詞）
+  const lineOf = (c, t) => ({ A: c.lineA, B: c.line, C: c.lineC }[t] || c.line);
   const P = {};
   let bag = [];
   const draw = () => { if (!bag.length) bag = CARDS.map((_, i) => i).sort(() => Math.random() - 0.5); return CARDS[bag.pop()]; };
@@ -101,8 +105,9 @@
   function reveal() {
     const c = P.card, t = P.tier;
     $('say').hidden = false;
-    $('line').textContent = c.line;
+    $('line').textContent = lineOf(c, t);
     $('line').hidden = t === 'B';                       // B：點圖片才出現句子
+    $('cue').hidden = t !== 'A';                        // A：句子不寫稱呼，學生自己叫家裡真的有的人
     $('tools').innerHTML = '<button class="go alt" id="nextline">下一句 ▶</button>';
     $('nextline').addEventListener('click', nextLine);
     $('msg').className = 'msg ok';
@@ -115,9 +120,9 @@
     if (t === 'B') {
       if (P.heard) return;                              // B：只唸一次，之後學生自己複誦
       P.heard = true; $('line').hidden = false; $('msg').textContent = '換你跟著說一次！';
-      return speak(c.line);
+      return speak(lineOf(c, t));
     }
-    speak(c.line);                                      // C：每點一次唸一次
+    speak(lineOf(c, t));                                // C：每點一次唸一次
   }
   // 下一句：同一位同學再抽一張練習（翻回背面再抽），老師最後按一次完成方式
   function nextLine() {
@@ -131,7 +136,7 @@
     P.done({ card: P.said.join('、'), how: b.dataset.how });
   });
   // 🔊 給老師用：任何層級都可以再念一次
-  $('again').addEventListener('click', () => { if (!P.card) return speak('點卡片，抽一張省電卡。'); if (P.tier === 'B') $('line').hidden = false; speak(P.card.line); });
+  $('again').addEventListener('click', () => { if (!P.card) return speak('點卡片，抽一張省電卡。'); if (P.tier === 'B') $('line').hidden = false; speak(lineOf(P.card, P.tier)); });
 
   Act.mountOptions($('opts'), '你好，我是朗讀的聲音。我們把冷氣調到二十六度，再開電扇，好嗎？');
   const turns = Act.turns({ tiers: TIERS, play, resultCols: ['練習的句子'], row: (x) => [x.card] });
