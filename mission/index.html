@@ -50,6 +50,7 @@
 .res .eq{font-size:22px;font-weight:700;line-height:1.6}
 .res .big{font-size:clamp(30px,5vw,42px);font-weight:900;color:var(--warn)}
 .res .objs{display:flex;flex-wrap:wrap;gap:4px}
+.res .cloudln{font-size:17px;color:var(--muted);font-weight:700}
 .res .objs img,.res .objs svg{width:40px;height:40px;object-fit:contain}
 .res.wait{color:var(--muted);font-size:20px}
 .cards .card.hint,.apps .card.hint{border-color:var(--accent);border-style:dashed;animation:pulse 1s ease-in-out infinite}
@@ -71,6 +72,7 @@
     <h2>朗讀與音效</h2>
     <div id="opts"></div>
     <button class="go" id="start">開始，第 1 位上台 ▶</button>
+    <p class="note" id="cloudnote"></p>
     <p class="note">輪流上台：每位上台前老師按 A／B／C 選等級，畫面只顯示「第幾位」，不輸入名字，結果只留在這個分頁。
       要輸入電費單上的度數，請用 <a href="../calculator/index.html">舊版計算器（電費單／家電）</a>。</p>
   </section>
@@ -165,7 +167,8 @@
     $('res').className = 'res';
     $('res').innerHTML = `<div class="eq">${APPS[P.app].name}：${w} 瓦 × ${h} 小時 × ${DAYS} 天 ÷ 1000 ＝ <b>${fmt1(kwh)} 度</b><br>${fmt1(kwh)} 度 × ${COEF} ＝ ${fmt1(kg)} 公斤</div>
       <div class="big">一個月排出約 ${fmt1(kg)} 公斤二氧化碳</div>
-      <div class="eq">＝ 約 ${wt.clouds} 朵碳雲，<b>${wt.text}</b>那麼重</div><div class="objs">${wt.html}</div>`;
+      <div class="eq"><b>${wt.text}</b>那麼重</div><div class="objs">${wt.html}</div>
+      <div class="cloudln">☁️ 畫成碳雲：約 ${wt.clouds} 朵（${TH.constants.cloudShort}）</div>`;
   }
 
   $('apps').addEventListener('click', (e) => {
@@ -244,6 +247,7 @@
   Act.mountOptions($('opts'), '你好，我是朗讀的聲音。電視一百瓦，每天看四小時。');
   const turns = Act.turns({ tiers: TIERS, play, resultCols: ['任務', '一個月', '碳排'], row: (x) => [x.task, `${x.kwh} 度`, `${x.kg} 公斤`] });
   $('start').addEventListener('click', () => { $('setup').hidden = true; turns.next(); });
+  $('cloudnote').textContent = TH.constants.cloudNote;
   window.__mission = { P, calc, newTask };
 })();
 </script>

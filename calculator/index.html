@@ -53,6 +53,7 @@ button:focus-visible{outline:4px solid var(--accent);outline-offset:2px}
 .big{font-size:clamp(30px,8vw,46px);font-weight:900;line-height:1.25;font-variant-numeric:tabular-nums}
 .big .unit{font-size:.5em;font-weight:700}
 .eq{font-size:20px}
+.cloudln{font-size:16px;color:var(--muted);font-weight:700;margin-top:4px}
 .bags{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;min-height:60px}
 .bags svg,.bags img{display:block}
 .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:15px;color:var(--muted);align-items:center}
@@ -202,7 +203,7 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
     return s;
   }
   const clouds=kg=>Math.round(kg/KPU);
-  $('legend').innerHTML=`<span>${svg('cloud')}1 朵碳雲＝${KPU} 公斤二氧化碳（真正的二氧化碳是看不見的氣體）</span>`+
+  $('legend').innerHTML=`<span>${svg('cloud')}${CS.cloudNote}</span>`+
     CMP.map(x=>`<span>${svg(x.icon)}1 ${x.label}約 ${x.kg} 公斤</span>`).join('');
 
   // keypad
@@ -221,7 +222,7 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
 
   function billSpeech(){
     const a=Number(bill.A||0); if(!a) return '請先輸入電費單上的度數。';
-    const kg=a*coef; let t=`這一期用了${a}度電，大約排放${fmt(kg,0)}公斤的二氧化碳，是${clouds(kg)}朵碳雲，${objText(kg)}那麼重。`;
+    const kg=a*coef; let t=`這一期用了${a}度電，大約排放${fmt(kg,0)}公斤的二氧化碳，${objText(kg)}那麼重。畫成碳雲大約${clouds(kg)}朵。`;
     const b=Number(bill.B||0);
     if(b){const d=(a-b)*coef; t+= d>0?`第一張比第二張多排了${fmt(d,0)}公斤。`: d<0?`第一張比第二張少排了${fmt(-d,0)}公斤。`:'兩張一樣多。';}
     return t;
@@ -233,7 +234,7 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
     if(!a){$('resBill').innerHTML='<div class="eq">請先輸入第一張電費單的度數。</div>';return;}
     const kg=a*coef;
     let h=`<div class="big">${fmt(kg,1)} <span class="unit">公斤二氧化碳 kg CO2</span></div>
-      <div class="eq">${a} 度 × ${coef} = ${fmt(kg,1)} 公斤 ＝ 約 ${clouds(kg)} 朵碳雲<br><strong>${objText(kg)}那麼重</strong></div>
+      <div class="eq">${a} 度 × ${coef} = <strong>${fmt(kg,1)} 公斤</strong>二氧化碳<br><strong>${objText(kg)}</strong>那麼重</div><div class="cloudln">☁️ 畫成碳雲：約 ${clouds(kg)} 朵（${CS.cloudShort}）</div>
       <div class="objs">${objsHTML(kg)}</div>`;
     const b=Number(bill.B||0);
     if(b){const kb=b*coef, d=kg-kb;
@@ -255,10 +256,10 @@ details input{font:inherit;width:120px;padding:6px 10px;border-radius:8px;border
     $('wOut').textContent=app.w+' W'; $('hOut').textContent=app.h+' 小時';
     const {kwh,kg}=appCalc();
     $('resApp').innerHTML=`<div class="big">${fmt(kg,1)} <span class="unit">公斤二氧化碳／月 kg CO2</span></div>
-      <div class="eq">${app.w} W × ${app.h} 小時 × 30 天 ÷ 1000 = ${fmt(kwh,1)} 度<br>${fmt(kwh,1)} 度 × ${coef} = ${fmt(kg,1)} 公斤 ＝ 約 ${clouds(kg)} 朵碳雲<br><strong>${objText(kg)}那麼重</strong></div>
+      <div class="eq">${app.w} W × ${app.h} 小時 × 30 天 ÷ 1000 = ${fmt(kwh,1)} 度<br>${fmt(kwh,1)} 度 × ${coef} = <strong>${fmt(kg,1)} 公斤</strong>二氧化碳<br><strong>${objText(kg)}</strong>那麼重</div><div class="cloudln">☁️ 畫成碳雲：約 ${clouds(kg)} 朵（${CS.cloudShort}）</div>
       <div class="objs">${objsHTML(kg)}</div>`;
   }
-  function appSpeech(){const {kwh,kg}=appCalc(); return `${apps[app.i].nm}，${app.w}瓦，一天用${app.h}小時，一個月大約用${fmt(kwh,0)}度電，排放${fmt(kg,1)}公斤的二氧化碳，是${clouds(kg)}朵碳雲，${objText(kg)}那麼重。`;}
+  function appSpeech(){const {kwh,kg}=appCalc(); return `${apps[app.i].nm}，${app.w}瓦，一天用${app.h}小時，一個月大約用${fmt(kwh,0)}度電，排放${fmt(kg,1)}公斤的二氧化碳，${objText(kg)}那麼重。畫成碳雲大約${clouds(kg)}朵。`;}
 
   // speech
   // 朗讀：和遊戲共用 ../engine/tts-zh.js，語音偏好也共用（遊戲設定頁選的語音，這裡一樣用）
