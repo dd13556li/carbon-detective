@@ -15,14 +15,15 @@
 <body>
 <main class="wrap">
   <div class="top">
-    <header><h1>地球吸不完的碳雲</h1><p class="en">Earth Overshoot Day</p></header>
+    <header><h1>地球吸不完的碳雲</h1><p class="en">Earth Overshoot Day</p>
+      <p class="sub" style="font-weight:700">☁️ 這裡的 1 朵大碳雲＝全世界的人 1 個月排出的碳（非常非常多，不是遊戲裡的「1 朵≈1 度電」）</p></header>
     <a class="home" href="../lesson/index.html">← 活動選單</a>
   </div>
   <div class="scene"><svg class="stage" id="svg" viewBox="0 0 1600 900" role="img" aria-label="一年十二個月的碳雲動畫"></svg></div>
   <div class="caption" id="cap" aria-live="polite">按「播放」開始。</div>
   <div class="row"><button class="go" id="play">▶ 播放</button></div>
   <p class="src">資料：2026 年地球超載日是 7 月 30 日（全球足跡網絡 Global Footprint Network）；碳約占人類生態足跡的 6 成。<br>
-    示意動畫：一個月畫一朵碳雲，前 7 朵被地球吸掉，等於到 7 月底就用完地球一整年吸得掉的量。真正的二氧化碳是看不見的氣體。</p>
+    示意動畫：這裡的 1 朵碳雲代表全世界 1 個月排出的碳（一定數量，和棋盤遊戲「1 朵≈1 度電的碳」的單位不同）；前 7 朵被地球吸掉，等於到 7 月底就用完地球一整年吸得掉的量。真正的二氧化碳是看不見的氣體。</p>
   <details class="panel"><summary>朗讀與音效</summary><div id="opts"></div></details>
 </main>
 
@@ -61,7 +62,7 @@
     el('path', { d: 'M1300 700v-120l70-60 70 60v120z', fill: '#e9c79b', stroke: '#6b4f2e', 'stroke-width': 6 });
     el('rect', { x: 1395, y: 520, width: 30, height: 60, fill: '#8a6a4a' });
     el('rect', { x: 1345, y: 620, width: 50, height: 80, fill: '#6b4f2e' });
-    el('text', { x: 1370, y: 760, 'text-anchor': 'middle', 'font-size': 28, 'font-weight': 900, fill: 'var(--ink)' }).textContent = '人類用電、用油';
+    el('text', { x: 1370, y: 760, 'text-anchor': 'middle', 'font-size': 28, 'font-weight': 900, fill: 'var(--ink)' }).textContent = '全世界用電、用油';
     // 計數
     el('text', { x: 40, y: 70, 'font-size': 40, 'font-weight': 900, fill: 'var(--ink)', id: 'count' }).textContent = '';
     el('g', { id: 'sky' });
@@ -89,7 +90,7 @@
     await fly(g, [800, 260], [sx, 567], 800, 1, .32);
     $('slot' + (m - 1)).setAttribute('fill', '#9fd8b8');
     anim($('earth'), [{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], 400);
-    $('count').textContent = `地球吸掉了 ${m} 朵`;
+    $('count').textContent = `地球吸掉了 ${m} 個月的碳`;
   }
   let stay = 0;
   async function linger(m) {
@@ -99,7 +100,7 @@
     await fly(g, [1410, 500], [tx, ty], 1100, .6, 1.15);
     g.setAttribute('transform', `translate(${tx} ${ty}) scale(1.15)`);
     g.querySelector('image').style.filter = 'brightness(.75)';
-    $('count').textContent = `留在天上 ${stay} 朵`;
+    $('count').textContent = `留在天上 ${stay} 個月的碳`;
   }
   async function overshoot() {
     await moveDot(7.97);
@@ -112,13 +113,13 @@
   }
   const months = (a, b, f) => async () => { for (let m = a; m <= b; m++) await f(m); };
   const steps = [
-    { say: '地球每年只吸得掉一定數量的碳雲。', run: async () => { await anim($('earth'), [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], 800); } },
-    { say: '一月、二月、三月……人類排出的碳雲，地球把它吸掉了。', run: months(1, 7, absorb) },
+    { say: '這裡的一朵大碳雲，是全世界的人一個月排出的碳，非常非常多。地球每年只吸得掉一定的數量。', run: async () => { await anim($('earth'), [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], 800); } },
+    { say: '一月、二月、三月……每個月全世界排出一朵大碳雲，地球把它吸掉了。', run: months(1, 7, absorb) },
     { say: '今年到7月30日，人類排的，就已經超過地球一整年吸得掉的量了。', run: overshoot },
     { say: '後面排的碳雲，地球吸不完，就一直留在天上。', run: months(8, 12, linger) },
     { say: '碳雲越來越多，地球就越來越熱。今天我們要過一天，看看能不能少排一點碳雲。', run: async () => { await anim($('earth'), [{ filter: 'none' }, { filter: 'sepia(.6) saturate(2) hue-rotate(-20deg)' }], 1200); } },
   ];
-  Act.mountOptions($('opts'), '你好，我是朗讀的聲音。地球每年只吸得掉一定數量的碳雲。');
+  Act.mountOptions($('opts'), '你好，我是朗讀的聲音。地球每年只吸得掉一定的數量。');
   Act.story(steps, { caption: $('cap'), play: $('play'), reset: () => { stay = 0; dotX = 0; reset(); } });
   reset();
 })();
