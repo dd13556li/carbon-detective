@@ -11,8 +11,9 @@
 /* 第一節 發展活動二（任務版）：左邊出任務（家電、幾瓦、一天幾小時）→ 右邊照任務 選家電、輸入瓦數、輸入小時 → 自動算出一個月幾度、幾公斤 */
 .mbox{display:grid;grid-template-columns:minmax(280px,5fr) 7fr;gap:20px;align-items:start}
 @media (max-width:860px){.mbox{grid-template-columns:1fr}}
-.task{position:sticky;top:12px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;border:4px solid var(--warn);border-radius:20px;background:var(--paper);padding:18px}
-@media (max-width:860px){.task{position:static}}
+.lcol{position:sticky;top:12px;display:flex;flex-direction:column;gap:12px;min-width:0}
+@media (max-width:860px){.lcol{position:static}}
+.task{display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;border:4px solid var(--warn);border-radius:20px;background:var(--paper);padding:18px}
 .task .tag{font-size:18px;font-weight:900;color:#fff;background:var(--warn);border-radius:999px;padding:2px 14px}
 .task img,.task svg{width:min(150px,40vw);height:auto;aspect-ratio:1;object-fit:contain}
 .task .tq{font-size:clamp(24px,3.4vw,32px);font-weight:900;line-height:1.5}
@@ -84,15 +85,18 @@
       <div class="bar"><span class="prog" id="prog"></span><span class="sp"></span>
         <button class="small" id="again">🔊 再念一次任務</button><button class="small" id="hintbtn">💡 提示</button></div>
       <div class="mbox">
-        <div class="task" id="task"></div>
+        <div class="lcol">
+          <div class="task" id="task"></div>
+          <!-- 2026-11-13 使用者定：數字鍵與算出來的結果放在任務框下方 -->
+          <div class="pad" id="pad"></div>
+          <div class="res wait" id="res">選好家電、輸入瓦數和小時，這裡就會算出來。</div>
+        </div>
         <div class="steps">
           <div class="st s1" id="s1"><h3><span class="n">1</span>選家電</h3><div class="apps" id="apps"></div></div>
           <div class="st s2" id="s2"><h3><span class="n">2</span>輸入瓦數</h3>
             <button class="fld" id="fw" data-f="w"><span class="v" id="vw">　</span><span class="u">瓦 W</span></button><div class="opts3" id="ow" hidden></div></div>
           <div class="st s3" id="s3"><h3><span class="n">3</span>一天用幾小時？</h3>
             <button class="fld" id="fh" data-f="h"><span class="v" id="vh">　</span><span class="u">小時</span></button><div class="opts3" id="oh" hidden></div></div>
-          <div class="pad" id="pad"></div>
-          <div class="res wait" id="res">選好家電、輸入瓦數和小時，這裡就會算出來。</div>
           <div class="msg" id="msg" aria-live="polite"></div>
           <div class="row" id="acts"><button class="go" id="check">完成任務 ✓</button></div>
         </div>
@@ -138,8 +142,8 @@
     $('prog').textContent = `第 ${n} 位・${TIERS[tier].name}`;
     $('task').className = 'task' + (tier === 'A' ? '' : ' mark');
     $('task').innerHTML = `<span class="tag">任務 Mission</span>${icon(t.a.key, t.a.name)}
-      <div class="tq">家裡的<b class="c1">${t.a.name}</b>是 <b class="c2">${t.w} 瓦</b>，<br>每天用 <b class="c3">${t.h} 小時</b>。</div>
-      <div class="ask">一個月（${DAYS} 天）會排多少碳？</div>`;
+      <div class="tq">家裡的<b class="c1">${t.a.name}</b><br>是 <b class="c2">${t.w} 瓦</b>，<br>每天用 <b class="c3">${t.h} 小時</b>。</div>
+      <div class="ask">一個月（${DAYS} 天）<br>會排多少碳？</div>`;
     P.cstep = 1;
     $('msg').textContent = ''; $('check').disabled = false; $('check').hidden = tier === 'C';   // C 點完第三步自動完成
     document.querySelectorAll('.st').forEach((s) => s.classList.remove('bad'));

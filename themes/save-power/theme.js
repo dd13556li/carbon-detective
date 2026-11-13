@@ -239,11 +239,13 @@ window.THEME = {
   //   度數＝Σ 瓦數 × 小時 × 30 ÷ 1000（瓦數取 appliances）；只放「× kgCO2PerKwh 四捨五入剛好 1～5 公斤」的活動，
   //   各格公斤數不同 → 現場準備 1～5 公斤的重物，學生拿起來提提看（check_theme 會檢查）
   spin: { days: 30, acts: [
-    { label: "開燈 5 小時",                             uses: [{ key: "bulb", hours: 5 }] },
+    // 2026-11-13 改：度數都是 2.1 的倍數 → × 0.471 ＝ 0.99、1.98、2.97、3.96、4.95，約 1～5 公斤，
+    //   計算器算出來就是「差一點點就是整數」，不再出現 2.8、5.4 這種要再判斷的數（瓦數都是 10 的倍數，算不出剛好的整數）
+    { label: "開燈 2 小時＋手機充電 3 小時",               uses: [{ key: "bulb", hours: 2 }, { key: "phoneCharge", hours: 3 }] },
     { label: "看電視 1 小時＋開燈 2 小時",               uses: [{ key: "tv", hours: 1 }, { key: "bulb", hours: 2 }] },
-    { label: "看電視 2 小時",                           uses: [{ key: "tv", hours: 2 }] },
-    { label: "看電視 2 小時＋開燈 5 小時",               uses: [{ key: "tv", hours: 2 }, { key: "bulb", hours: 5 }] },
-    { label: "看電視 3 小時＋開燈 3 小時＋手機充電 2 小時", uses: [{ key: "tv", hours: 3 }, { key: "bulb", hours: 3 }, { key: "phoneCharge", hours: 2 }] }
+    { label: "看電視 2 小時＋手機充電 1 小時",             uses: [{ key: "tv", hours: 2 }, { key: "phoneCharge", hours: 1 }] },
+    { label: "看電視 2 小時＋開燈 4 小時",               uses: [{ key: "tv", hours: 2 }, { key: "bulb", hours: 4 }] },
+    { label: "看電視 3 小時＋開燈 2 小時＋手機充電 1 小時", uses: [{ key: "tv", hours: 3 }, { key: "bulb", hours: 2 }, { key: "phoneCharge", hours: 1 }] }
   ] },
   // 我會說：抽一張，對家人說出這一句（icon＝art/ 的圖）
   // 中英雙語關鍵字卡（cards/ 字卡頁、教案附錄十三都讀這一份）。img 是從遊戲根目錄算起的路徑；

@@ -52,26 +52,52 @@
   // 輪流上台。opt：tiers {A:{name,desc},B,C}；play(tier, n, done(result))；resultCols ['欄名']；row(result)→[欄值]
   // 三個畫面的容器：#turn（第 n 位＋選層級）、#play（遊戲）、#done（全班結果）
   const HOW = { 獨立: '自己完成', 提示: '看提示完成', 協助: '在協助下完成' };
+  // 第 1 位的選等級直接放在設定頁（#start 換成 #first 選單，2026-11-13 使用者定）；第 2 位起照舊在 #turn。
+  //   opt.first:false 不放；opt.beforeStart() 從設定頁出發前呼叫（hunt 用來同步朗讀開關）
+  // 每個遊戲的「← 活動選單」右邊加「⚙️ 回設定」：回到設定頁、清掉這一輪
   function turns(opt) {
     const T = { n: 0, log: [] };
-    function show(id) { ['turn', 'play', 'done'].forEach((x) => { $(x).hidden = x !== id; }); window.scrollTo(0, 0); }
+    const tiersHTML = () => `<div class="tiers">${Object.entries(opt.tiers).map(([k, t]) =>
+      `<button class="tier" data-tier="${k}"><b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div>`;
+    const whoHTML = (n) => `<div class="who">第 ${n} 位同學上台 🙋</div>
+        <p class="sub" style="text-align:center">老師幫這位同學選任務等級</p>`;
+    function show(id) { ['setup', 'turn', 'play', 'done'].forEach((x) => { if ($(x)) $(x).hidden = x !== id; }); window.scrollTo(0, 0); }
     function next() {
       T.n++; stop();
-      $('turn').innerHTML = `<div class="turn">
-        <div class="who">第 ${T.n} 位同學上台 🙋</div>
-        <p class="sub" style="text-align:center">老師幫這位同學選任務等級</p>
-        <div class="tiers">${Object.entries(opt.tiers).map(([k, t]) =>
-          `<button class="tier" data-tier="${k}"><b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div>
+      $('turn').innerHTML = `<div class="turn">${whoHTML(T.n)}${tiersHTML()}
         ${T.log.length ? `<button class="go alt" id="finish">全班都玩過了，看結果 ✔</button>` : ''}
       </div>`;
       show('turn');
       speak(`請第${T.n}位同學上台。`);
     }
-    document.addEventListener('click', (e) => {
-      const b = e.target.closest('#turn .tier, #turn #finish'); if (!b) return;
-      if (b.id === 'finish') { T.n--; return finish(); }
-      const tier = b.dataset.tier; show('play');
+    function begin(tier) {
+      show('play');
       opt.play(tier, T.n, (result) => { T.log.push({ n: T.n, tier, ...result }); next(); });
+    }
+    if (opt.first !== false && $('start')) {
+      const f = document.createElement('div'); f.id = 'first'; f.className = 'turn';
+      f.innerHTML = whoHTML(1) + tiersHTML();
+      $('start').insertAdjacentElement('beforebegin', f); $('start').hidden = true;
+    }
+    const home = document.querySelector('.top .home');
+    if (home && !$('toSetup')) {
+      const nav = document.createElement('span'); nav.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+      home.replaceWith(nav); nav.appendChild(home);
+      const b = document.createElement('button'); b.id = 'toSetup'; b.className = 'home'; b.type = 'button';
+      b.style.cssText = 'font-family:inherit;cursor:pointer'; b.textContent = '⚙️ 回設定';
+      nav.appendChild(b);
+      b.addEventListener('click', () => {
+        if (!$('setup') || !$('setup').hidden) return;
+        if (T.log.length && !confirm(`回到設定頁會清掉這一輪 ${T.log.length} 位的結果，確定嗎？`)) return;
+        stop(); T.n = 0; T.log.length = 0; show('setup');
+        opt.onSetup && opt.onSetup();
+      });
+    }
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest('#turn .tier, #turn #finish, #first .tier'); if (!b) return;
+      if (b.id === 'finish') { T.n--; return finish(); }
+      if (b.closest('#first')) { opt.beforeStart && opt.beforeStart(); stop(); T.n = 1; T.log.length = 0; }
+      begin(b.dataset.tier);
     });
     function finish() {
       stop(); window.GameSfx.sfx.fanfare();
@@ -84,7 +110,7 @@
         <p class="note">教師紀錄：依完成方式（獨立／提示／協助）記入紀錄表。這份結果只留在這個分頁，重新整理就清除，不會上傳。</p>`;
       show('done');
       speak(`太棒了！全班${T.log.length}位同學都完成了。`);
-      $('again').addEventListener('click', () => { T.n = 0; T.log = []; next(); }, { once: true });
+      $('again').addEventListener('click', () => { T.n = 0; T.log.length = 0; next(); }, { once: true });
     }
     window.__turns = { T, next, finish };
     return { next, finish, show, log: T.log };

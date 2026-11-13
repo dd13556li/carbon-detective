@@ -196,6 +196,7 @@ a{color:var(--accent)}
     $('mode').innerHTML = [[true, '輪流上台（每人一張）'], [false, '一個人玩三張']].map(([v, l]) =>
       `<button data-opt="rot" data-v="${v}" aria-pressed="${S.rot === v}">${l}</button>`).join('');
     $('solo').hidden = S.rot;
+    if ($('first')) { $('first').hidden = !S.rot; $('start').hidden = S.rot; }   // 輪流上台：第 1 位直接在這裡選等級
   }
   $('setup').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
@@ -206,12 +207,14 @@ a{color:var(--accent)}
   const HOWRANK = { 獨立: 0, 提示: 1, 協助: 2 };
   const turns = window.Act && Act.turns({
     tiers: TIERS, resultCols: ['帳單', '找到的寶藏'], row: (x) => [`範例 ${x.bill}`, x.found],
+    beforeStart: () => { Act.S.speak = S.speak; }, onSetup: () => renderSetup(),
     play: (tier, n, done) => { S.tier = tier; S.bi = pickBill(); S.seq = [S.bi]; S.k = 0; S.log = []; S.turnDone = done; show('play'); startBill(); },
   });
   $('start').addEventListener('click', () => {
     if (S.rot && turns) { Act.S.speak = S.speak; $('setup').hidden = true; turns.next(); return; }
     startSolo();
   });
+  renderSetup();
   // ---- 列印練習單：用遊戲同一份帳單圖與題目（T），一張帳單一頁 ----
   const PRINTQ = {
     A: (b) => [1, 2, 3, 4].map((n) => `<li><span class="n" style="background:${T[n].c}">${n}</span>${T[n].zh}：${n === 3 ? '<span class="blank"></span> 至 <span class="blank"></span>' : `<span class="blank"></span> ${{ 1: '度', 2: '元', 4: '公斤' }[n]}`}</li>`),
