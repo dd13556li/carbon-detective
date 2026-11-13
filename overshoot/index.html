@@ -16,14 +16,14 @@
 <main class="wrap">
   <div class="top">
     <header><h1>地球吸不完的碳雲</h1><p class="en">Earth Overshoot Day</p>
-      <p class="sub" style="font-weight:700">☁️ 這裡的 1 朵大碳雲＝全世界的人 1 個月排出的碳（非常非常多，不是遊戲裡的「1 朵≈1 度電」）</p></header>
+      <p class="sub" style="font-weight:700">☁️ 這裡的 1 朵超大碳雲＝全世界的人 1 個月排出的碳（非常非常多，不是遊戲裡的「1 朵≈1 度電」）</p></header>
     <a class="home" href="../lesson/index.html">← 活動選單</a>
   </div>
   <div class="scene"><svg class="stage" id="svg" viewBox="0 0 1600 900" role="img" aria-label="一年十二個月的碳雲動畫"></svg></div>
   <div class="caption" id="cap" aria-live="polite">按「播放」開始。</div>
   <div class="row"><button class="go" id="play">▶ 播放</button></div>
   <p class="src">資料：2026 年地球超載日是 7 月 30 日（全球足跡網絡 Global Footprint Network）；碳約占人類生態足跡的 6 成。<br>
-    示意動畫：這裡的 1 朵碳雲代表全世界 1 個月排出的碳（一定數量，和棋盤遊戲「1 朵≈1 度電的碳」的單位不同）；前 7 朵被地球吸掉，等於到 7 月底就用完地球一整年吸得掉的量。真正的二氧化碳是看不見的氣體。</p>
+    示意動畫：每個月從城市（大樓、工廠、住家）上空冒出 1 朵超大碳雲，代表全世界 1 個月排出的碳（一定數量，和棋盤遊戲「1 朵≈1 度電的碳」的單位不同）；前 7 朵被地球吸掉，等於到 7 月底就用完地球一整年吸得掉的量。真正的二氧化碳是看不見的氣體。</p>
   <details class="panel"><summary>朗讀與音效</summary><div id="opts"></div></details>
 </main>
 
@@ -58,11 +58,22 @@
     el('rect', { x: X0, y: 820, width: X1 - X0, height: 14, rx: 7, fill: 'var(--line)' });
     for (let m = 1; m <= 12; m++) el('text', { x: MX(m), y: 875, 'text-anchor': 'middle', 'font-size': 28, 'font-weight': 700, fill: 'var(--ink)' }).textContent = m + '月';
     el('circle', { cx: MX(1), cy: 827, r: 20, fill: 'var(--warn)', id: 'dot', class: 'fx' });
-    // 排碳的家（工廠＋房子）
-    el('path', { d: 'M1300 700v-120l70-60 70 60v120z', fill: '#e9c79b', stroke: '#6b4f2e', 'stroke-width': 6 });
-    el('rect', { x: 1395, y: 520, width: 30, height: 60, fill: '#8a6a4a' });
-    el('rect', { x: 1345, y: 620, width: 50, height: 80, fill: '#6b4f2e' });
-    el('text', { x: 1370, y: 760, 'text-anchor': 'middle', 'font-size': 28, 'font-weight': 900, fill: 'var(--ink)' }).textContent = '全世界用電、用油';
+    // 排碳的城市：大樓、工廠、住家——全世界的人生活、工作都在用電用油
+    // 辦公大樓（窗戶亮著）
+    el('rect', { x: 1150, y: 440, width: 110, height: 260, rx: 6, fill: '#9fb4c7', stroke: '#4a5d70', 'stroke-width': 5 });
+    for (let r = 0; r < 6; r++) for (let c = 0; c < 3; c++) el('rect', { x: 1166 + c * 32, y: 460 + r * 38, width: 20, height: 24, rx: 3, fill: '#ffe27a' });
+    // 公寓
+    el('rect', { x: 1268, y: 540, width: 80, height: 160, rx: 4, fill: '#d9a07a', stroke: '#7a4e32', 'stroke-width': 5 });
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) el('rect', { x: 1282 + c * 32, y: 556 + r * 36, width: 20, height: 22, rx: 3, fill: '#fff4c2' });
+    // 工廠（鋸齒屋頂＋兩支煙囪）
+    el('path', { d: 'M1356 700v-90l40-30v30l40-30v30l40-30v120z', fill: '#b9b2a6', stroke: '#5e574c', 'stroke-width': 5 });
+    el('rect', { x: 1372, y: 470, width: 26, height: 120, fill: '#8d857a', stroke: '#5e574c', 'stroke-width': 4 });
+    el('rect', { x: 1440, y: 500, width: 26, height: 90, fill: '#8d857a', stroke: '#5e574c', 'stroke-width': 4 });
+    // 住家
+    el('path', { d: 'M1486 700v-100l52-46 52 46v100z', fill: '#e9c79b', stroke: '#6b4f2e', 'stroke-width': 5 });
+    el('rect', { x: 1522, y: 640, width: 32, height: 60, fill: '#6b4f2e' });
+    el('text', { x: 1370, y: 755, 'text-anchor': 'middle', 'font-size': 26, 'font-weight': 900, fill: 'var(--ink)' }).textContent = '城市、工廠、家家戶戶';
+    el('text', { x: 1370, y: 790, 'text-anchor': 'middle', 'font-size': 24, 'font-weight': 700, fill: 'var(--muted)' }).textContent = '全世界用電、用油';
     // 計數
     el('text', { x: 40, y: 70, 'font-size': 40, 'font-weight': 900, fill: 'var(--ink)', id: 'count' }).textContent = '';
     el('g', { id: 'sky' });
@@ -70,11 +81,12 @@
   let dotX = 0;
   const moveDot = (m) => { const a = dotX; dotX = MX(m) - MX(1); return anim($('dot'), [{ transform: `translateX(${a}px)` }, { transform: `translateX(${dotX}px)` }], 500); };
 
-  // 一朵雲從房子飄出
+  // 一朵「超大」碳雲從城市（大樓、工廠煙囪、住家）上空冒出：代表全世界一個月排出的碳
+  const FROM = [1360, 420];
   function puff() {
     const g = el('g', {}, $('sky'));
-    el('image', { href: CLOUD, x: -80, y: -60, width: 160, height: 120 }, g);
-    g.setAttribute('transform', 'translate(1410 500)');
+    el('image', { href: CLOUD, x: -130, y: -98, width: 260, height: 196 }, g);
+    g.setAttribute('transform', `translate(${FROM[0]} ${FROM[1]}) scale(.4)`);
     sfx.rise();
     return g;
   }
@@ -85,9 +97,10 @@
   async function absorb(m) {
     await moveDot(m);
     const g = puff();
-    await fly(g, [1410, 500], [800, 260], 900, .6, 1);
+    await fly(g, FROM, [800, 260], 1100, .4, 1.4);
+    g.setAttribute('transform', 'translate(800 260) scale(1.4)'); await sleep(450);
     const sx = 420 + (m - 1) * 62 + 27;
-    await fly(g, [800, 260], [sx, 567], 800, 1, .32);
+    await fly(g, [800, 260], [sx, 567], 800, 1.4, .2);
     $('slot' + (m - 1)).setAttribute('fill', '#9fd8b8');
     anim($('earth'), [{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], 400);
     $('count').textContent = `地球吸掉了 ${m} 個月的碳`;
@@ -97,8 +110,8 @@
     await moveDot(m);
     const g = puff(); stay++;
     const tx = 520 + (stay - 1) * 190, ty = 120 + (stay % 2) * 70;
-    await fly(g, [1410, 500], [tx, ty], 1100, .6, 1.15);
-    g.setAttribute('transform', `translate(${tx} ${ty}) scale(1.15)`);
+    await fly(g, FROM, [tx, ty], 1100, .4, .8);
+    g.setAttribute('transform', `translate(${tx} ${ty}) scale(.8)`);
     g.querySelector('image').style.filter = 'brightness(.75)';
     $('count').textContent = `留在天上 ${stay} 個月的碳`;
   }
@@ -113,8 +126,8 @@
   }
   const months = (a, b, f) => async () => { for (let m = a; m <= b; m++) await f(m); };
   const steps = [
-    { say: '這裡的一朵大碳雲，是全世界的人一個月排出的碳，非常非常多。地球每年只吸得掉一定的數量。', run: async () => { await anim($('earth'), [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], 800); } },
-    { say: '一月、二月、三月……每個月全世界排出一朵大碳雲，地球把它吸掉了。', run: months(1, 7, absorb) },
+    { say: '城市裡的大樓、工廠，還有家家戶戶，都在用電、用油。這裡的一朵超大碳雲，是全世界的人一個月排出的碳，非常非常多。地球每年只吸得掉一定的數量。', run: async () => { await anim($('earth'), [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], 800); } },
+    { say: '一月、二月、三月……每個月全世界排出一朵超大碳雲，地球把它吸掉了。', run: months(1, 7, absorb) },
     { say: '今年到7月30日，人類排的，就已經超過地球一整年吸得掉的量了。', run: overshoot },
     { say: '後面排的碳雲，地球吸不完，就一直留在天上。', run: months(8, 12, linger) },
     { say: '碳雲越來越多，地球就越來越熱。今天我們要過一天，看看能不能少排一點碳雲。', run: async () => { await anim($('earth'), [{ filter: 'none' }, { filter: 'sepia(.6) saturate(2) hue-rotate(-20deg)' }], 1200); } },
