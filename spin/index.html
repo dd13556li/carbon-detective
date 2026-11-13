@@ -192,7 +192,7 @@
   const KEYS = { A: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', '×', '⌫', '清除', '＝'], B: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', '⌫', '清除'] };
   function drawMini(result) {
     const A = P.tier === 'A', v = Number(P.typed || 0);
-    const read = A ? `<span class="in">${P.typed || '　'}</span> ＝ ${result || '？ 公斤'}`
+    const read = A ? `<span class="in">${P.typed || '　'}</span> ${result ? `＝ ${result}` : '？ 公斤'}`   // A：算出來之前只顯示「？ 公斤」，按＝後才出現「＝」
       : `<span class="in">${P.typed || '　'}</span> 度 × ${COEF} ＝ ${result || (v && !P.typed.endsWith('.') ? `${kgShow(v)} 公斤` : '？ 公斤')}`;
     $('mini').innerHTML = `<p class="how">${A ? `輸入算式：度數 × ${COEF}，再按「＝」` : `輸入度數，計算器會自動乘 ${COEF}`}（1 度電排出約 ${COEF} 公斤的碳）</p>
       <div class="read">${read}</div>
@@ -232,7 +232,7 @@
       P.typed += x;
     }
     sfx.step(); drawMini();
-    if (A) { if (/^[\d×]$/.test(x)) speak(x === '×' ? '乘以' : x); return; }
+    if (A) { if (/^[\d×.]$/.test(x)) speak({ '×': '乘以', '.': '點' }[x] || x); return; }
     const v = Number(P.typed || 0);
     if (!v || P.typed.endsWith('.')) return;
     if (v === a.kwh) { sfx.good(); return calcDone(v); }
