@@ -181,7 +181,7 @@
     if (g !== k) {
       P.wrong++; c.classList.add('wrong'); c.disabled = true; sfx.gentle();
       const say = g > k ? `${g}公斤太重了，再找輕一點的。` : `${g}公斤太輕了，再找重一點的。`;
-      $('msg').className = 'msg no'; $('msg').textContent = say; speak(say.replace(/重/g, '種'));   // 朗讀用「種」：TTS 會把「重」唸成ㄔㄨㄥˊ
+      $('msg').className = 'msg no'; $('msg').textContent = say; speak(say.replace(/重/g, '眾'));   // 朗讀用「眾」：TTS 會把「重」唸成ㄔㄨㄥˊ
       if (P.wrong >= (P.tier === 'A' ? 3 : 1)) showHint();
       return;
     }
@@ -246,7 +246,7 @@
     $('after').innerHTML = `<div class="formula">${a.kwh} 度 × ${COEF} ＝ ${kgShow(a.kwh)}（大約 ${k} 公斤）</div>
       <div class="lift">🏋️ 拿起「${k} 公斤」的物品，提提看有多重！</div>
       <div class="row" style="margin-top:12px"><button class="go" id="lifted">完成 ✓</button></div>`;
-    speak(`${lead}每天${a.label}，一個月排出的碳大約${k}公斤。請拿起${k}公斤的物品，提提看有多種。`);   // 朗讀寫「多種」：TTS 會把「多重」唸成ㄔㄨㄥˊ
+    speak(`${lead}每天${a.label}，一個月排出的碳大約${k}公斤。請拿起${k}公斤的物品，提提看有多眾。`);   // 朗讀寫「多眾」：TTS 會把「多重」唸成ㄔㄨㄥˊ
     $('lifted').addEventListener('click', () => P.done({ act: a.label, kwh: a.kwh, kg: k, how }), { once: true });
   }
   $('spinbtn').addEventListener('click', spin);
