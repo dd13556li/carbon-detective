@@ -17,6 +17,8 @@
 .stu input[type=text]{font:inherit;font-size:18px;padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:var(--paper);color:var(--ink);width:100%;min-width:0}
 .stu .avb{flex:none;width:56px;height:56px;border-radius:50%;border:3px solid var(--line);background:var(--paper);padding:0;overflow:hidden;display:grid;place-items:center;cursor:pointer}
 .av img,.av svg,.avb img,.avb svg{width:100%;height:100%;object-fit:cover;display:block}
+.resume{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 14px;border:2px dashed var(--line);border-radius:14px;background:var(--bg);font-size:17px;font-weight:700}
+.resume .small{font-size:17px}
 .pbtn{flex:none;display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;border:2px solid var(--line);background:var(--paper);font-size:20px;cursor:pointer;padding:0}
 .chk td.nm .av{display:inline-block;width:36px;height:36px;border-radius:50%;overflow:hidden;vertical-align:middle;margin-right:6px;border:2px solid var(--line)}
 .count{display:flex;gap:10px;align-items:center;font-size:22px;font-weight:900}
@@ -88,6 +90,7 @@ table.chk{border-collapse:collapse;width:100%;min-width:640px}
   </div>
 
   <section id="setup" class="panel">
+    <div class="resume"><span>上一節已經勾過？</span><label class="small" style="cursor:pointer">📂 匯入紀錄檔，接著勾<input type="file" id="imp" accept=".json,application/json" hidden></label><span id="impmsg" style="color:var(--muted)"></span></div>
     <h2>1. 全班幾位同學？</h2>
     <div class="count"><button id="minus" aria-label="少一位">−</button><span id="cnt"></span><button id="plus" aria-label="多一位">＋</button></div>
     <div class="names" id="names"></div>
@@ -99,7 +102,7 @@ table.chk{border-collapse:collapse;width:100%;min-width:640px}
 
   <section id="check" hidden>
     <div class="wrap" style="gap:14px">
-      <div class="bar"><span class="prog">點格子打勾；點活動名稱＝整欄全班都完成</span><span class="sp"></span><button class="small" id="back">回設定</button></div>
+      <div class="bar"><span class="prog">點格子打勾；點活動名稱＝整欄全班都完成</span><span class="sp"></span><button class="small" id="exp1">💾 匯出紀錄</button><button class="small" id="back">回設定</button></div>
       <div class="gridwrap"><table class="chk" id="grid"></table></div>
       <div class="row"><button class="go" id="verify">檢查 ✔</button></div>
     </div>
@@ -189,22 +192,66 @@ table.chk{border-collapse:collapse;width:100%;min-width:640px}
     $('done').innerHTML = `<h2>🎉 檢查結果：${full} 位完成全部 ${A.length} 項活動</h2>
       <p class="sub">全班 ${S.n} 位。每張證書有頭像和完成的活動，○ 是還沒完成的，補做後可以回去再勾。按「列印」一張 A4 印兩位。</p>
       <div class="certs">${res.map(certHTML).join('')}</div>
-      <div class="row"><button class="go" id="again">回去修改勾選</button><button class="go alt" id="print">列印</button></div>
-      <p class="note">這份結果只留在這個分頁，重新整理就清除，不會上傳。</p>`;
+      <div class="row"><button class="go" id="again">回去修改勾選</button><button class="go alt" id="print">列印</button><button class="go alt" id="exp2">💾 匯出紀錄</button></div>
+      <p class="note">這份結果只留在這個分頁，重新整理就清除，不會上傳。下一節要接著勾：先按「💾 匯出紀錄」存檔，下一節在第 1 步按「📂 匯入紀錄檔」。</p>`;
     $('check').hidden = true; $('done').hidden = false; window.scrollTo(0, 0);
     full ? sfx.fanfare() : sfx.good();
     speak(`檢查完成。全班${S.n}位，有${full}位完成全部${A.length}項活動。`);
     $('again').onclick = () => { $('done').hidden = true; $('check').hidden = false; drawGrid(); };
     $('print').onclick = () => window.print();
+    $('exp2').onclick = exportFile;
   }
   $('start').onclick = () => {
     if (!used().length) { alert('請至少選一項活動'); return; }
     $('setup').hidden = true; $('check').hidden = false; drawGrid();
   };
+  // ---------- 匯出／匯入（兩節課分開上時接著勾）----------
+  // 檔案存在老師自己的電腦：瀏覽器在本機產生、本機讀取，不經過任何伺服器。檔案含名字與照片，不要上傳分享。
+  const FILE_APP = 'carbon-detective-cert';
+  function exportFile() {
+    const data = { app: FILE_APP, v: 1, savedAt: new Date().toISOString(), n: S.n, names: S.names.slice(0, S.n),
+      av: S.av.slice(0, S.n), photo: S.photo.slice(0, S.n), use: [...S.use], done: S.done };
+    const d = new Date(), z = (x) => String(x).padStart(2, '0');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
+    a.download = `減碳身分認證紀錄_${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    sfx.good();
+  }
+  function importData(data) {
+    if (!data || data.app !== FILE_APP) throw new Error('不是減碳身分認證的紀錄檔');
+    const ids = new Set(ACTS.map((a) => a.id));
+    S.n = Math.max(1, Math.min(30, +data.n || 1));
+    S.names = (data.names || []).map((x) => String(x || '').slice(0, 30));
+    S.av = (data.av || []).map((x) => (x == null ? undefined : +x));
+    S.photo = (data.photo || []).map((x) => (typeof x === 'string' && x.startsWith('data:image/') ? x : undefined));
+    S.use = new Set((data.use || []).filter((k) => ids.has(k)));
+    if (!S.use.size) S.use = new Set(ids);
+    S.done = {};
+    for (const [i, row] of Object.entries(data.done || {})) {
+      if (+i >= S.n) continue;
+      S.done[+i] = {}; for (const [k, v] of Object.entries(row || {})) if (ids.has(k) && v) S.done[+i][k] = true;
+    }
+  }
+  $('imp').addEventListener('change', (e) => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        importData(JSON.parse(rd.result));
+        const k = Object.values(S.done).reduce((t, r) => t + Object.keys(r).length, 0);
+        $('impmsg').textContent = `已匯入：${S.n} 位、已勾 ${k} 格`;
+        sfx.good(); $('setup').hidden = true; $('check').hidden = false; drawGrid();
+      } catch (err) { $('impmsg').textContent = '⚠️ 這個檔案讀不出來：' + err.message; }
+    };
+    rd.readAsText(f);
+  });
+  $('exp1').onclick = exportFile;
   $('back').onclick = () => { $('check').hidden = true; $('setup').hidden = false; drawSetup(); };
   $('verify').onclick = verify;
   drawSetup();
-  window.__cert = { S, ACTS, verify, AVS };
+  window.__cert = { S, ACTS, verify, AVS, importData };
 })();
 </script>
 </body>
