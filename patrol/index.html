@@ -156,10 +156,10 @@
     $('msg').className = 'msg ok';
     $('msg').textContent = `巡守完成！關掉了 ${n} 個電器${P.fridge ? '，也記得冰箱不能關' : ''}。`;
     speak(`巡守完成！你關掉了${n}個沒人用的電器。`);
-    $('acts').innerHTML = '<button class="go" id="next">下一位 ✓</button>';
+    $('acts').innerHTML = '<button class="go" id="next">完成 ✓</button>';
     $('next').addEventListener('click', () => P.done({ list: P.offed.join('、'), fridge: P.fridge ? `點了 ${P.fridge} 次` : '—', how }), { once: true });
   }
-  $('again').addEventListener('click', () => P.over ? speak('按下一位。') : speak('教室裡有電器開著，沒有人在用。找出來，點一下關掉。'));
+  $('again').addEventListener('click', () => P.over ? speak('按完成。') : speak('教室裡有電器開著，沒有人在用。找出來，點一下關掉。'));
   $('hintbtn').addEventListener('click', () => { if (!P.over && P.on.size) { hint(); speak(`找找看${left()[0].name}。`); } });
   Act.mountOptions($('opts'), '你好，我是朗讀的聲音。電燈關掉了！');
   const turns = Act.turns({ tiers: TIERS, play, resultCols: ['關掉的電器', '冰箱'], row: (x) => [x.list, x.fridge] });

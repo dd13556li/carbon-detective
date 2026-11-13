@@ -342,7 +342,7 @@ a{color:var(--accent)}
     $('msg').className = 'msg ok';
     if (S.rot) {
       const how = S.log.reduce((w, x) => HOWRANK[x.how] > HOWRANK[w] ? x.how : w, '獨立');
-      $('msg').innerHTML = `這張帳單的寶藏都找到了！<button class="small" id="nextbill" style="margin-left:10px">下一位 ✓</button>`;
+      $('msg').innerHTML = `這張帳單的寶藏都找到了！<button class="small" id="nextbill" style="margin-left:10px">完成 ✓</button>`;
       speak(`太棒了！你找到了${S.log.length}個寶藏。`);
       $('nextbill').addEventListener('click', () => S.turnDone({ bill: b.key, found: S.log.map((x) => T[x.task].zh).join('、'), how }), { once: true });
       return;

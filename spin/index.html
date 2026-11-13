@@ -245,7 +245,7 @@
     $('msg').className = 'msg ok'; $('msg').textContent = P.tier === 'C' ? '' : '答對了！';
     $('after').innerHTML = `<div class="formula">${a.kwh} 度 × ${COEF} ＝ ${kgShow(a.kwh)}（大約 ${k} 公斤）</div>
       <div class="lift">🏋️ 到桌上拿起「${k} 公斤」那一個，提提看有多重！</div>
-      <div class="row" style="margin-top:12px"><button class="go" id="lifted">提過了，下一位 ✓</button></div>`;
+      <div class="row" style="margin-top:12px"><button class="go" id="lifted">完成 ✓</button></div>`;
     speak(`${lead}每天${a.label}，一個月排出的碳大約${k}公斤。請到桌上拿起${k}公斤那一個，提提看有多重。`);
     $('lifted').addEventListener('click', () => P.done({ act: a.label, kwh: a.kwh, kg: k, how }), { once: true });
   }

@@ -132,7 +132,7 @@
     const byMonth = P.order.slice().sort((a, b) => month(b) - month(a));
     const jump = byMonth.find((a, i) => P.order.indexOf(a) > i);          // 瓦數排名後面、一個月卻用得多的
     $('after').innerHTML = `<h2>瓦數（用電的力氣）</h2>${bars(P.order, (a) => a.watts, (a) => `${a.watts} W`)}
-      <div class="row" style="margin-top:14px"><button class="go alt" id="mon">一個月用多少度？📅</button><button class="go" id="next">下一位 ✓</button></div>
+      <div class="row" style="margin-top:14px"><button class="go alt" id="mon">一個月用多少度？📅</button><button class="go" id="next">完成 ✓</button></div>
       <div id="monbox"></div>`;
     speak(`排好了！最吃電的是${P.order[0].name}，${P.order[0].watts}瓦。`);
     $('mon').addEventListener('click', () => {
@@ -144,7 +144,7 @@
     });
     $('next').addEventListener('click', () => P.done({ list: P.order.map((a) => a.name).join(' > '), how }), { once: true });
   }
-  $('again').addEventListener('click', () => speak(P.order && P.placed < P.order.length ? '從最吃電的開始，一個一個點。' : '按下一位。'));
+  $('again').addEventListener('click', () => speak(P.order && P.placed < P.order.length ? '從最吃電的開始，一個一個點。' : '按完成。'));
   $('hintbtn').addEventListener('click', () => { if (P.placed < P.order.length) { hint(); speak(`找找看${want().name}。`); } });
 
   Act.mountOptions($('opts'), '你好，我是朗讀的聲音。冷氣是九百瓦。');

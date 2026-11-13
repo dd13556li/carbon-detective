@@ -241,7 +241,7 @@
     const how = P.tier === 'C' ? '協助' : (P.wrong === 0 && !P.hinted ? '獨立' : '提示');
     $('msg').className = 'msg ok'; $('msg').textContent = '任務完成！';
     $('check').hidden = true;
-    $('acts').insertAdjacentHTML('beforeend', '<button class="go" id="nextp">下一位 ✓</button>');
+    $('acts').insertAdjacentHTML('beforeend', '<button class="go" id="nextp">完成 ✓</button>');
     speak(`任務完成！${t.a.name}${t.w}瓦，每天用${t.h}小時，一個月用了${fmt1(kwh)}度電，排出大約${fmt1(kg)}公斤的二氧化碳，${wt.text}那麼重。`);
     $('nextp').addEventListener('click', () => { $('nextp').remove(); P.done({ task: `${t.a.name} ${t.w} 瓦×${t.h} 小時`, kwh: fmt1(kwh), kg: fmt1(kg), how }); }, { once: true });
   });

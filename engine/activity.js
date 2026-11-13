@@ -2,7 +2,7 @@
 //   Act.speak(text)          朗讀（等音效結束；用 ZhTTS.pickTW 挑高品質語音，與棋盤遊戲同一個選擇）
 //   Act.icon(key)            theme art/ 的圖，沒有就用 icons.js 向量圖
 //   Act.mountOptions(el)     朗讀／音效開關（語音自動選，不給選單）
-//   Act.turns({...})         輪流上台：第 n 位 → 老師按 A／B／C → 玩一回 → 下一位；結果只留在這個分頁
+//   Act.turns({...})         輪流上台：設定頁選第 n 位的 A／B／C → 玩一回 → 按「完成」回設定頁；結果只留在這個分頁
 (function () {
   const TH = window.THEME || {}, ART = TH.art || {}, IC = window.THEME_ICONS || {};
   const ARTDIR = '../themes/save-power/art/';
@@ -50,35 +50,36 @@
   }
 
   // 輪流上台。opt：tiers {A:{name,desc},B,C}；play(tier, n, done(result))；resultCols ['欄名']；row(result)→[欄值]
-  // 三個畫面的容器：#turn（第 n 位＋選層級）、#play（遊戲）、#done（全班結果）
+  // 畫面：#setup（設定＋「第 n 位同學上台」選 A／B／C）、#play（遊戲）、#done（全班結果）
+  // 2026-11-13 使用者定：每位同學玩完按「完成 ✓」→ 回到設定頁，叫下一位、選等級（不另開換人畫面）。
+  //   設定頁的 #start 換成 #first 選單；opt.beforeStart() 每次從設定頁出發前呼叫（hunt 用來同步朗讀開關）
+  //   opt.onSetup() 回到設定頁時呼叫（hunt 重畫自己的設定）
+  // 「← 活動選單」右邊加「⚙️ 回設定」：這位同學不算、回設定頁（已完成的同學紀錄保留）
   const HOW = { 獨立: '自己完成', 提示: '看提示完成', 協助: '在協助下完成' };
-  // 第 1 位的選等級直接放在設定頁（#start 換成 #first 選單，2026-11-13 使用者定）；第 2 位起照舊在 #turn。
-  //   opt.first:false 不放；opt.beforeStart() 從設定頁出發前呼叫（hunt 用來同步朗讀開關）
-  // 每個遊戲的「← 活動選單」右邊加「⚙️ 回設定」：回到設定頁、清掉這一輪
   function turns(opt) {
-    const T = { n: 0, log: [] };
+    const T = { n: 1, log: [] };
     const tiersHTML = () => `<div class="tiers">${Object.entries(opt.tiers).map(([k, t]) =>
       `<button class="tier" data-tier="${k}"><b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div>`;
-    const whoHTML = (n) => `<div class="who">第 ${n} 位同學上台 🙋</div>
-        <p class="sub" style="text-align:center">老師幫這位同學選任務等級</p>`;
     function show(id) { ['setup', 'turn', 'play', 'done'].forEach((x) => { if ($(x)) $(x).hidden = x !== id; }); window.scrollTo(0, 0); }
-    function next() {
-      T.n++; stop();
-      $('turn').innerHTML = `<div class="turn">${whoHTML(T.n)}${tiersHTML()}
-        ${T.log.length ? `<button class="go alt" id="finish">全班都玩過了，看結果 ✔</button>` : ''}
-      </div>`;
-      show('turn');
-      speak(`請第${T.n}位同學上台。`);
+    let first = null;
+    if ($('start')) {
+      first = document.createElement('div'); first.id = 'first'; first.className = 'turn';
+      $('start').insertAdjacentElement('beforebegin', first); $('start').hidden = true;
     }
-    function begin(tier) {
-      show('play');
-      opt.play(tier, T.n, (result) => { T.log.push({ n: T.n, tier, ...result }); next(); });
+    function drawFirst() {
+      if (!first) return;
+      first.innerHTML = `<div class="who">第 ${T.n} 位同學上台 🙋</div>
+        <p class="sub" style="text-align:center">老師幫這位同學選任務等級${T.log.length ? `（已完成 ${T.log.length} 位）` : ''}</p>
+        ${tiersHTML()}
+        ${T.log.length ? `<button class="go alt" id="finish">全班都玩過了，看結果 ✔</button>` : ''}`;
     }
-    if (opt.first !== false && $('start')) {
-      const f = document.createElement('div'); f.id = 'first'; f.className = 'turn';
-      f.innerHTML = whoHTML(1) + tiersHTML();
-      $('start').insertAdjacentElement('beforebegin', f); $('start').hidden = true;
+    function toSetup(say) {
+      stop(); drawFirst(); show('setup');
+      opt.onSetup && opt.onSetup();
+      if (say) speak(`請第${T.n}位同學上台。`);
     }
+    function next() { T.n = T.log.length + 1; toSetup(true); }
+    drawFirst();
     const home = document.querySelector('.top .home');
     if (home && !$('toSetup')) {
       const nav = document.createElement('span'); nav.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
@@ -86,18 +87,14 @@
       const b = document.createElement('button'); b.id = 'toSetup'; b.className = 'home'; b.type = 'button';
       b.style.cssText = 'font-family:inherit;cursor:pointer'; b.textContent = '⚙️ 回設定';
       nav.appendChild(b);
-      b.addEventListener('click', () => {
-        if (!$('setup') || !$('setup').hidden) return;
-        if (T.log.length && !confirm(`回到設定頁會清掉這一輪 ${T.log.length} 位的結果，確定嗎？`)) return;
-        stop(); T.n = 0; T.log.length = 0; show('setup');
-        opt.onSetup && opt.onSetup();
-      });
+      b.addEventListener('click', () => { if ($('setup') && $('setup').hidden) toSetup(false); });
     }
     document.addEventListener('click', (e) => {
-      const b = e.target.closest('#turn .tier, #turn #finish, #first .tier'); if (!b) return;
-      if (b.id === 'finish') { T.n--; return finish(); }
-      if (b.closest('#first')) { opt.beforeStart && opt.beforeStart(); stop(); T.n = 1; T.log.length = 0; }
-      begin(b.dataset.tier);
+      const b = e.target.closest('#first .tier, #first #finish'); if (!b) return;
+      if (b.id === 'finish') return finish();
+      opt.beforeStart && opt.beforeStart(); stop();
+      const tier = b.dataset.tier; show('play');
+      opt.play(tier, T.n, (result) => { T.log.push({ n: T.n, tier, ...result }); next(); });
     });
     function finish() {
       stop(); window.GameSfx.sfx.fanfare();
@@ -110,10 +107,10 @@
         <p class="note">教師紀錄：依完成方式（獨立／提示／協助）記入紀錄表。這份結果只留在這個分頁，重新整理就清除，不會上傳。</p>`;
       show('done');
       speak(`太棒了！全班${T.log.length}位同學都完成了。`);
-      $('again').addEventListener('click', () => { T.n = 0; T.log.length = 0; next(); }, { once: true });
+      $('again').addEventListener('click', () => { T.log.length = 0; T.n = 1; toSetup(true); }, { once: true });
     }
     window.__turns = { T, next, finish };
-    return { next, finish, show, log: T.log };
+    return { next: () => toSetup(true), finish, show, log: T.log };
   }
 
   // 動畫頁：一幕一句旁白。steps＝[{ say, run(ctx) }]，run 回傳 Promise（動畫跑完）；旁白念完、動畫跑完才換下一幕。
