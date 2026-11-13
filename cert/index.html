@@ -12,8 +12,13 @@
 .pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
 .pick label{display:flex;gap:10px;align-items:center;font-size:18px;font-weight:700;padding:8px 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg)}
 .pick input{width:22px;height:22px}
-.names{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
-.names input{font:inherit;font-size:18px;padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:var(--paper);color:var(--ink);width:100%}
+.names{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.stu{display:flex;align-items:center;gap:8px;padding:6px 8px;border:2px solid var(--line);border-radius:14px;background:var(--bg)}
+.stu input[type=text]{font:inherit;font-size:18px;padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:var(--paper);color:var(--ink);width:100%;min-width:0}
+.stu .avb{flex:none;width:56px;height:56px;border-radius:50%;border:3px solid var(--line);background:var(--paper);padding:0;overflow:hidden;display:grid;place-items:center;cursor:pointer}
+.av img,.av svg,.avb img,.avb svg{width:100%;height:100%;object-fit:cover;display:block}
+.pbtn{flex:none;display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;border:2px solid var(--line);background:var(--paper);font-size:20px;cursor:pointer;padding:0}
+.chk td.nm .av{display:inline-block;width:36px;height:36px;border-radius:50%;overflow:hidden;vertical-align:middle;margin-right:6px;border:2px solid var(--line)}
 .count{display:flex;gap:10px;align-items:center;font-size:22px;font-weight:900}
 .count button{width:52px;height:52px;border-radius:14px;border:2px solid var(--line);background:var(--paper);font-size:28px;font-weight:900}
 .gridwrap{overflow-x:auto;border:2px solid var(--line);border-radius:16px;background:var(--paper)}
@@ -27,22 +32,50 @@ table.chk{border-collapse:collapse;width:100%;min-width:640px}
 .chk td.n{font-weight:900;font-size:18px;white-space:nowrap}
 .tick{width:52px;height:52px;border-radius:14px;border:3px dashed var(--line);background:var(--bg);font-size:28px;font-weight:900;color:transparent}
 .tick[aria-pressed="true"]{border:3px solid var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--paper));color:var(--ok)}
-.certs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
-.cert{border:4px solid var(--line);border-radius:20px;background:var(--paper);padding:16px;display:flex;flex-direction:column;gap:8px}
-.cert.all{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--paper))}
-.cert h3{margin:0;font-size:26px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.cert .big{font-size:20px;font-weight:900}
-.cert .bar{height:16px;border-radius:8px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
-.cert .bar i{display:block;height:100%;background:var(--ok)}
-.cert ul{margin:0;padding:0;list-style:none;font-size:17px;line-height:1.6}
-.cert li.no{color:var(--muted)}
-.cert .badge{font-size:22px;font-weight:900;color:var(--ok)}
+/* 證書：左＝頭像、名字、完成幾項；右＝每項活動（打勾或還沒完成）。列印＝一張 A4 兩張證書 */
+.certs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:16px}
+.cert{--c:#2b8a6e;border:3px solid var(--c);border-radius:22px;background:var(--paper);padding:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.cert.part{--c:#e08a2e}
+.cert .in{border:2px dashed color-mix(in srgb,var(--c) 55%,transparent);border-radius:16px;padding:12px 16px;display:grid;grid-template-columns:150px 1fr;gap:10px 16px;align-items:start}
+.cert .ch{grid-column:1/-1;display:flex;align-items:center;gap:10px;border-bottom:2px solid color-mix(in srgb,var(--c) 25%,transparent);padding-bottom:8px}
+.cert .ch b{font-size:24px;font-weight:900;color:var(--c)}
+.cert .ch .en{font-size:14px;font-weight:700;color:var(--muted);letter-spacing:.06em}
+.cert .ch .seal{margin-left:auto;width:54px;height:54px;flex:none}
+.cert .ch .seal img,.cert .ch .seal svg{width:100%;height:100%;object-fit:contain}
+.cert .who{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.cert .av{width:130px;height:130px;border-radius:50%;overflow:hidden;border:5px solid var(--c);background:var(--bg);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 18%,transparent)}
+.cert .nm{font-size:26px;font-weight:900;line-height:1.2;word-break:break-all}
+.cert .big{font-size:18px;font-weight:900;color:var(--c)}
+.cert .hint{font-size:14px;font-weight:700;color:var(--muted)}
+.cert .meter{width:100%;height:12px;border-radius:6px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.cert .meter i{display:block;height:100%;background:var(--c)}
+.cert .badge{font-size:16px;font-weight:900;color:#fff;background:var(--c);border-radius:999px;padding:4px 14px}
+.cert ul{margin:0 0 6px;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cert li{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;line-height:1.25;padding:4px 6px;border-radius:10px;background:color-mix(in srgb,var(--c) 10%,var(--paper))}
+.cert li .ai{width:32px;height:32px;flex:none}
+.cert li .ai img,.cert li .ai svg{width:100%;height:100%;object-fit:contain}
+.cert li .mk{margin-left:auto;flex:none;font-size:18px;font-weight:900;color:var(--c)}
+.cert li.no{background:none;border:1.5px dashed var(--line);color:var(--muted)}
+.cert li.no .ai{opacity:.4}
+.cert li.no .mk{color:var(--muted)}
+.cert .sec{font-size:13px;font-weight:900;color:var(--muted);margin:0 0 4px}
+.cert .foot{grid-column:1/-1;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;font-size:13px;font-weight:700;color:var(--muted);border-top:1px solid var(--line);padding-top:6px}
+@media (max-width:560px){.cert .in{grid-template-columns:1fr}.cert ul{grid-template-columns:1fr}}
+@page{size:A4;margin:10mm}
 @media print{
-  body{background:#fff;padding:0}
-  .top,.bar,#setup,#check,.row,.note{display:none!important}
-  #done{display:block!important;border:none;padding:0}
-  .certs{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
-  .cert{break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff;padding:0;color:#1d2a36}
+  .top,.bar,#setup,#check,.row,.note,#done>h2,#done>.sub{display:none!important}
+  #done{display:block!important;border:none;padding:0;background:none;box-shadow:none}
+  .certs{display:block}
+  .cert{height:134mm;overflow:hidden;box-sizing:border-box;margin:0 0 6mm;break-inside:avoid;background:#fff}
+  .cert:nth-child(2n){break-after:page;margin-bottom:0}
+  .cert .in{height:100%;box-sizing:border-box;grid-template-columns:52mm 1fr;grid-template-rows:auto 1fr auto}
+  .cert .av{width:46mm;height:46mm}
+  .cert .nm{font-size:22pt}
+  .cert ul{gap:2mm;margin-bottom:2.5mm}
+  .cert li{font-size:12.5pt;padding:1.4mm 2.2mm}
+  .cert li .ai{width:9mm;height:9mm}
+  .cert .sec{font-size:11pt;margin-bottom:1.5mm}
 }
 </style>
 </head>
@@ -58,7 +91,7 @@ table.chk{border-collapse:collapse;width:100%;min-width:640px}
     <h2>1. 全班幾位同學？</h2>
     <div class="count"><button id="minus" aria-label="少一位">−</button><span id="cnt"></span><button id="plus" aria-label="多一位">＋</button></div>
     <div class="names" id="names"></div>
-    <p class="note">可以輸入代號或名字（也可以不改，用「第 1 位」）。名字只留在這次開啟的網頁裡，不上傳、不儲存，重新整理就消失。</p>
+    <p class="note">點頭像換卡通圖像，點 📷 用學生照片（✕ 改回卡通）。可以輸入代號或名字（也可以不改，用「第 1 位」）。名字和照片只留在這次開啟的網頁裡，不上傳、不儲存，重新整理就消失。</p>
     <h2>2. 這次要認證哪些活動？</h2>
     <div class="pick" id="pick"></div>
     <button class="go" id="start">開始勾選 ▶</button>
@@ -79,34 +112,51 @@ table.chk{border-collapse:collapse;width:100%;min-width:640px}
 <script src="../engine/sfx.js"></script>
 <script src="../themes/save-power/icons.js"></script>
 <script src="../themes/save-power/theme.js"></script>
+<script src="../engine/photo.js"></script>
 <script src="../engine/activity.js"></script>
 <script src="../engine/lesson-list.js"></script>
 <script>
 (function () {
-  const { $, speak, sfx, icon } = Act;
+  const { $, speak, sfx, icon, TH } = Act;
+  const AVS = TH.idCard.avatars;   // 卡通頭像（theme.js）
   // 活動＝兩節課的網頁活動＋不是網頁的任務（回家任務）。id 用網址資料夾名
   const ACTS = [...window.LESSON.flatMap((s, si) => s.items.map((a) => ({ ...a, id: a.href === '../index.html' ? 'game' : a.href.split('/').slice(-2, -1)[0], sec: si + 1 }))),
     ...window.LESSON_EXTRA.map((a) => ({ ...a, sec: 1 }))];
-  const S = { n: 6, names: [], use: new Set(ACTS.map((a) => a.id)), done: {} };   // done[學生][活動id]＝true
+  const S = { n: 6, names: [], av: [], photo: [], use: new Set(ACTS.map((a) => a.id)), done: {} };   // done[學生][活動id]＝true
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const nameOf = (i) => esc(S.names[i] || `第 ${i + 1} 位`);
   const used = () => ACTS.filter((a) => S.use.has(a.id));
+  // 頭像：照片優先，沒有就用卡通（照片只在記憶體，見 engine/photo.js）
+  const avOf = (i) => S.photo[i] ? `<img src="${S.photo[i]}" alt="">` : icon(AVS[(S.av[i] ?? i) % AVS.length], '');
 
   function drawSetup() {
     $('cnt').textContent = `${S.n} 位`;
-    $('names').innerHTML = Array.from({ length: S.n }, (_, i) => `<input data-i="${i}" placeholder="第 ${i + 1} 位" value="${(S.names[i] || '').replace(/"/g, '&quot;')}" aria-label="第 ${i + 1} 位的代號">`).join('');
+    $('names').innerHTML = Array.from({ length: S.n }, (_, i) => `<div class="stu">
+      <button type="button" class="avb" data-av="${i}" aria-label="第 ${i + 1} 位換頭像" title="點一下換卡通頭像">${avOf(i)}</button>
+      <label class="pbtn" title="用照片當頭像">📷<input type="file" accept="image/*" data-photo="${i}" hidden></label>
+      ${S.photo[i] ? `<button type="button" class="pbtn" data-unphoto="${i}" title="改回卡通頭像" aria-label="改回卡通頭像">✕</button>` : ''}
+      <input type="text" data-i="${i}" placeholder="第 ${i + 1} 位" value="${(S.names[i] || '').replace(/"/g, '&quot;')}" aria-label="第 ${i + 1} 位的代號"></div>`).join('');
     $('pick').innerHTML = ACTS.map((a) => `<label><input type="checkbox" data-a="${a.id}" ${S.use.has(a.id) ? 'checked' : ''}>${a.nm}<small style="color:var(--muted);font-weight:400">第${a.sec}節</small></label>`).join('');
   }
   $('minus').onclick = () => { S.n = Math.max(1, S.n - 1); drawSetup(); };
   $('plus').onclick = () => { S.n = Math.min(30, S.n + 1); drawSetup(); };
   $('names').addEventListener('input', (e) => { const i = e.target.dataset.i; if (i != null) S.names[+i] = e.target.value.trim(); });
+  $('names').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.av != null) { const i = +b.dataset.av; if (S.photo[i]) delete S.photo[i]; else S.av[i] = ((S.av[i] ?? i) + 1) % AVS.length; drawSetup(); }
+    if (b.dataset.unphoto != null) { delete S.photo[+b.dataset.unphoto]; drawSetup(); }
+  });
+  $('names').addEventListener('change', (e) => {
+    const i = e.target.dataset.photo; if (i == null) return;
+    window.readPhoto(e.target.files[0], (d) => { S.photo[+i] = d; drawSetup(); });
+  });
   $('pick').addEventListener('change', (e) => { const a = e.target.dataset.a; if (!a) return; e.target.checked ? S.use.add(a) : S.use.delete(a); });
 
   function drawGrid() {
     const A = used();
     $('grid').innerHTML = `<thead><tr><th></th>${A.map((a) => `<th><button data-col="${a.id}">${icon(a.icon, '')}${a.nm}<small>第${a.sec}節</small></button></th>`).join('')}<th>完成</th></tr></thead>
       <tbody>${Array.from({ length: S.n }, (_, i) => { const d = S.done[i] || {}; const k = A.filter((a) => d[a.id]).length;
-        return `<tr><td class="nm">${nameOf(i)}</td>${A.map((a) => `<td><button class="tick" data-s="${i}" data-a="${a.id}" aria-pressed="${!!d[a.id]}" aria-label="${nameOf(i)} ${a.nm}">✔</button></td>`).join('')}<td class="n">${k}／${A.length}</td></tr>`; }).join('')}</tbody>`;
+        return `<tr><td class="nm"><span class="av">${avOf(i)}</span>${nameOf(i)}</td>${A.map((a) => `<td><button class="tick" data-s="${i}" data-a="${a.id}" aria-pressed="${!!d[a.id]}" aria-label="${nameOf(i)} ${a.nm}">✔</button></td>`).join('')}<td class="n">${k}／${A.length}</td></tr>`; }).join('')}</tbody>`;
   }
   $('grid').addEventListener('click', (e) => {
     const t = e.target.closest('.tick'), c = e.target.closest('[data-col]');
@@ -118,16 +168,27 @@ table.chk{border-collapse:collapse;width:100%;min-width:640px}
     }
   });
 
+  const today = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+  function certHTML(r) {
+    const A = used(), pct = Math.round(r.ok.length / A.length * 100), all = !r.no.length, d = S.done[r.i] || {};
+    const li = (a) => d[a.id] ? `<li><span class="ai">${icon(a.icon, '')}</span>${esc(a.nm)}<span class="mk">✔</span></li>`
+                              : `<li class="no"><span class="ai">${icon(a.icon, '')}</span>${esc(a.nm)}<span class="mk">○</span></li>`;
+    const secs = [1, 2].map((n) => { const L = A.filter((a) => a.sec === n); return L.length ? `<div class="sec">第${n}節</div><ul>${L.map(li).join('')}</ul>` : ''; }).join('');
+    return `<div class="cert ${all ? 'all' : 'part'}"><div class="in">
+      <div class="ch"><b>減碳身分認證</b><span class="en">NET-ZERO DETECTIVE</span><span class="seal"><img src="../themes/save-power/images/certBadge.webp" alt=""></span></div>
+      <div class="who"><div class="av">${avOf(r.i)}</div><div class="nm">${nameOf(r.i)}</div>
+        <div class="big">完成 ${r.ok.length}／${A.length} 項</div><div class="meter"><i style="width:${pct}%"></i></div>
+        ${all ? '<div class="badge">🏅 認證通過</div>' : '<div class="hint">○ 的活動補做後再勾</div>'}</div>
+      <div>${secs}</div>
+      <div class="foot"><span>電費單偵探隊：從家裡到教室的減碳任務</span><span>${today}</span></div>
+    </div></div>`;
+  }
   function verify() {
     const A = used(), res = Array.from({ length: S.n }, (_, i) => { const d = S.done[i] || {}; return { i, ok: A.filter((a) => d[a.id]), no: A.filter((a) => !d[a.id]) }; });
     const full = res.filter((r) => !r.no.length).length;
     $('done').innerHTML = `<h2>🎉 檢查結果：${full} 位完成全部 ${A.length} 項活動</h2>
-      <p class="sub">全班 ${S.n} 位。還沒完成的活動列在每張卡片下方，可以補做後回去再勾。</p>
-      <div class="certs">${res.map((r) => { const pct = Math.round(r.ok.length / A.length * 100);
-        return `<div class="cert ${r.no.length ? '' : 'all'}"><h3>${nameOf(r.i)}<span class="big">${r.ok.length}／${A.length} 項</span></h3>
-          <div class="bar"><i style="width:${pct}%"></i></div>
-          ${r.no.length ? '' : '<div class="badge">🏅 減碳偵探認證通過！</div>'}
-          <ul>${r.ok.map((a) => `<li>✔ ${a.nm}</li>`).join('')}${r.no.map((a) => `<li class="no">○ ${a.nm}（還沒完成）</li>`).join('')}</ul></div>`; }).join('')}</div>
+      <p class="sub">全班 ${S.n} 位。每張證書有頭像和完成的活動，○ 是還沒完成的，補做後可以回去再勾。按「列印」一張 A4 印兩位。</p>
+      <div class="certs">${res.map(certHTML).join('')}</div>
       <div class="row"><button class="go" id="again">回去修改勾選</button><button class="go alt" id="print">列印</button></div>
       <p class="note">這份結果只留在這個分頁，重新整理就清除，不會上傳。</p>`;
     $('check').hidden = true; $('done').hidden = false; window.scrollTo(0, 0);
@@ -143,7 +204,7 @@ table.chk{border-collapse:collapse;width:100%;min-width:640px}
   $('back').onclick = () => { $('check').hidden = true; $('setup').hidden = false; drawSetup(); };
   $('verify').onclick = verify;
   drawSetup();
-  window.__cert = { S, ACTS, verify };
+  window.__cert = { S, ACTS, verify, AVS };
 })();
 </script>
 </body>

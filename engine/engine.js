@@ -154,19 +154,7 @@
   function avatarHTML(p) {
     return p.photo ? `<img class="ic avphoto" src="${p.photo}" alt="">` : icon(T.idCard.avatars[p.avatar]);
   }
-  function readPhoto(file, done) {
-    if (!file || !/^image\//.test(file.type)) return;
-    const url = URL.createObjectURL(file), img = new Image();
-    img.onload = () => {
-      const side = Math.min(img.naturalWidth, img.naturalHeight), cv = document.createElement('canvas');
-      cv.width = cv.height = 256;
-      cv.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 256, 256);
-      URL.revokeObjectURL(url);
-      done(cv.toDataURL('image/jpeg', 0.85));
-    };
-    img.onerror = () => URL.revokeObjectURL(url);
-    img.src = url;
-  }
+  const readPhoto = window.readPhoto;   // engine/photo.js
 
   // ---------- 設定頁 ----------
   function renderSetup() {
