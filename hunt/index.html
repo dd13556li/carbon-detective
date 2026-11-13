@@ -182,7 +182,7 @@ a{color:var(--accent)}
   function speak(text) {
     if (!S.speak || !window.ZhTTS) return;
     const wait = Math.max(0, window.GameSfx.until() - performance.now());
-    setTimeout(() => { try { speechSynthesis.cancel(); } catch (e) {} ZhTTS.speak(text, { voice: ZhTTS.pickTW() || undefined, rate: 0.9 }); }, wait);
+    setTimeout(() => { try { speechSynthesis.cancel(); } catch (e) {} ZhTTS.speakTW(text, { rate: 0.9 }); }, wait);
   }
   document.addEventListener('pointerdown', () => { try { window.ZhTTS && ZhTTS.unlock(); } catch (e) {} }, { once: true });
 

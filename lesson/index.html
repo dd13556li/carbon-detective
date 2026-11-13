@@ -40,7 +40,7 @@
     `<a class="act" href="${a.href}">${icon(a.icon)}<span><span class="step">${a.step}</span><span class="kind">${a.kind}</span><br><span class="nm">${a.nm}</span><br><span class="d">${a.d}</span></span></a>`).join('')}</div></section>`).join('');
   const cardImg = '<img src="../themes/save-power/images/meter.webp" alt="" style="border-radius:12px">';
   document.getElementById('root').insertAdjacentHTML('beforeend', `<section class="sec"><h2>兩節都用　雙語關鍵字卡</h2><div class="list">
-    <a class="act" href="../cards/index.html">${cardImg}<span><span class="step">教學資源</span><span class="kind">字卡</span><br><span class="nm">雙語關鍵字卡</span><br><span class="d">度 kWh、碳雲 Carbon Cloud、淨零 Net Zero……共 ${window.THEME.words.length} 張，點卡片念中文再念英文，可放大、可列印</span></span></a></div></section>`);
+    <a class="act" href="../cards/index.html">${cardImg}<span><span class="step">教學資源</span><span class="kind">字卡</span><br><span class="nm">雙語關鍵字卡</span><br><span class="d">電費單 Electricity Bill、度 kWh、淨零 Net Zero……共 ${window.THEME.words.length} 張，點卡片念中文再念英文，可放大、可列印</span></span></a></div></section>`);
   document.getElementById('root').insertAdjacentHTML('beforeend', `<section class="sec"><h2>課後　減碳身分認證</h2><div class="list">
     <a class="act" href="../cert/index.html">${icon('patrol')}<span><span class="step">兩節課上完</span><span class="kind">教師</span><br><span class="nm">減碳身分認證</span><br><span class="d">勾選每位同學完成的活動，按「檢查」看每人完成幾項、哪些還沒做</span></span></a></div></section>`);
   window.__lesson = LESSON;

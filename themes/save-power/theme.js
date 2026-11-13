@@ -248,17 +248,14 @@ window.THEME = {
   // 我會說：抽一張，對家人說出這一句（icon＝art/ 的圖）
   // 中英雙語關鍵字卡（cards/ 字卡頁、教案附錄十三都讀這一份）。img 是從遊戲根目錄算起的路徑；
   // ebill／meter／co2／certBadge／netZero 由 tools/gen_icons.py 產生（2026-11-13），其餘重用遊戲裡現成的圖
+  // 雙語字卡＝教案「雙語融入」表的 7 張（2026-11-13 定案：兩邊一一對應，多的刪掉）
   words: [
     { zh: "電費單", en: "Electricity Bill", say: "Electricity bill", when: "第一節 引起動機", img: "hunt/bills/B.webp", note: "教學範例帳單" },
-    { zh: "電子帳單", en: "E-bill", say: "E-bill", when: "第一節 引起動機", img: "themes/save-power/images/ebill.webp" },
     { zh: "度（用電度數）", en: "kWh", say: "kilowatt-hour", when: "第一節 電費單尋寶", img: "themes/save-power/images/meter.webp" },
     { zh: "二氧化碳", en: "CO2（carbon dioxide）", say: "carbon dioxide", when: "第一節 度數變碳排", img: "themes/save-power/art/cloud.webp" },
     { zh: "節能", en: "Save Energy", say: "Save energy", when: "第一節 吃電大戶排排站", img: "themes/save-power/images/ledLamp.webp" },
     { zh: "碳排放", en: "Carbon Emissions", say: "Carbon emissions", when: "第二節 引起動機", img: "themes/save-power/images/co2.webp" },
-    { zh: "碳雲", en: "Carbon Cloud", say: "Carbon cloud", when: "第二節 遊戲說明", img: "themes/save-power/art/cloud.webp", note: "教學比喻：把看不見的二氧化碳畫成雲" },
     { zh: "關掉", en: "Turn off", say: "Turn off", when: "第二節 巡守任務", img: "themes/save-power/images/lightsOff.webp" },
-    { zh: "拔插頭", en: "Unplug", say: "Unplug", when: "第二節 我會說省電", img: "themes/save-power/images/plug.webp" },
-    { zh: "減碳身分認證", en: "Carbon Saver Check", say: "Carbon saver check", when: "第二節 總結", img: "themes/save-power/images/certBadge.webp" },
     { zh: "淨零", en: "Net Zero", say: "Net zero", when: "第二節 總結", img: "themes/save-power/images/netZero.webp" },
   ],
   sayCards: [

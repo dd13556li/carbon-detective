@@ -15,10 +15,10 @@
     const wait = Math.max(0, window.GameSfx.until() - performance.now());
     setTimeout(() => {
       try { speechSynthesis.cancel(); } catch (e) {}
-      ZhTTS.speak(text, { voice: ZhTTS.pickTW() || undefined, rate: opt.rate || 0.9, onEnd: opt.onEnd });
+      ZhTTS.speakTW(text, { rate: opt.rate || 0.9, onEnd: opt.onEnd });
     }, wait);
   }
-  function stop() { try { speechSynthesis.cancel(); } catch (e) {} }
+  function stop() { try { ZhTTS.cancelTW(); } catch (e) {} try { speechSynthesis.cancel(); } catch (e) {} }
   // 英文朗讀（字卡、巡守口號共用）：每次念之前重抓語音清單（物件會過期）；挑不到也照念，交給系統挑
   function speakEn(text, opt = {}) {
     if (!S.speak || !window.speechSynthesis) { opt.onEnd && opt.onEnd(); return; }

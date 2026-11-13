@@ -313,6 +313,7 @@
     best, bestByGender, hasGender,
     setPreferred, getPreferred, clearPreferred, resolvePreferred,
     speak, cancel, unlock, playChain, installGatekeeper,
+    refresh: load,   // 重讀語音清單（雲端語音晚到時用）
     isFileProtocol: () => global.location && global.location.protocol === 'file:',
   };
   global.ZhTTS = ZhTTS;
@@ -325,10 +326,29 @@
   if (!window.ZhTTS) return;
   const online = (v) => /online|natural/i.test(v.name);
   window.ZhTTS.pickTW = function () {
+    ZhTTS.refresh();   // Edge 的雲端語音比本機語音晚到：每次都重讀清單，不沿用開頁當下那份
     const L = ZhTTS.list();
     return L.find((v) => /HsiaoChen/i.test(v.name) && online(v))
         || L.find((v) => /Yating/i.test(v.name) && online(v))
         || L.find((v) => /Yating/i.test(v.name))
         || ZhTTS.best(null);
   };
+  // 全部遊戲的朗讀入口（唯一定義）。開頁前幾秒雲端語音可能還沒載入：沒有雲端語音就稍等再挑，
+  // 最多等到開頁後 3 秒；還是沒有（Chrome、離線）就用本機語音照唸（鐵律⑧：挑不到也要唸）。
+  const T0 = performance.now(), WAIT_UNTIL = 3000;
+  let seq = 0;
+  window.ZhTTS.speakTW = function (text, opt = {}) {
+    const my = ++seq;
+    const go = () => {
+      if (my !== seq) return;   // 等待中又有新句子：舊的不唸
+      ZhTTS.speak(text, Object.assign({ rate: 0.9 }, opt, { voice: ZhTTS.pickTW() || undefined }));
+    };
+    const tick = () => {
+      const v = ZhTTS.pickTW();
+      if ((v && online(v)) || performance.now() - T0 >= WAIT_UNTIL) return go();
+      setTimeout(tick, 150);
+    };
+    tick();
+  };
+  window.ZhTTS.cancelTW = function () { seq++; ZhTTS.cancel(); };
 })();

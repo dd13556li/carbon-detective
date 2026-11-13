@@ -96,11 +96,11 @@
   function stopVoice() {
     speakSeq++;
     if (curAudio) { try { curAudio.pause(); } catch (e) {} curAudio = null; }
-    if (window.ZhTTS) ZhTTS.cancel();
+    if (window.ZhTTS) ZhTTS.cancelTW();
   }
   function liveSpeak(text) {
     if (!window.ZhTTS) return;
-    ZhTTS.speak(text, { voice: ZhTTS.pickTW() || undefined, rate: 0.9 });   // 挑不到語音也照唸（交給系統）
+    ZhTTS.speakTW(text, { rate: 0.9 });   // 挑不到語音也照唸（交給系統）；雲端語音晚到會稍等（tts-zh.js）
   }
   function speak(text) {
     if (!S.set.speak || TEST === 'end' || !text) return;
