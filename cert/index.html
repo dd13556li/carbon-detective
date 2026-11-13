@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>減碳身分認證</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../engine/activity.css">
+<style>
+/* 兩節課結束後：老師勾選每位同學完成了哪些活動 → 按「檢查」看每人完成幾項、哪些還沒做。活動清單＝engine/lesson-list.js */
+.pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+.pick label{display:flex;gap:10px;align-items:center;font-size:18px;font-weight:700;padding:8px 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg)}
+.pick input{width:22px;height:22px}
+.names{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.names input{font:inherit;font-size:18px;padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:var(--paper);color:var(--ink);width:100%}
+.count{display:flex;gap:10px;align-items:center;font-size:22px;font-weight:900}
+.count button{width:52px;height:52px;border-radius:14px;border:2px solid var(--line);background:var(--paper);font-size:28px;font-weight:900}
+.gridwrap{overflow-x:auto;border:2px solid var(--line);border-radius:16px;background:var(--paper)}
+table.chk{border-collapse:collapse;width:100%;min-width:640px}
+.chk th,.chk td{border-bottom:1px solid var(--line);padding:6px;text-align:center}
+.chk th{font-size:15px;line-height:1.3;vertical-align:bottom}
+.chk th button{font:inherit;font-size:15px;font-weight:900;border:none;background:none;color:var(--ink);padding:4px;border-radius:8px}
+.chk th button img,.chk th button svg{width:40px;height:40px;object-fit:contain;display:block;margin:0 auto 2px}
+.chk th small{display:block;color:var(--muted);font-weight:700;font-size:12px}
+.chk td.nm{text-align:left;font-weight:900;font-size:20px;white-space:nowrap;position:sticky;left:0;background:var(--paper)}
+.chk td.n{font-weight:900;font-size:18px;white-space:nowrap}
+.tick{width:52px;height:52px;border-radius:14px;border:3px dashed var(--line);background:var(--bg);font-size:28px;font-weight:900;color:transparent}
+.tick[aria-pressed="true"]{border:3px solid var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--paper));color:var(--ok)}
+.certs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.cert{border:4px solid var(--line);border-radius:20px;background:var(--paper);padding:16px;display:flex;flex-direction:column;gap:8px}
+.cert.all{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--paper))}
+.cert h3{margin:0;font-size:26px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.cert .big{font-size:20px;font-weight:900}
+.cert .bar{height:16px;border-radius:8px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.cert .bar i{display:block;height:100%;background:var(--ok)}
+.cert ul{margin:0;padding:0;list-style:none;font-size:17px;line-height:1.6}
+.cert li.no{color:var(--muted)}
+.cert .badge{font-size:22px;font-weight:900;color:var(--ok)}
+@media print{
+  body{background:#fff;padding:0}
+  .top,.bar,#setup,#check,.row,.note{display:none!important}
+  #done{display:block!important;border:none;padding:0}
+  .certs{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+  .cert{break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <header><h1>減碳身分認證</h1><p class="en">Net-Zero Detective Check</p>
+      <p class="sub">兩節課上完後，老師勾選每位同學完成的活動，按「檢查」看每人完成了幾項。</p></header>
+    <a class="home" href="../lesson/index.html">← 活動選單</a>
+  </div>
+
+  <section id="setup" class="panel">
+    <h2>1. 全班幾位同學？</h2>
+    <div class="count"><button id="minus" aria-label="少一位">−</button><span id="cnt"></span><button id="plus" aria-label="多一位">＋</button></div>
+    <div class="names" id="names"></div>
+    <p class="note">可以輸入代號或名字（也可以不改，用「第 1 位」）。名字只留在這次開啟的網頁裡，不上傳、不儲存，重新整理就消失。</p>
+    <h2>2. 這次要認證哪些活動？</h2>
+    <div class="pick" id="pick"></div>
+    <button class="go" id="start">開始勾選 ▶</button>
+  </section>
+
+  <section id="check" hidden>
+    <div class="wrap" style="gap:14px">
+      <div class="bar"><span class="prog">點格子打勾；點活動名稱＝整欄全班都完成</span><span class="sp"></span><button class="small" id="back">回設定</button></div>
+      <div class="gridwrap"><table class="chk" id="grid"></table></div>
+      <div class="row"><button class="go" id="verify">檢查 ✔</button></div>
+    </div>
+  </section>
+
+  <section id="done" class="panel" hidden></section>
+</main>
+
+<script src="../engine/tts-zh.js"></script>
+<script src="../engine/sfx.js"></script>
+<script src="../themes/save-power/icons.js"></script>
+<script src="../themes/save-power/theme.js"></script>
+<script src="../engine/activity.js"></script>
+<script src="../engine/lesson-list.js"></script>
+<script>
+(function () {
+  const { $, speak, sfx, icon } = Act;
+  // 活動＝兩節課的網頁活動＋不是網頁的任務（回家任務）。id 用網址資料夾名
+  const ACTS = [...window.LESSON.flatMap((s, si) => s.items.map((a) => ({ ...a, id: a.href === '../index.html' ? 'game' : a.href.split('/').slice(-2, -1)[0], sec: si + 1 }))),
+    ...window.LESSON_EXTRA.map((a) => ({ ...a, sec: 1 }))];
+  const S = { n: 6, names: [], use: new Set(ACTS.map((a) => a.id)), done: {} };   // done[學生][活動id]＝true
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const nameOf = (i) => esc(S.names[i] || `第 ${i + 1} 位`);
+  const used = () => ACTS.filter((a) => S.use.has(a.id));
+
+  function drawSetup() {
+    $('cnt').textContent = `${S.n} 位`;
+    $('names').innerHTML = Array.from({ length: S.n }, (_, i) => `<input data-i="${i}" placeholder="第 ${i + 1} 位" value="${(S.names[i] || '').replace(/"/g, '&quot;')}" aria-label="第 ${i + 1} 位的代號">`).join('');
+    $('pick').innerHTML = ACTS.map((a) => `<label><input type="checkbox" data-a="${a.id}" ${S.use.has(a.id) ? 'checked' : ''}>${a.nm}<small style="color:var(--muted);font-weight:400">第${a.sec}節</small></label>`).join('');
+  }
+  $('minus').onclick = () => { S.n = Math.max(1, S.n - 1); drawSetup(); };
+  $('plus').onclick = () => { S.n = Math.min(30, S.n + 1); drawSetup(); };
+  $('names').addEventListener('input', (e) => { const i = e.target.dataset.i; if (i != null) S.names[+i] = e.target.value.trim(); });
+  $('pick').addEventListener('change', (e) => { const a = e.target.dataset.a; if (!a) return; e.target.checked ? S.use.add(a) : S.use.delete(a); });
+
+  function drawGrid() {
+    const A = used();
+    $('grid').innerHTML = `<thead><tr><th></th>${A.map((a) => `<th><button data-col="${a.id}">${icon(a.icon, '')}${a.nm}<small>第${a.sec}節</small></button></th>`).join('')}<th>完成</th></tr></thead>
+      <tbody>${Array.from({ length: S.n }, (_, i) => { const d = S.done[i] || {}; const k = A.filter((a) => d[a.id]).length;
+        return `<tr><td class="nm">${nameOf(i)}</td>${A.map((a) => `<td><button class="tick" data-s="${i}" data-a="${a.id}" aria-pressed="${!!d[a.id]}" aria-label="${nameOf(i)} ${a.nm}">✔</button></td>`).join('')}<td class="n">${k}／${A.length}</td></tr>`; }).join('')}</tbody>`;
+  }
+  $('grid').addEventListener('click', (e) => {
+    const t = e.target.closest('.tick'), c = e.target.closest('[data-col]');
+    if (t) { const d = S.done[t.dataset.s] = S.done[t.dataset.s] || {}; d[t.dataset.a] = !d[t.dataset.a]; if (d[t.dataset.a]) sfx.good(); drawGrid(); return; }
+    if (c) {   // 整欄：還有人沒勾就全勾，全都勾了就全清
+      const id = c.dataset.col, all = Array.from({ length: S.n }, (_, i) => (S.done[i] || {})[id]).every(Boolean);
+      for (let i = 0; i < S.n; i++) (S.done[i] = S.done[i] || {})[id] = !all;
+      if (!all) sfx.good(); drawGrid();
+    }
+  });
+
+  function verify() {
+    const A = used(), res = Array.from({ length: S.n }, (_, i) => { const d = S.done[i] || {}; return { i, ok: A.filter((a) => d[a.id]), no: A.filter((a) => !d[a.id]) }; });
+    const full = res.filter((r) => !r.no.length).length;
+    $('done').innerHTML = `<h2>🎉 檢查結果：${full} 位完成全部 ${A.length} 項活動</h2>
+      <p class="sub">全班 ${S.n} 位。還沒完成的活動列在每張卡片下方，可以補做後回去再勾。</p>
+      <div class="certs">${res.map((r) => { const pct = Math.round(r.ok.length / A.length * 100);
+        return `<div class="cert ${r.no.length ? '' : 'all'}"><h3>${nameOf(r.i)}<span class="big">${r.ok.length}／${A.length} 項</span></h3>
+          <div class="bar"><i style="width:${pct}%"></i></div>
+          ${r.no.length ? '' : '<div class="badge">🏅 減碳偵探認證通過！</div>'}
+          <ul>${r.ok.map((a) => `<li>✔ ${a.nm}</li>`).join('')}${r.no.map((a) => `<li class="no">○ ${a.nm}（還沒完成）</li>`).join('')}</ul></div>`; }).join('')}</div>
+      <div class="row"><button class="go" id="again">回去修改勾選</button><button class="go alt" id="print">列印</button></div>
+      <p class="note">這份結果只留在這個分頁，重新整理就清除，不會上傳。</p>`;
+    $('check').hidden = true; $('done').hidden = false; window.scrollTo(0, 0);
+    full ? sfx.fanfare() : sfx.good();
+    speak(`檢查完成。全班${S.n}位，有${full}位完成全部${A.length}項活動。`);
+    $('again').onclick = () => { $('done').hidden = true; $('check').hidden = false; drawGrid(); };
+    $('print').onclick = () => window.print();
+  }
+  $('start').onclick = () => {
+    if (!used().length) { alert('請至少選一項活動'); return; }
+    $('setup').hidden = true; $('check').hidden = false; drawGrid();
+  };
+  $('back').onclick = () => { $('check').hidden = true; $('setup').hidden = false; drawSetup(); };
+  $('verify').onclick = verify;
+  drawSetup();
+  window.__cert = { S, ACTS, verify };
+})();
+</script>
+</body>
+</html>

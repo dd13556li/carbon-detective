@@ -436,6 +436,24 @@
       </div>
     </div><button type="button" class="flipbtn" data-flip="${i}">翻到背面</button></div>`;
   }
+  // 一天結束 → 總結畫面：自動歸納每位同學在二選一題目的作答（2026-11-13 起先不發身分證；cardHTML 保留，之後要用再接回）
+  const TAGS = { cool: '冷氣電扇', off: '關燈拔插頭', light: '照明', heat: '加熱電器' };
+  function summaryHTML() {
+    const all = S.players.flatMap((p) => p.choices), good = all.filter((c) => c.better).length;
+    const rows = S.players.map((p) => {
+      const ch = p.choices, ok = ch.filter((c) => c.better).length, re = ch.filter((c) => c.retried).length;
+      const pct = ch.length ? Math.round(ok / ch.length * 100) : 0, t = titleOf(p);
+      const qs = ch.map((c) => { const q = T.questions[c.q]; return `<li class="${c.better ? 'ok' : 'no'}">${c.better ? '✔' : '✘'} ${esc(q ? q.say : c.q)}${c.retried ? '<small>（選錯後再選一次）</small>' : ''}</li>`; }).join('');
+      return `<tr><td class="nm"><span class="av">${avatarHTML(p)}</span>${esc(p.name)}</td><td>${p.tier}</td>
+        <td><b>${ok}</b> ／ ${ch.length}</td><td><span class="bar"><i style="width:${pct}%"></i></span>${pct}%</td>
+        <td>${re || '—'}</td><td>${p.patrol ? '✔ 做到了' : '—'}</td><td class="ttl">${esc(t.name)}</td></tr>
+        <tr class="qs"><td colspan="7"><ul>${qs || '<li>這一天沒有輪到二選一題目</li>'}</ul></td></tr>`;
+    }).join('');
+    const byTag = Object.entries(TAGS).map(([k, nm]) => { const xs = all.filter((c) => c.tag === k); return xs.length ? `${nm} ${xs.filter((c) => c.better).length}／${xs.length}` : ''; }).filter(Boolean).join('　');
+    return `<h2>作答總結</h2>
+      <p class="sum2">全班一共答了 <b>${all.length}</b> 題二選一，選了省電的做法 <b>${good}</b> 題${all.length ? `（${Math.round(good / all.length * 100)}%）` : ''}。${byTag ? '<br>分類：' + byTag : ''}</p>
+      <table class="sumtab"><thead><tr><th>偵探</th><th>等級</th><th>選省電</th><th>正確率</th><th>C 再選</th><th>巡守任務</th><th>稱號</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
   function endGame() {
     closeModal();
     const R = T.resource, pass = S.amt <= R.goal.keepAtMost, kg = S.amt * kgPerUnit();
@@ -444,9 +462,9 @@
       <p class="sum">全班一天排了 <b>${r1(S.amt)}</b> ${R.unit}${esc(R.unitName || '')}（目標：不超過 ${R.goal.keepAtMost} ${R.unit}）</p>
       <p class="sum2">碳約 ${fmtKg(kg)} 公斤，${compareText(kg)}</p>
       <div class="sumunits sky" style="${skyStyle()}">${unitRow(S.amt, Math.max(R.max || 10, Math.ceil(S.amt)), R.goal.keepAtMost)}</div>
-      <p class="tip">這是每個人的${esc(T.idCard.title)}。老師可以填入電費單的度數、點印章蓋章。</p>
-      <div class="cards">${S.players.map(cardHTML).join('')}</div>
-      <div class="actions"><button class="btn" id="printbtn">列印身分證</button><button class="btn ghost" id="againbtn">再玩一次</button><button class="btn ghost" id="backbtn">回設定</button></div>
+      ${summaryHTML()}
+      <div class="actions"><button class="btn" id="printbtn">列印總結</button><a class="btn ghost" href="cert/index.html">減碳身分認證 →</a><button class="btn ghost" id="againbtn">再玩一次</button><button class="btn ghost" id="backbtn">回設定</button></div>
+      <p class="tip">教師紀錄：依每人選省電的題數與完成方式記入紀錄表。這份總結只留在這個分頁，重新整理就清除，不會上傳。</p>
       <p class="src">${esc(C.wattsNote || '')}</p>`;
     show('result');
     pass ? sfx.fanfare() : sfx.gentle();
