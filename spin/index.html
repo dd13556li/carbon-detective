@@ -244,9 +244,9 @@
     const how = P.tier === 'C' ? '協助' : (P.wrong === 0 && !P.hinted ? '獨立' : '提示');
     $('msg').className = 'msg ok'; $('msg').textContent = P.tier === 'C' ? '' : '答對了！';
     $('after').innerHTML = `<div class="formula">${a.kwh} 度 × ${COEF} ＝ ${kgShow(a.kwh)}（大約 ${k} 公斤）</div>
-      <div class="lift">🏋️ 到桌上拿起「${k} 公斤」那一個，提提看有多重！</div>
+      <div class="lift">🏋️ 拿起「${k} 公斤」的物品，提提看有多重！</div>
       <div class="row" style="margin-top:12px"><button class="go" id="lifted">完成 ✓</button></div>`;
-    speak(`${lead}每天${a.label}，一個月排出的碳大約${k}公斤。請到桌上拿起${k}公斤那一個，提提看有多重。`);
+    speak(`${lead}每天${a.label}，一個月排出的碳大約${k}公斤。請拿起${k}公斤的物品，提提看有多種。`);   // 朗讀寫「多種」：TTS 會把「多重」唸成ㄔㄨㄥˊ
     $('lifted').addEventListener('click', () => P.done({ act: a.label, kwh: a.kwh, kg: k, how }), { once: true });
   }
   $('spinbtn').addEventListener('click', spin);
