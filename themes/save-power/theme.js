@@ -224,15 +224,24 @@ window.THEME = {
   // ⑨ 課堂小遊戲（第一節 spin/、rank/，第二節 say/）。計算器的家電模式與教案附錄六也讀這一份
   // 家電：示例瓦數與每天使用時數（常見機種概略值，上課前以實物標示核對）
   appliances: [
-    { key: "ac",          name: "冷氣",     watts: 900, hours: 8 },
-    { key: "riceCooker",  name: "電鍋",     watts: 800, hours: 1 },
-    { key: "fridge",      name: "冰箱",     watts: 150, hours: 24 },
-    { key: "tv",          name: "電視",     watts: 100, hours: 4 },
-    { key: "bulb",        name: "電燈",     watts: 20,  hours: 6 },
-    { key: "phoneCharge", name: "手機充電器", watts: 10,  hours: 3 }
+    { key: "ac",          name: "冷氣",     watts: 900, hours: 8,  taskHours: [4, 6, 8] },
+    { key: "riceCooker",  name: "電鍋",     watts: 800, hours: 1,  taskHours: [1, 2] },
+    { key: "fridge",      name: "冰箱",     watts: 150, hours: 24, taskHours: [24] },
+    { key: "tv",          name: "電視",     watts: 100, hours: 4,  taskHours: [2, 3, 4, 5] },
+    { key: "bulb",        name: "電燈",     watts: 20,  hours: 6,  taskHours: [4, 5, 6, 8] },
+    { key: "phoneCharge", name: "手機充電器", watts: 10,  hours: 3,  taskHours: [2, 3] }
   ],
-  // 碳排有多重？轉盤上的度數：度數 × kgCO2PerKwh 四捨五入剛好是 1～5 公斤（現場準備 1～5 公斤的重物）
-  spin: { kwh: [2, 4, 6, 8, 11] },
+  // 用電任務（mission/）出題：taskHours＝「一天用幾小時」從這幾個值隨機抽；瓦數就是上面的 watts
+  // 碳排有多重？轉盤：生活中的用電活動（可以好幾樣同時用）。每格算「每天這樣用，一個月（30 天）」
+  //   度數＝Σ 瓦數 × 小時 × 30 ÷ 1000（瓦數取 appliances）；只放「× kgCO2PerKwh 四捨五入剛好 1～5 公斤」的活動，
+  //   各格公斤數不同 → 現場準備 1～5 公斤的重物，學生拿起來提提看（check_theme 會檢查）
+  spin: { days: 30, acts: [
+    { label: "開燈 5 小時",                             uses: [{ key: "bulb", hours: 5 }] },
+    { label: "看電視 1 小時＋開燈 2 小時",               uses: [{ key: "tv", hours: 1 }, { key: "bulb", hours: 2 }] },
+    { label: "看電視 2 小時",                           uses: [{ key: "tv", hours: 2 }] },
+    { label: "看電視 2 小時＋開燈 5 小時",               uses: [{ key: "tv", hours: 2 }, { key: "bulb", hours: 5 }] },
+    { label: "看電視 3 小時＋開燈 3 小時＋手機充電 2 小時", uses: [{ key: "tv", hours: 3 }, { key: "bulb", hours: 3 }, { key: "phoneCharge", hours: 2 }] }
+  ] },
   // 我會說：抽一張，對家人說出這一句（icon＝art/ 的圖）
   sayCards: [
     { icon: "t26",       line: "我們把冷氣調到 26 度，再開電扇，好嗎？", short: "冷氣 26 度＋電扇" },

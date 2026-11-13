@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>用電碳排計算器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../engine/activity.css">
+<style>
+/* 第一節 發展活動二（任務版）：左邊出任務（家電、幾瓦、一天幾小時）→ 右邊照任務 選家電、輸入瓦數、輸入小時 → 自動算出一個月幾度、幾公斤 */
+.mbox{display:grid;grid-template-columns:minmax(280px,5fr) 7fr;gap:20px;align-items:start}
+@media (max-width:860px){.mbox{grid-template-columns:1fr}}
+.task{position:sticky;top:12px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;border:4px solid var(--warn);border-radius:20px;background:var(--paper);padding:18px}
+@media (max-width:860px){.task{position:static}}
+.task .tag{font-size:18px;font-weight:900;color:#fff;background:var(--warn);border-radius:999px;padding:2px 14px}
+.task img,.task svg{width:min(150px,40vw);height:auto;aspect-ratio:1;object-fit:contain}
+.task .tq{font-size:clamp(24px,3.4vw,32px);font-weight:900;line-height:1.5}
+.task .tq b{padding:0 4px;border-radius:8px}
+.task.mark .tq b.c1{background:#fde2e0;color:#b3261e;outline:3px solid #d93025}
+.task.mark .tq b.c2{background:#dbe8fb;color:#174ea6;outline:3px solid #1a73e8}
+.task.mark .tq b.c3{background:#dcf3e2;color:#0d652d;outline:3px solid #1e8e3e}
+.task .ask{font-size:20px;font-weight:700;color:var(--muted)}
+.steps{display:flex;flex-direction:column;gap:14px}
+.st{border:3px solid var(--line);border-radius:18px;background:var(--paper);padding:14px;display:flex;flex-direction:column;gap:10px}
+.st h3{margin:0;font-size:22px;display:flex;gap:10px;align-items:center}
+.st h3 .n{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;color:#fff;font-weight:900;flex:none}
+.st.s1 .n{background:#d93025} .st.s2 .n{background:#1a73e8} .st.s3 .n{background:#1e8e3e}
+.st.bad{border-color:var(--warn);animation:shake .4s}
+.st.locked{opacity:.75}
+.apps{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px}
+.apps .card{min-height:110px;padding:8px 4px}
+.apps .card img,.apps .card svg{width:60px;height:60px}
+.apps .card .nm{font-size:19px}
+.apps .card[aria-pressed="true"]:disabled{opacity:1}
+.apps .card[aria-pressed="true"]{border-color:#d93025;background:color-mix(in srgb,#d93025 10%,var(--paper))}
+.fld{font:inherit;font-size:32px;font-weight:900;font-variant-numeric:tabular-nums;text-align:left;padding:8px 14px;border-radius:14px;border:3px solid var(--line);background:var(--bg);display:flex;align-items:baseline;gap:10px}
+.fld .v{min-width:3em;border-bottom:4px solid currentColor;text-align:center}
+.fld .u{font-size:22px;color:var(--muted)}
+.fld[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+.fld:disabled{cursor:default}
+.pad{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.pad button{font-size:26px;font-weight:900;padding:10px 0;border-radius:12px;border:2px solid var(--line);background:var(--bg)}
+.opts3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.opts3 button{font-size:30px;font-weight:900;padding:14px 6px;border-radius:16px;border:4px solid var(--line);background:var(--paper)}
+.opts3 button.hint{border-color:var(--accent);border-style:dashed;animation:pulse 1s ease-in-out infinite}
+.opts3 button.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--paper))}
+.opts3 button.wrong{border-color:var(--warn);animation:shake .4s}
+.res{border:3px dashed var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--paper)}
+.res .eq{font-size:22px;font-weight:700;line-height:1.6}
+.res .big{font-size:clamp(30px,5vw,42px);font-weight:900;color:var(--warn)}
+.res .objs{display:flex;flex-wrap:wrap;gap:4px}
+.res .objs img,.res .objs svg{width:40px;height:40px;object-fit:contain}
+.res.wait{color:var(--muted);font-size:20px}
+.cards .card.hint,.apps .card.hint{border-color:var(--accent);border-style:dashed;animation:pulse 1s ease-in-out infinite}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion: reduce){.st.bad,.apps .card.hint{animation:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <header><h1>用電碳排計算器</h1><p class="en">Power Mission → CO2 Calculator</p>
+      <p class="sub">照著任務選家電、輸入瓦數和小時，看看一個月會排多少碳。</p></header>
+    <a class="home" href="../lesson/index.html">← 活動選單</a>
+  </div>
+
+  <section id="setup" class="panel">
+    <p>左邊是任務：家裡的哪一個家電、幾瓦、一天用幾小時。學生照任務在右邊做三步：<b>①選家電 ②輸入瓦數 ③輸入小時</b>，畫面自動算出一個月（30 天）用了幾度電、排了幾公斤二氧化碳。</p>
+    <p class="sub" id="formula"></p>
+    <h2>朗讀與音效</h2>
+    <div id="opts"></div>
+    <button class="go" id="start">開始，第 1 位上台 ▶</button>
+    <p class="note">輪流上台：每位上台前老師按 A／B／C 選等級，畫面只顯示「第幾位」，不輸入名字，結果只留在這個分頁。
+      要輸入電費單上的度數，請用 <a href="../calculator/index.html">舊版計算器（電費單／家電）</a>。</p>
+  </section>
+
+  <section id="turn" class="panel" hidden></section>
+
+  <section id="play" hidden>
+    <div class="wrap" style="gap:14px">
+      <div class="bar"><span class="prog" id="prog"></span><span class="sp"></span>
+        <button class="small" id="again">🔊 再念一次任務</button><button class="small" id="hintbtn">💡 提示</button></div>
+      <div class="mbox">
+        <div class="task" id="task"></div>
+        <div class="steps">
+          <div class="st s1" id="s1"><h3><span class="n">1</span>選家電</h3><div class="apps" id="apps"></div></div>
+          <div class="st s2" id="s2"><h3><span class="n">2</span>輸入瓦數</h3>
+            <button class="fld" id="fw" data-f="w"><span class="v" id="vw">　</span><span class="u">瓦 W</span></button><div class="opts3" id="ow" hidden></div></div>
+          <div class="st s3" id="s3"><h3><span class="n">3</span>一天用幾小時？</h3>
+            <button class="fld" id="fh" data-f="h"><span class="v" id="vh">　</span><span class="u">小時</span></button><div class="opts3" id="oh" hidden></div></div>
+          <div class="pad" id="pad"></div>
+          <div class="res wait" id="res">選好家電、輸入瓦數和小時，這裡就會算出來。</div>
+          <div class="msg" id="msg" aria-live="polite"></div>
+          <div class="row" id="acts"><button class="go" id="check">完成任務 ✓</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="done" class="panel" hidden></section>
+</main>
+
+<script src="../engine/tts-zh.js"></script>
+<script src="../engine/sfx.js"></script>
+<script src="../themes/save-power/icons.js"></script>
+<script src="../themes/save-power/theme.js"></script>
+<script src="../engine/activity.js"></script>
+<script>
+(function () {
+  const { $, speak, sfx, icon, weigh, fmt1, TH } = Act;
+  const COEF = TH.constants.kgCO2PerKwh, DAYS = 30;
+  const APPS = TH.appliances;                               // 家電與瓦數的唯一來源＝theme.js（排排站、轉盤、舊版計算器同一份）
+  $('formula').textContent = `算法：瓦數 × 小時 × ${DAYS} 天 ÷ 1000 ＝ 一個月幾度；度數 × ${COEF} ＝ 幾公斤二氧化碳（${TH.constants.source}）。瓦數是常見機種的概略值。`;
+
+  const TIERS = {
+    A: { name: 'A', desc: '只看任務文字，自己找出家電、瓦數、小時，三步都自己輸入' },
+    B: { name: 'B', desc: '任務上的家電、瓦數、小時標上顏色（紅①、藍②、綠③），照顏色輸入' },
+    C: { name: 'C', desc: '依序點選正確的選項：家電 → 瓦數 → 小時（正確的那一個會閃動提示），不用輸入數字' },
+  };
+  const P = {};
+  let lastKey = '';
+  const rnd = (a) => a[Math.floor(Math.random() * a.length)];
+  function newTask() {
+    let a, h, key;
+    do { a = rnd(APPS); h = rnd(a.taskHours); key = a.key + h; } while (key === lastKey && APPS.length > 1);
+    lastKey = key;
+    return { i: APPS.indexOf(a), a, w: a.watts, h };
+  }
+  const taskSay = (t) => `任務：家裡的${t.a.name}是${t.w}瓦，每天用${t.h}小時。一個月會排多少碳？`;
+  const calc = (w, h) => { const kwh = w * h * DAYS / 1000; return { kwh, kg: kwh * COEF }; };
+
+  function play(tier, n, done) {
+    const t = newTask();
+    Object.assign(P, { tier, n, done, t, wrong: 0, hinted: false, lock: false, app: -1, w: '', h: '', f: 'w' });
+    $('prog').textContent = `第 ${n} 位・${TIERS[tier].name}`;
+    $('task').className = 'task' + (tier === 'A' ? '' : ' mark');
+    $('task').innerHTML = `<span class="tag">任務 Mission</span>${icon(t.a.key, t.a.name)}
+      <div class="tq">家裡的<b class="c1">${t.a.name}</b>是 <b class="c2">${t.w} 瓦</b>，<br>每天用 <b class="c3">${t.h} 小時</b>。</div>
+      <div class="ask">一個月（${DAYS} 天）會排多少碳？</div>`;
+    P.cstep = 1;
+    $('msg').textContent = ''; $('check').disabled = false; $('check').hidden = tier === 'C';   // C 點完第三步自動完成
+    document.querySelectorAll('.st').forEach((s) => s.classList.remove('bad'));
+    draw();
+    speak(taskSay(t) + (tier === 'C' ? '請先點出任務上的家電。' : '請照任務，先選家電。'));
+  }
+
+  $('apps').innerHTML = APPS.map((a, i) => `<button class="card" data-i="${i}" aria-pressed="false">${icon(a.key, a.name)}<span class="nm">${a.name}</span></button>`).join('');
+  $('pad').innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '⌫', '清除'].map((x) => `<button data-p="${x}" aria-label="${x === '⌫' ? '刪除一個數字' : x}">${x}</button>`).join('');
+
+  function draw() {
+    const C = P.tier === 'C';
+    document.querySelectorAll('#apps .card').forEach((c) => {
+      c.setAttribute('aria-pressed', +c.dataset.i === P.app);
+      c.classList.toggle('hint', C && P.cstep === 1 && +c.dataset.i === P.t.i); c.classList.remove('wrong'); c.disabled = false; });
+    ['fw', 'fh', 'pad'].forEach((x) => { $(x).hidden = C; });
+    $('ow').hidden = !C || P.cstep < 2; $('oh').hidden = !C || P.cstep < 3;
+    $('s2').classList.toggle('locked', C && P.cstep < 2); $('s3').classList.toggle('locked', C && P.cstep < 3);
+    $('s1').classList.remove('locked');
+    $('vw').textContent = P.w || '　'; $('vh').textContent = P.h || '　';
+    $('fw').setAttribute('aria-pressed', P.f === 'w'); $('fh').setAttribute('aria-pressed', P.f === 'h');
+    const w = +P.w, h = +P.h;
+    if (P.app < 0 || !w || !h) { $('res').className = 'res wait'; $('res').textContent = '選好家電、輸入瓦數和小時，這裡就會算出來。'; return; }
+    const { kwh, kg } = calc(w, h), wt = weigh(kg);
+    $('res').className = 'res';
+    $('res').innerHTML = `<div class="eq">${APPS[P.app].name}：${w} 瓦 × ${h} 小時 × ${DAYS} 天 ÷ 1000 ＝ <b>${fmt1(kwh)} 度</b><br>${fmt1(kwh)} 度 × ${COEF} ＝ ${fmt1(kg)} 公斤</div>
+      <div class="big">一個月排出約 ${fmt1(kg)} 公斤二氧化碳</div>
+      <div class="eq">＝ 約 ${wt.clouds} 朵碳雲，<b>${wt.text}</b>那麼重</div><div class="objs">${wt.html}</div>`;
+  }
+
+  $('apps').addEventListener('click', (e) => {
+    const c = e.target.closest('.card'); if (!c || P.lock) return;
+    if (P.tier === 'C') return pickC(1, +c.dataset.i, c);
+    P.app = +c.dataset.i; P.f = 'w'; sfx.step(); $('s1').classList.remove('bad');
+    c.classList.remove('hint'); draw(); speak(`${APPS[P.app].name}。請輸入瓦數，輸入好再點「小時」那一格。`);
+  });
+  document.querySelectorAll('.fld').forEach((b) => b.addEventListener('click', () => { if (P.lock) return; P.f = b.dataset.f; sfx.step(); draw(); }));
+  $('pad').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-p]'); if (!b || P.lock) return;
+    const x = b.dataset.p, f = P.f, max = f === 'w' ? 4 : 2;
+    let v = x === '清除' ? '' : x === '⌫' ? P[f].slice(0, -1) : (P[f] + x).replace(/^0+(?=\d)/, '').slice(0, max);
+    if (f === 'h' && +v > 24) v = '24';
+    P[f] = v; sfx.step(); $(f === 'w' ? 's2' : 's3').classList.remove('bad'); draw();
+    if (v && x !== '清除') speak(f === 'w' ? `${v}瓦` : `${v}小時`);
+  });
+
+  // C：依序點選正確選項（家電 → 瓦數 → 小時），正確的那一個一直閃動提示
+  const three = (right, pool) => { const o = [...new Set(pool.filter((x) => x !== right))].sort(() => Math.random() - 0.5).slice(0, 2);
+    return [right, ...o].sort((a, b) => a - b); };
+  function optsC(id, vals, right, unit) {
+    $(id).innerHTML = vals.map((v) => `<button data-v="${v}" class="${v === right ? 'hint' : ''}">${v}<small style="font-size:.6em"> ${unit}</small></button>`).join('');
+  }
+  function pickC(step, v, el) {
+    if (step !== P.cstep || P.lock) return;
+    const t = P.t, right = [0, t.i, t.w, t.h][step];
+    if (v !== right) {
+      sfx.gentle(); el.classList.remove('wrong'); void el.offsetWidth; el.classList.add('wrong'); P.wrong++;
+      const say = ['', `任務是「${t.a.name}」，找一找閃動的那一個。`, `任務上寫${t.w}瓦，找一找閃動的那一個。`, `任務上寫每天${t.h}小時，找一找閃動的那一個。`][step];
+      $('msg').className = 'msg no'; $('msg').textContent = say; speak(say); return;
+    }
+    sfx.step(); $('msg').textContent = '';
+    if (step === 1) { P.app = v; P.cstep = 2; optsC('ow', three(t.w, APPS.map((a) => a.watts)), t.w, '瓦'); draw(); speak(`${t.a.name}。接著點出${t.a.name}的瓦數。`); }
+    else if (step === 2) { P.w = String(v); P.cstep = 3; optsC('oh', three(t.h, [1, 2, 3, 4, 5, 6, 8, 24]), t.h, '小時'); draw(); speak(`${v}瓦。最後點出每天用幾小時。`); }
+    else { P.h = String(v); P.cstep = 4; draw(); $('check').click(); }
+  }
+  $('ow').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) pickC(2, +b.dataset.v, b); });
+  $('oh').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) pickC(3, +b.dataset.v, b); });
+
+  function showHint() {
+    P.hinted = true; $('task').classList.add('mark');
+    const t = P.t, tips = [];
+    if (P.app !== t.i) { const c = $('apps').querySelector(`[data-i="${t.i}"]`); c && c.classList.add('hint'); tips.push(`①選「${t.a.name}」`); }
+    if (+P.w !== t.w) tips.push(`②瓦數輸入 ${t.w}`);
+    if (+P.h !== t.h) tips.push(`③小時輸入 ${t.h}`);
+    const s = tips.length ? '提示：' + tips.join('，') + '。' : '三步都對了，按「完成任務」。';
+    $('msg').className = 'msg no'; $('msg').textContent = s; return s;
+  }
+  $('check').addEventListener('click', () => {
+    if (P.lock) return;
+    const t = P.t, bad = [];
+    if (P.app !== t.i) bad.push(['s1', `①家電不對，任務是「${t.a.name}」喔`]);
+    if (+P.w !== t.w) bad.push(['s2', '②瓦數再看一次任務']);
+    if (+P.h !== t.h) bad.push(['s3', '③小時再看一次任務']);
+    if (bad.length) {
+      P.wrong++; sfx.gentle();
+      bad.forEach(([id]) => { const s = $(id); s.classList.remove('bad'); void s.offsetWidth; s.classList.add('bad'); });
+      const say = bad.map((b) => b[1]).join('；') + '。';
+      $('msg').className = 'msg no'; $('msg').textContent = say;
+      if (P.wrong >= (P.tier === 'A' ? 2 : 1)) { const h = showHint(); speak(say + h); } else speak(say);
+      return;
+    }
+    P.lock = true; sfx.good();
+    const { kwh, kg } = calc(t.w, t.h), wt = weigh(kg);
+    const how = P.tier === 'C' ? '協助' : (P.wrong === 0 && !P.hinted ? '獨立' : '提示');
+    $('msg').className = 'msg ok'; $('msg').textContent = '任務完成！';
+    $('check').hidden = true;
+    $('acts').insertAdjacentHTML('beforeend', '<button class="go" id="nextp">下一位 ✓</button>');
+    speak(`任務完成！${t.a.name}${t.w}瓦，每天用${t.h}小時，一個月用了${fmt1(kwh)}度電，排出大約${fmt1(kg)}公斤的二氧化碳，${wt.text}那麼重。`);
+    $('nextp').addEventListener('click', () => { $('nextp').remove(); P.done({ task: `${t.a.name} ${t.w} 瓦×${t.h} 小時`, kwh: fmt1(kwh), kg: fmt1(kg), how }); }, { once: true });
+  });
+  $('again').addEventListener('click', () => P.t && speak(taskSay(P.t)));
+  $('hintbtn').addEventListener('click', () => { if (P.t && !P.lock) speak(showHint()); });
+
+  Act.mountOptions($('opts'), '你好，我是朗讀的聲音。電視一百瓦，每天看四小時。');
+  const turns = Act.turns({ tiers: TIERS, play, resultCols: ['任務', '一個月', '碳排'], row: (x) => [x.task, `${x.kwh} 度`, `${x.kg} 公斤`] });
+  $('start').addEventListener('click', () => { $('setup').hidden = true; turns.next(); });
+  window.__mission = { P, calc, newTask };
+})();
+</script>
+</body>
+</html>

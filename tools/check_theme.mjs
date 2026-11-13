@@ -111,12 +111,18 @@ if (S0 + best > G) err('每題都選省電也過不了關，門檻太嚴');
 // 課堂小遊戲（spin/ rank/ say/）用到的內容
 const COEF = T.constants?.kgCO2PerKwh;
 if (T.spin) {
-  const kg = T.spin.kwh.map((d) => Math.round(d * COEF));
+  const W = Object.fromEntries((T.appliances || []).map((a) => [a.key, a.watts]));
+  const kwh = T.spin.acts.map((a) => a.uses.reduce((t, u) => {
+    if (!(u.key in W)) err(`轉盤「${a.label}」：家電 ${u.key} 不在 appliances`);
+    return t + (W[u.key] || 0) * u.hours * T.spin.days / 1000; }, 0));
   console.log(`
-轉盤：${T.spin.kwh.map((d, i) => `${d} 度→${(d * COEF).toFixed(2)}≈${kg[i]} 公斤`).join('、')}`);
+轉盤（每天這樣用，${T.spin.days} 天）：${T.spin.acts.map((a, i) => `${a.label}→${kwh[i]} 度→${(kwh[i] * COEF).toFixed(1)} 公斤`).join('、')}`);
+  const kg = kwh.map((d) => Math.round(Math.round(d * 10) / 10 * COEF));
   if (new Set(kg).size !== kg.length) err('轉盤：兩格四捨五入後是同一個公斤數，學生分不出來');
   if (kg.some((k) => k < 1 || k > 5)) err('轉盤：公斤數要在 1～5（現場準備的重物）');
+  if (kwh.some((d) => Math.abs(d * 10 - Math.round(d * 10)) > 1e-9)) err('轉盤：度數最多一位小數（學生好算）');
 }
+(T.appliances || []).forEach((a, i) => { if (!(a.taskHours || []).length || a.taskHours.some((h) => !(h > 0 && h <= 24))) err(`appliances[${i}]：taskHours 要有 1～24 的值`); });
 (T.appliances || []).forEach((a, i) => { if (!(a.watts > 0 && a.hours > 0)) err(`appliances[${i}]：瓦數與時數要大於 0`); });
 if (T.appliances && new Set(T.appliances.map((a) => a.watts)).size !== T.appliances.length) err('appliances：瓦數不能重複（排排站要分得出先後）');
 (T.sayCards || []).forEach((c, i) => { if (!c.line || !c.short) err(`sayCards[${i}]：缺 line 或 short`); });

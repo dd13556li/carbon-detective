@@ -109,5 +109,19 @@
     return { start };
   }
 
-  window.Act = { S, $, speak, stop, icon, mountOptions, turns, story, anim, sleep, TH, sfx: window.GameSfx.sfx };
+  // 公斤 → 生活物品（與 calculator/ 同一套規則：挑「至少 1 個」的最重那一項）
+  //   Act.weigh(kg) → { text:'差不多 12 瓶 500 mL 礦泉水', html:圖示列, clouds:朵數 }
+  const CMP = TH.compare || [], KPU = (TH.constants || {}).kgPerUnit || 0.5;
+  const fmt1 = (n) => Number(n.toFixed(1)).toLocaleString('zh-TW');
+  function weigh(kg) {
+    let it = CMP[0]; for (const x of CMP) if (kg >= x.kg) it = x;
+    const n = kg / it.kg, whole = n < 1 ? 0 : Math.round(n), shown = Math.min(whole, 20);
+    const text = n < 1 ? `不到 1 ${it.label}` : `差不多 ${n >= 2 ? Math.round(n) : fmt1(n)} ${it.label}`;
+    let html = ''; for (let i = 0; i < shown; i++) html += icon(it.icon, '');
+    if (!whole) html += `<span style="opacity:.45">${icon(it.icon, '')}</span>`;
+    if (whole > 20) html += `<span>…還有 ${whole - 20} 個</span>`;
+    return { text, html, clouds: Math.round(kg / KPU) };
+  }
+
+  window.Act = { S, $, speak, stop, icon, mountOptions, turns, story, anim, sleep, weigh, fmt1, TH, sfx: window.GameSfx.sfx };
 })();

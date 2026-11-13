@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
 <link rel="stylesheet" href="../engine/activity.css">
 <style>
-/* 第一節 發展活動三：轉盤轉到幾度 → 選出排的碳有幾公斤 → 到桌上拿起那個重量提提看 */
+/* 第一節 發展活動三：轉盤轉到生活用電活動（可同時用好幾樣）→ 一個月共用幾度 → 排出幾公斤 → 到桌上拿起那個重量提提看 */
 .spinbox{display:grid;grid-template-columns:minmax(260px,420px) 1fr;gap:24px;align-items:center}
 @media (max-width:760px){.spinbox{grid-template-columns:1fr}}
 .wheel{position:relative;width:min(100%,max(220px,calc(100dvh - 430px)));aspect-ratio:1;margin:0 auto}
@@ -25,6 +25,9 @@
 .mini .pad{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
 .mini .pad button{font-size:24px;font-weight:900;padding:10px 0;border-radius:12px;border:2px solid var(--line);background:var(--bg)}
 .mini .how{font-size:17px;color:var(--muted);margin:0}
+.lines{font-size:22px;font-weight:700;line-height:1.7;margin:0;padding:0;list-style:none}
+.lines .ans{color:var(--warn);font-weight:900}
+.objs{display:flex;flex-wrap:wrap;gap:4px}.objs img,.objs svg{width:40px;height:40px;object-fit:contain}
 .lift{font-size:26px;font-weight:900;padding:16px;border-radius:16px;background:color-mix(in srgb,var(--ok) 14%,var(--paper));border:3px solid var(--ok)}
 @media (prefers-reduced-motion: reduce){.wheel .rot{transition-duration:.01s}}
 </style>
@@ -33,14 +36,16 @@
 <main class="wrap">
   <div class="top">
     <header><h1>碳排有多重？</h1><p class="en">How Heavy Is the Carbon?</p>
-      <p class="sub">轉轉盤，看轉到幾度電，再找出排出的碳有幾公斤，拿起來提提看！</p></header>
+      <p class="sub">轉轉盤，轉到一個生活中的用電活動，算算一個月共用幾度電、排出幾公斤的碳，再拿起來提提看！</p></header>
     <a class="home" href="../lesson/index.html">← 活動選單</a>
   </div>
 
   <section id="setup" class="panel">
-    <h2>上課前準備</h2>
-    <p>桌上放 5 個重物，各貼上「1 公斤」到「5 公斤」的標籤。例如：1 公升的水約 1 公斤，用寶特瓶裝 1～5 公升的水最方便。</p>
+    <h2>轉盤上的活動</h2>
+    <p>每一格是「每天這樣用電，一個月（30 天）」。有的只用一樣家電，有的同時用好幾樣（例如看電視又開燈）。</p>
     <p class="sub" id="table"></p>
+    <h2>上課前準備</h2>
+    <p>桌上放 5 個重物，各貼上「1 公斤」到「5 公斤」的標籤。例如：1 公升的水約 1 公斤，用寶特瓶裝 1～5 公升的水最方便。轉盤上每一格算出來剛好是其中一個重量。</p>
     <h2>朗讀與音效</h2>
     <div id="opts"></div>
     <button class="go" id="start">開始，第 1 位上台 ▶</button>
@@ -58,6 +63,7 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <div class="q" id="q"></div>
           <button class="go" id="spinbtn">轉！Spin</button>
+          <ul class="lines" id="lines" hidden></ul>
           <div class="hintline" id="hint" hidden></div>
           <div class="mini" id="mini" hidden></div>
         </div>
@@ -78,41 +84,48 @@
 <script src="../engine/activity.js"></script>
 <script>
 (function () {
-  const { $, speak, sfx, TH } = Act;
-  const COEF = TH.constants.kgCO2PerKwh;
-  const KWH = TH.spin.kwh;                         // 轉盤上的度數（theme.js）
-  const KG = [1, 2, 3, 4, 5];                       // 現場的重物
-  const COLORS = ['#f6c344', '#5bb8f5', '#7ccf7a', '#f2955b', '#b99be8'];
-  const tgt = (d) => Math.round(d * COEF);
-  const perKg = (1 / COEF).toFixed(1);             // 1 公斤 ≈ 幾度電的碳
-  $('table').textContent = '轉盤：' + KWH.map((d) => `${d} 度 → ${(d * COEF).toFixed(1)} 公斤 ≈ ${tgt(d)} 公斤`).join('；') + `（度數 × ${COEF}）`;
+  const { $, speak, sfx, icon, fmt1, TH } = Act;
+  const COEF = TH.constants.kgCO2PerKwh, DAYS = TH.spin.days;
+  const APP = Object.fromEntries(TH.appliances.map((a) => [a.key, a]));      // 瓦數的唯一來源＝theme.js appliances
+  const ACTS = TH.spin.acts.map((a) => {
+    const uses = a.uses.map((u) => ({ ...u, name: APP[u.key].name, w: APP[u.key].watts, kwh: APP[u.key].watts * u.hours * DAYS / 1000 }));
+    const kwh = Math.round(uses.reduce((t, u) => t + u.kwh, 0) * 10) / 10;
+    return { label: a.label, uses, kwh, kg: kwh * COEF, k: Math.round(kwh * COEF) };
+  });
+  const COLORS = ['#f6c344', '#5bb8f5', '#7ccf7a', '#f2955b', '#b99be8', '#f28bb0'];
+  $('table').textContent = '轉盤：' + ACTS.map((a) => `${a.label} → ${a.kwh} 度 → ${a.kg.toFixed(2)} ≈ ${a.k} 公斤`).join('；') + `（瓦數 × 小時 × ${DAYS} 天 ÷ 1000 ＝ 度數；度數 × ${COEF} ＝ 公斤）`;
 
   const TIERS = {
-    A: { name: 'A', desc: `把轉到的度數輸入計算器，算出「度數 × ${COEF}」幾公斤，再從五個重量選一個` },
-    B: { name: 'B', desc: '畫面寫出算式和答案（幾公斤），從五個重量選一個' },
+    A: { name: 'A', desc: '自己算出一個月共用幾度（從四個選一個），再把度數輸入計算器算出公斤，從五個重量選一個' },
+    B: { name: 'B', desc: '畫面列出算式和答案（每一樣幾度、共用幾度、幾公斤），從五個重量選出那一個' },
     C: { name: 'C', desc: '畫面直接顯示幾公斤，不用選，直接拿起來提提看' },
   };
 
-  // 轉盤（5 格，指針在正上方）
-  const N = KWH.length, A = 360 / N;
+  // 轉盤（6 格，指針在正上方）：每格畫出用到的家電圖＋幾小時
+  const N = ACTS.length, A = 360 / N, ART = '../themes/save-power/art/';
   const pt = (deg, r) => { const a = (deg - 90) * Math.PI / 180; return [200 + r * Math.cos(a), 200 + r * Math.sin(a)]; };
-  $('wheel').innerHTML = `<circle cx="200" cy="200" r="196" fill="#3a4658"/><g class="rot" id="rot">` + KWH.map((d, i) => {
-    const [x1, y1] = pt(i * A, 186), [x2, y2] = pt((i + 1) * A, 186), [tx, ty] = pt(i * A + A / 2, 122);
-    return `<path d="M200 200L${x1} ${y1}A186 186 0 0 1 ${x2} ${y2}z" fill="${COLORS[i % COLORS.length]}" stroke="#fff" stroke-width="4"/>
-      <text x="${tx}" y="${ty}" transform="rotate(${i * A + A / 2} ${tx} ${ty})" text-anchor="middle" dominant-baseline="middle" font-size="44" font-weight="900" fill="#1d2a26" font-family="sans-serif">${d}<tspan font-size="26"> 度</tspan></text>`;
+  $('wheel').innerHTML = `<circle cx="200" cy="200" r="196" fill="#3a4658"/><g class="rot" id="rot">` + ACTS.map((act, i) => {
+    const [x1, y1] = pt(i * A, 186), [x2, y2] = pt((i + 1) * A, 186), mid = i * A + A / 2;
+    const n = act.uses.length, sz = [0, 62, 46, 38][n], gap = A * 0.66 / n;
+    const items = act.uses.map((u, k) => {
+      const deg = mid + (k - (n - 1) / 2) * gap, [cx, cy] = pt(deg, 126), [tx, ty] = pt(deg, 126 + sz / 2 + 13);
+      const href = TH.art[u.key] ? ART + TH.art[u.key] : '';
+      return `${href ? `<image href="${href}" x="${cx - sz / 2}" y="${cy - sz / 2}" width="${sz}" height="${sz}" transform="rotate(${deg} ${cx} ${cy})"/>` : ''}
+        <text x="${tx}" y="${ty}" transform="rotate(${deg} ${tx} ${ty})" text-anchor="middle" dominant-baseline="middle" font-size="${n > 2 ? 17 : 20}" font-weight="900" fill="#1d2a26" font-family="sans-serif">${u.hours}時</text>`;
+    }).join('');
+    return `<path d="M200 200L${x1} ${y1}A186 186 0 0 1 ${x2} ${y2}z" fill="${COLORS[i % COLORS.length]}" stroke="#fff" stroke-width="4"/>${items}`;
   }).join('') + `</g><circle cx="200" cy="200" r="34" fill="#fff" stroke="#3a4658" stroke-width="6"/>`;
-
-  const weightSVG = (kg) => `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 20a10 10 0 1 1 20 0" fill="none" stroke="#4a5568" stroke-width="6"/><path d="M14 24h36l6 32H8z" fill="#5a6678" stroke="#2d3748" stroke-width="2.5" stroke-linejoin="round"/><text x="32" y="47" text-anchor="middle" font-size="18" font-weight="900" fill="#fff" font-family="sans-serif">${kg}kg</text></svg>`;
 
   let rot = 0, last = -1;
   const P = {};
   function play(tier, n, done) {
-    Object.assign(P, { tier, n, done, d: 0, wrong: 0, hinted: false, spun: false, lock: false });
+    Object.assign(P, { tier, n, done, act: null, wrong: 0, hinted: false, spun: false, lock: false, kwhOK: false, typed: '' });
     $('prog').textContent = `第 ${n} 位・${TIERS[tier].name}`;
-    $('q').innerHTML = '按「轉！」看看轉到幾度電。';
+    $('q').innerHTML = '按「轉！」看看轉到什麼用電活動。';
     $('spinbtn').hidden = false; $('spinbtn').disabled = false;
-    $('hint').hidden = true; $('mini').hidden = true; $('cards').innerHTML = ''; $('msg').textContent = ''; $('after').innerHTML = '';
-    speak('請按轉，看看轉到幾度電。');
+    ['lines', 'hint', 'mini'].forEach((x) => { $(x).hidden = true; });
+    $('cards').innerHTML = ''; $('msg').textContent = ''; $('after').innerHTML = '';
+    speak('請按轉，看看轉到什麼用電活動。');
   }
   function spin() {
     if (P.spun) return; P.spun = true; $('spinbtn').disabled = true;
@@ -122,87 +135,116 @@
     $('rot').style.transform = `rotate(${rot}deg)`;
     sfx.rattle(); const tick = setInterval(sfx.step, 220);
     const t = matchMedia('(prefers-reduced-motion: reduce)').matches ? 50 : 2900;
-    setTimeout(() => { clearInterval(tick); sfx.land(); landed(KWH[i]); }, t);
+    setTimeout(() => { clearInterval(tick); sfx.land(); landed(i); }, t);
   }
-  const exactKg = (d) => (d * COEF).toFixed(1);
-  const cardsHTML = (opts) => opts.map((g) => `<button class="card" data-kg="${g}">${weightSVG(g)}<span class="nm">${g} 公斤</span></button>`).join('');
-  function landed(d) {
-    P.d = d; $('spinbtn').hidden = true;
-    const k = tgt(d), tier = P.tier;
-    if (tier === 'C') {            // C：直接顯示幾公斤，不用選
-      $('q').innerHTML = `轉到 <span class="kwh">${d} 度</span>！排出的碳大約 <span class="kwh">${k} 公斤</span>。`;
-      speak(`轉到${d}度。排出的碳大約${k}公斤。請到桌上拿起${k}公斤那一個，提提看有多重。`);
-      return correct();
+  const small = (k, alt) => icon(k, alt).replace(/^<(img|svg)/, '<$1 style="width:34px;height:34px;vertical-align:middle"');
+  const lineHTML = (a, show, kg) => a.uses.map((u) => `<li>${small(u.key, u.name)} ${u.name} ${u.w} 瓦 × ${u.hours} 小時 × ${DAYS} 天 ÷ 1000 ＝ <span class="ans">${show ? u.kwh + ' 度' : '？ 度'}</span></li>`).join('')
+    + (a.uses.length > 1 ? `<li>合起來：<span class="ans">${show ? a.uses.map((u) => u.kwh).join(' ＋ ') + ' ＝ ' + a.kwh + ' 度' : '？ 度'}</span></li>` : '')
+    + (kg ? `<li>${a.kwh} 度 × ${COEF} ＝ ${a.kg.toFixed(2)} 公斤 ≈ <span class="ans">${a.k} 公斤</span></li>` : '');
+  const sayUses = (a) => a.uses.map((u) => `${u.name}${u.w}瓦，用${u.hours}小時`).join('，');
+  function options(a) {                    // 正確度數＋另外 3 格的度數，由小到大
+    const others = ACTS.filter((x) => x !== a).map((x) => x.kwh).sort(() => Math.random() - 0.5).slice(0, 3);
+    return [a.kwh, ...others].sort((x, y) => x - y);
+  }
+  const cardsHTML = (opts) => opts.map((d) => `<button class="card" data-kwh="${d}">${icon('plug', '')}<span class="nm">${d} 度</span></button>`).join('');
+  const weightSVG = (kg) => `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 20a10 10 0 1 1 20 0" fill="none" stroke="#4a5568" stroke-width="6"/><path d="M14 24h36l6 32H8z" fill="#5a6678" stroke="#2d3748" stroke-width="2.5" stroke-linejoin="round"/><text x="32" y="47" text-anchor="middle" font-size="18" font-weight="900" fill="#fff" font-family="sans-serif">${kg}kg</text></svg>`;
+  const weightsHTML = () => [1, 2, 3, 4, 5].map((g) => `<button class="card" data-kg="${g}">${weightSVG(g)}<span class="nm">${g} 公斤</span></button>`).join('');
+  function landed(i) {
+    const a = P.act = ACTS[i]; $('spinbtn').hidden = true;
+    $('q').innerHTML = `轉到：每天 <span class="kwh">${a.label}</span>`;
+    $('lines').hidden = false;
+    if (P.tier === 'C') {           // C：直接顯示幾公斤，不用選
+      $('lines').innerHTML = lineHTML(a, true, true);
+      return correct(`轉到：每天${a.label}。一個月共用${a.kwh}度電。`);
     }
-    $('q').innerHTML = `轉到 <span class="kwh">${d} 度</span>！排出的碳大約幾公斤？`;
-    if (tier === 'B') {            // B：寫出算式與答案，學生自己選出那個重量
-      $('hint').hidden = false;
-      $('hint').innerHTML = `${d} 度 × ${COEF} ＝ ${exactKg(d)} 公斤 ≈ <b>${k} 公斤</b>`;
-      $('cards').innerHTML = cardsHTML(KG);
-      speak(`轉到${d}度。${d}度乘以${COEF}，等於${exactKg(d)}公斤，大約${k}公斤。請找出${k}公斤。`);
-      return;
+    if (P.tier === 'B') {           // B：列出算式和答案，從五個重量選出那一個
+      $('lines').innerHTML = lineHTML(a, true, true); P.kwhOK = true;
+      $('cards').innerHTML = weightsHTML();
+      return speak(`轉到：每天${a.label}。一個月共用${a.kwh}度電，排出的碳大約${a.k}公斤。請找出${a.k}公斤。`);
     }
-    // A：右邊出現計算器，學生自己輸入度數，計算器算出公斤，再從五個重量選一個
-    P.typed = '';
-    $('mini').hidden = false;
-    drawMini();
-    speak(`轉到${d}度。請把度數輸入計算器，算算看排出的碳大約幾公斤。`);
+    $('lines').innerHTML = lineHTML(a, false);
+    $('cards').innerHTML = cardsHTML(options(a));
+    speak(`轉到：每天${a.label}。${sayUses(a)}。算算看，一個月共用幾度電？`);
   }
-  function drawMini() {
-    const v = Number(P.typed || 0);
-    $('mini').innerHTML = `<p class="how">算式：度數 × ${COEF} ＝ 公斤（1 度電排出約 ${COEF} 公斤的碳）</p>
-      <div class="read"><span class="in">${P.typed || '　'}</span> 度 × ${COEF} ＝ ${v ? `${(v * COEF).toFixed(1)} 公斤` : '？ 公斤'}</div>
-      <div class="pad">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '⌫', '清除'].map((x) => `<button data-p="${x}" aria-label="${x === '⌫' ? '刪除一個數字' : x}">${x}</button>`).join('')}</div>`;
-    if (v && !$('cards').children.length) { $('cards').innerHTML = cardsHTML(KG); }
-  }
-  $('mini').addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-p]'); if (!b || P.lock) return;
-    const x = b.dataset.p;
-    P.typed = x === '清除' ? '' : x === '⌫' ? P.typed.slice(0, -1) : (P.typed + x).replace(/^0+(?=\d)/, '').slice(0, 3);
-    sfx.step(); drawMini();
-    const v = Number(P.typed || 0);
-    if (v) speak(`${v}度乘以${COEF}，等於${(v * COEF).toFixed(1)}公斤。`);
-  });
   function showHint() {
-    P.hinted = true;
-    const c = $('cards').querySelector(`[data-kg="${tgt(P.d)}"]`); if (c) c.classList.add('hint');
+    P.hinted = true; const a = P.act;
+    const weights = !!$('cards').querySelector('[data-kg]');
+    $('lines').innerHTML = lineHTML(a, true, weights);
+    const c = $('cards').querySelector(weights ? `[data-kg="${a.k}"]` : `[data-kwh="${a.kwh}"]`); if (c) c.classList.add('hint');
     $('hint').hidden = false;
-    $('hint').innerHTML = P.tier === 'A' ? `提示：轉到 ${P.d} 度，計算器輸入「${P.d}」。${P.d} × ${COEF} ＝ ${exactKg(P.d)}，最接近 ${tgt(P.d)} 公斤`
-      : `${P.d} 度 × ${COEF} ＝ ${exactKg(P.d)} 公斤 ≈ <b>${tgt(P.d)} 公斤</b>`;
+    $('hint').textContent = weights ? `提示：${a.kwh} 度 × ${COEF} ≈ ${a.k} 公斤，找出 ${a.k} 公斤。` : P.kwhOK ? `提示：計算器輸入「${a.kwh}」。` : `提示：一個月共用 ${a.kwh} 度。`;
   }
   $('cards').addEventListener('click', (e) => {
     const c = e.target.closest('.card'); if (!c || P.lock) return;
-    const g = +c.dataset.kg, k = tgt(P.d);
+    if (c.dataset.kg) return pickWeight(c);
+    if (P.kwhOK) return;
+    const d = +c.dataset.kwh, a = P.act;
+    if (d !== a.kwh) {
+      P.wrong++; c.classList.add('wrong'); c.disabled = true; sfx.gentle();
+      const say = d > a.kwh ? `${d}度太多了，再算一次。` : `${d}度太少了，再算一次。`;
+      $('msg').className = 'msg no'; $('msg').textContent = say; speak(say);
+      if (P.wrong >= (P.tier === 'A' ? 2 : 1)) showHint();
+      return;
+    }
+    c.classList.remove('hint'); c.classList.add('right'); sfx.good(); P.kwhOK = true;
+    $('lines').innerHTML = lineHTML(a, true); $('hint').hidden = true;
+    // A：再把度數輸入計算器，算出公斤，再從五個重量選
+    $('msg').className = 'msg ok'; $('msg').textContent = `答對了！一個月共用 ${a.kwh} 度。`;
+    $('mini').hidden = false; drawMini();
+    speak(`答對了！一個月共用${a.kwh}度。請把${a.kwh}度輸入計算器，看看排出幾公斤的碳。`);
+  });
+  function pickWeight(c) {
+    const g = +c.dataset.kg, k = P.act.k;
     if (g !== k) {
       P.wrong++; c.classList.add('wrong'); c.disabled = true; sfx.gentle();
       const say = g > k ? `${g}公斤太重了，再找輕一點的。` : `${g}公斤太輕了，再找重一點的。`;
       $('msg').className = 'msg no'; $('msg').textContent = say; speak(say);
-      if (P.wrong >= (P.tier === 'A' ? 2 : 1)) showHint();
-      if (P.tier === 'A' && Number(P.typed) && Number(P.typed) !== P.d) { $('msg').textContent += `（計算器輸入的是 ${P.typed} 度，轉盤轉到的是 ${P.d} 度喔）`; }
+      if (P.wrong >= (P.tier === 'A' ? 3 : 1)) showHint();
       return;
     }
     c.classList.remove('hint'); c.classList.add('right'); sfx.good();
-    correct();
+    correct('答對了！');
+  }
+  function drawMini() {
+    const v = Number(P.typed || 0);
+    $('mini').innerHTML = `<p class="how">算式：度數 × ${COEF} ＝ 公斤（1 度電排出約 ${COEF} 公斤的碳）</p>
+      <div class="read"><span class="in">${P.typed || '　'}</span> 度 × ${COEF} ＝ ${v ? `${fmt1(v * COEF)} 公斤` : '？ 公斤'}</div>
+      <div class="pad">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', '⌫', '清除'].map((x) => `<button data-p="${x}" aria-label="${x === '⌫' ? '刪除一個數字' : x}">${x}</button>`).join('')}</div>`;
+  }
+  $('mini').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-p]'); if (!b || P.lock) return;
+    const x = b.dataset.p;
+    if (x === '.' && P.typed.includes('.')) return;
+    P.typed = x === '清除' ? '' : x === '⌫' ? P.typed.slice(0, -1) : (P.typed + x).replace(/^0+(?=\d)/, '').replace(/^\./, '0.').slice(0, 4);
+    sfx.step(); drawMini();
+    const v = Number(P.typed || 0);
+    if (!v || P.typed.endsWith('.')) return;
+    if (v === P.act.kwh) {
+      $('msg').className = 'msg ok'; $('msg').textContent = `${v} 度 × ${COEF} ＝ ${fmt1(v * COEF)} 公斤，大約幾公斤？從下面五個重量選一個。`;
+      if (!$('cards').querySelector('[data-kg]')) $('cards').innerHTML = weightsHTML();
+      return speak(`${v}度乘以${COEF}，等於${fmt1(v * COEF)}公斤。大約幾公斤？請從五個重量選一個。`);
+    }
+    speak(`${v}度乘以${COEF}，等於${fmt1(v * COEF)}公斤。`);
+    if (P.typed.replace('.', '').length >= String(P.act.kwh).replace('.', '').length) { $('msg').className = 'msg no'; $('msg').textContent = `計算器輸入的是 ${v} 度，一個月共用的是 ${P.act.kwh} 度喔。`; }
   });
-  function correct() {
-    P.lock = true; const k = tgt(P.d);
-    const exact = exactKg(P.d);
+  function correct(lead) {           // lead：結果前先念的那一句（只念一次，避免兩次 speak 互相打斷）
+    P.lock = true; const a = P.act, k = a.k;
     const how = P.tier === 'C' ? '協助' : (P.wrong === 0 && !P.hinted ? '獨立' : '提示');
-    $('msg').className = 'msg ok'; $('msg').textContent = P.tier === 'C' ? '' : `答對了！`;
-    $('after').innerHTML = `<div class="formula">${P.d} 度 × ${COEF} ＝ ${exact} 公斤 ≈ ${k} 公斤</div>
+    $('msg').className = 'msg ok'; $('msg').textContent = P.tier === 'C' ? '' : '答對了！';
+    $('after').innerHTML = `<div class="formula">${a.kwh} 度 × ${COEF} ＝ ${a.kg.toFixed(2)} 公斤 ≈ ${k} 公斤</div>
       <div class="lift">🏋️ 到桌上拿起「${k} 公斤」那一個，提提看有多重！</div>
       <div class="row" style="margin-top:12px"><button class="go" id="lifted">提過了，下一位 ✓</button></div>`;
-    if (P.tier !== 'C') speak(`答對了！${P.d}度電排出的碳，大約${k}公斤。請到桌上拿起${k}公斤那一個，提提看有多重。`);
-    $('lifted').addEventListener('click', () => P.done({ kwh: P.d, kg: k, how }), { once: true });
+    speak(`${lead}每天${a.label}，一個月排出的碳大約${k}公斤。請到桌上拿起${k}公斤那一個，提提看有多重。`);
+    $('lifted').addEventListener('click', () => P.done({ act: a.label, kwh: a.kwh, kg: k, how }), { once: true });
   }
   $('spinbtn').addEventListener('click', spin);
-  $('again').addEventListener('click', () => P.d ? speak(`${P.d}度電排出的碳，大約幾公斤？`) : speak('請按轉。'));
-  $('hintbtn').addEventListener('click', () => { if (P.d) { showHint(); speak($('hint').textContent); } });
+  $('again').addEventListener('click', () => P.act ? speak(`每天${P.act.label}。${sayUses(P.act)}。一個月共用幾度電？`) : speak('請按轉。'));
+  $('hintbtn').addEventListener('click', () => { if (P.act && !P.lock) { showHint(); speak($('hint').textContent); } });
 
-  Act.mountOptions($('opts'), '你好，我是朗讀的聲音。轉到四度，排出的碳大約兩公斤。');
-  const turns = Act.turns({ tiers: TIERS, play, resultCols: ['轉到', '找出的重量'], row: (x) => [`${x.kwh} 度`, `${x.kg} 公斤`] });
+  Act.mountOptions($('opts'), '你好，我是朗讀的聲音。每天看電視兩小時，一個月共用六度電，排出的碳大約三公斤。');
+  const turns = Act.turns({ tiers: TIERS, play, resultCols: ['轉到', '一個月', '碳排'], row: (x) => [x.act, `${x.kwh} 度`, `${x.kg} 公斤`] });
   $('start').addEventListener('click', () => { $('setup').hidden = true; turns.next(); });
-  window.__spin = { P, landed, tgt, correct };
+  window.__spin = { P, landed, ACTS, correct };
 })();
 </script>
 </body>
