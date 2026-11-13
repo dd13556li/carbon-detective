@@ -18,17 +18,38 @@
       ZhTTS.speakTW(text, { rate: opt.rate || 0.9, onEnd: opt.onEnd });
     }, wait);
   }
-  function stop() { try { ZhTTS.cancelTW(); } catch (e) {} try { speechSynthesis.cancel(); } catch (e) {} }
-  // 英文朗讀（字卡、巡守口號共用）：每次念之前重抓語音清單（物件會過期）；挑不到也照念，交給系統挑
+  function stop() { enSeq++; try { ZhTTS.cancelTW(); } catch (e) {} try { speechSynthesis.cancel(); } catch (e) {} }
+  // 英文朗讀（雙語字卡、巡守口號共用；唯一定義）。挑法比照中文 ZhTTS.speakTW（2026-11-13 使用者要求英文也用高品質語音）：
+  //   Edge 雲端神經語音（Jenny／Aria／Ava…美式女聲優先）＞ 其他雲端 en-US ＞ Google US English ＞ 本機 en-US。
+  //   雲端語音比本機晚到 → 沒有雲端語音就稍等再挑，最多等到開頁後 3 秒；每次唸的當下重抓清單（物件會過期）；
+  //   挑不到也照唸（u.lang 交給系統挑）。
+  const EN_T0 = performance.now(), EN_WAIT = 3000;
+  const enOnline = (v) => /online|natural/i.test(v.name);
+  function pickEn() {
+    const vs = (speechSynthesis.getVoices() || []).filter((v) => v && /^en[-_]/i.test(v.lang || ''));
+    const us = (x) => /en[-_]us/i.test(x.lang);
+    return vs.find((x) => enOnline(x) && us(x) && /jenny|aria|ava|emma|michelle/i.test(x.name))
+        || vs.find((x) => enOnline(x) && us(x)) || vs.find(enOnline)
+        || vs.find((x) => /google/i.test(x.name) && us(x)) || vs.find(us) || vs[0] || null;
+  }
+  let enSeq = 0;
   function speakEn(text, opt = {}) {
     if (!S.speak || !window.speechSynthesis) { opt.onEnd && opt.onEnd(); return; }
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'en-US'; u.rate = opt.rate || 0.85; if (opt.onEnd) u.onend = opt.onEnd;
-    const vs = speechSynthesis.getVoices().filter((v) => v && /^en[-_]/i.test(v.lang || ''));
-    const us = (x) => /en[-_]us/i.test(x.lang);
-    const v = vs.find((x) => /online|natural/i.test(x.name) && us(x)) || vs.find((x) => /google/i.test(x.name) && us(x)) || vs.find(us) || vs[0];
-    try { if (v) u.voice = v; } catch (e) {}
-    speechSynthesis.speak(u);
+    const my = ++enSeq;
+    const go = () => {
+      if (my !== enSeq) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US'; u.rate = opt.rate || 0.85; if (opt.onEnd) u.onend = opt.onEnd;
+      const v = pickEn();
+      try { if (v) { u.voice = v; u.lang = v.lang; } } catch (e) {}
+      speechSynthesis.speak(u);
+    };
+    const tick = () => {
+      const v = pickEn();
+      if ((v && enOnline(v)) || performance.now() - EN_T0 >= EN_WAIT) return go();
+      setTimeout(tick, 150);
+    };
+    tick();
   }
   document.addEventListener('pointerdown', () => { try { window.ZhTTS && ZhTTS.unlock(); } catch (e) {} }, { once: true });
 
