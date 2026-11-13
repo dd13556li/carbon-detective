@@ -193,14 +193,14 @@
   function drawMini(result) {
     const A = P.tier === 'A', v = Number(P.typed || 0);
     const read = A ? `<span class="in">${P.typed || '　'}</span> ＝ ${result || '？ 公斤'}`
-      : `<span class="in">${P.typed || '　'}</span> 度 × ${COEF} ＝ ${v && !P.typed.endsWith('.') ? `${kgShow(v)} 公斤` : '？ 公斤'}`;
+      : `<span class="in">${P.typed || '　'}</span> 度 × ${COEF} ＝ ${result || (v && !P.typed.endsWith('.') ? `${kgShow(v)} 公斤` : '？ 公斤')}`;
     $('mini').innerHTML = `<p class="how">${A ? `輸入算式：度數 × ${COEF}，再按「＝」` : `輸入度數，計算器會自動乘 ${COEF}`}（1 度電排出約 ${COEF} 公斤的碳）</p>
       <div class="read">${read}</div>
       <div class="pad">${KEYS[A ? 'A' : 'B'].map((x) => `<button data-p="${x}" aria-label="${{ '⌫': '刪除一個字', '×': '乘以', '＝': '等於' }[x] || x}">${x}</button>`).join('')}</div>`;
   }
   function calcDone(v) {           // 算對了：顯示幾公斤，再從五個重量選
     const a = P.act;
-    drawMini(P.tier === 'A' ? `<span class="big">${kgShow(v)} ≈ ${a.k} 公斤</span>` : undefined);
+    drawMini(`<span class="big">${kgShow(v)} ≈ ${a.k} 公斤</span>`);   // A、B 都顯示「0.99 ≈ 1 公斤」
     $('msg').className = 'msg ok'; $('msg').textContent = `${a.kwh} 度 × ${COEF} ＝ ${kgShow(a.kwh)} 公斤，大約 ${a.k} 公斤。從下面五個重量選一個。`;
     if (!$('cards').querySelector('[data-kg]')) $('cards').innerHTML = weightsHTML();
     P.calcOK = true;
