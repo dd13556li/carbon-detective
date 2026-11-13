@@ -134,7 +134,7 @@
         await anim($('cloud'), [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1.08)' }, { opacity: 1, transform: 'scale(1)' }], 900);
         anim($('gas'), [{ opacity: 1 }, { opacity: 0 }], 400);
       } },
-    { say: '記住：用電的時候，看不見的二氧化碳就跑到空氣裡了。碳雲是我們把它畫出來。', pause: 200 },
+    { say: '記住：用電，就會排出看不見的二氧化碳。它跑到空氣裡，就像我們畫的碳雲。少用一點電，碳雲就少一點。', pause: 200 },
   ];
   Act.mountOptions($('opts'));
   Act.story(steps, { caption: $('cap'), play: $('play'), reset });
