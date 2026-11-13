@@ -177,10 +177,10 @@ a{color:var(--accent)}
   window.GameSfx.enabled = () => S.sfx;
   const sfx = window.GameSfx.sfx;
 
-  function speak(text) {
-    if (!S.speak || !window.ZhTTS) return;
+  function speak(text, onEnd) {
+    if (!S.speak || !window.ZhTTS) { onEnd && onEnd(); return; }
     const wait = Math.max(0, window.GameSfx.until() - performance.now());
-    setTimeout(() => { try { speechSynthesis.cancel(); } catch (e) {} ZhTTS.speakTW(text, { rate: 0.9 }); }, wait);
+    setTimeout(() => { try { speechSynthesis.cancel(); } catch (e) {} ZhTTS.speakTW(text, { rate: 0.9, onEnd }); }, wait);
   }
   document.addEventListener('pointerdown', () => { try { window.ZhTTS && ZhTTS.unlock(); } catch (e) {} }, { once: true });
 
@@ -302,8 +302,10 @@ a{color:var(--accent)}
       S.log.push({ bill: b.key, task: want, how: tier().hintAfter === 0 ? '協助' : how, tries: S.wrong + 1 });
       sfx.good();
       $('msg').className = 'msg ok'; $('msg').textContent = `找到了！${t.zh}是 ${t.val(b)}`;
-      speak(`找到了！${t.zh}是${t.say(b)}。`);
-      setTimeout(next, 2600);
+      // 2026-11-13 使用者定：把找到的值（金額、度數…）完整唸完才換下一題，不用固定秒數
+      let moved = false;
+      const go = () => { if (moved) return; moved = true; setTimeout(next, S.speak ? 600 : 2000); };
+      speak(`找到了！${t.zh}是${t.say(b)}。`, go);
       return;
     }
     S.wrong++;

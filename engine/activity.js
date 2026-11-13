@@ -39,7 +39,11 @@
     const go = () => {
       if (my !== enSeq) return;
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'en-US'; u.rate = opt.rate || 0.85; if (opt.onEnd) u.onend = opt.onEnd;
+      u.lang = 'en-US'; u.rate = opt.rate || 0.85;
+      if (opt.onEnd) {                // onend 有的瀏覽器不觸發 → 依長度補一個保底計時，只會叫一次
+        let ended = false; const fin = () => { if (!ended) { ended = true; opt.onEnd(); } };
+        u.onend = u.onerror = fin; setTimeout(fin, Math.min(15000, 1500 + String(text).length * 150));
+      }
       const v = pickEn();
       try { if (v) { u.voice = v; u.lang = v.lang; } } catch (e) {}
       speechSynthesis.speak(u);

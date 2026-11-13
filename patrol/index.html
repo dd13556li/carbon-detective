@@ -135,8 +135,9 @@
     }
     P.on.delete(s.key); P.offed.push(s.name); b.classList.remove('hint'); sfx.step(); draw();
     $('msg').className = 'msg ok'; $('msg').textContent = `${s.name}關掉了！Turn off! 關掉！`;
-    speak(`${s.name}關掉了！`, { onEnd: () => speakEn('Turn off!') });
-    if (!TIERS[P.tier].self && P.on.size === 0) setTimeout(finish, 900);
+    // 關掉最後一個（非自行按完成的等級）：等「關掉了！Turn off!」唸完才進結算，不用固定秒數蓋掉語音
+    const last = !TIERS[P.tier].self && P.on.size === 0;
+    speak(`${s.name}關掉了！`, { onEnd: () => speakEn('Turn off!', last ? { onEnd: () => setTimeout(finish, 400) } : {}) });
   });
   function selfDone() {
     if (P.over) return;
@@ -150,6 +151,7 @@
     finish();
   }
   function finish() {
+    if (P.over) return;
     P.over = true; sfx.good(); draw();
     const how = P.tier === 'C' ? '協助' : (P.wrong === 0 && !P.hinted ? '獨立' : '提示');
     const n = P.offed.length;
