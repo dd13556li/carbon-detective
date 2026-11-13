@@ -258,7 +258,7 @@ window.THEME = {
     { zh: "節能", en: "Save Energy", say: "Save energy", when: "第一節 吃電大戶排排站", img: "themes/save-power/images/ledLamp.webp" },
     { zh: "碳排放", en: "Carbon Emissions", say: "Carbon emissions", when: "第二節 引起動機", img: "themes/save-power/images/co2.webp" },
     { zh: "關掉", en: "Turn off", say: "Turn off", when: "第二節 巡守任務", img: "themes/save-power/images/lightsOff.webp" },
-    { zh: "淨零", en: "Net Zero", say: "Net zero", when: "第二節 總結", img: "themes/save-power/images/netZero.webp" },
+    { zh: "淨零排放", en: "Net Zero", say: "Net zero", when: "第二節 總結", img: "themes/save-power/images/netZero.webp" },
   ],
   // 分層換顆粒度，不是只剪短（依 money_tutor dialogue/data/topic_presets.js 的 T1／T2／T3 原則）：
   //   lineA＝A 層：自然口語、帶理由、結尾有變化；不寫稱呼（不知道學生家裡有誰），畫面另提示「先叫一聲你的家人」
