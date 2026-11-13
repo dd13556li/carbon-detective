@@ -165,7 +165,7 @@ window.THEME = {
     { say: "電視開著，沒有人在看。",       icon: "tv",        effect: "cost", use: { watts: 100, minutes: 120 } },
     { say: "電腦螢幕整個晚上沒關。",       icon: "pcOn",      effect: "cost", use: { watts: 30, minutes: 600 } },
     { say: "冷氣開著，人卻離開房間 1 小時。", icon: "ac",     effect: "cost", use: { watts: 900, minutes: 60 } },
-    { say: "看完電視，把插頭拔掉了！",     icon: "plug",      effect: "save", use: { watts: 10, minutes: 1440 } },
+    { say: "看完電視，把延長線的開關關掉了！", icon: "plug", effect: "save", use: { watts: 10, minutes: 1440 } },   // 2026-11-13 原「把插頭拔掉」不符合生活習慣，改關延長線開關（同樣切斷待機電）
     { say: "順手關掉走廊沒人用的燈！",     icon: "lightsOff", effect: "save", use: { watts: 80, minutes: 120 } },
     { say: "把舊燈泡換成 LED 燈！",        icon: "ledLamp",   effect: "save", use: { watts: 50, minutes: 240 } },
     { say: "把冷氣的濾網洗乾淨了！",       icon: "filter",    effect: "save", use: { kwh: 0.47 },
