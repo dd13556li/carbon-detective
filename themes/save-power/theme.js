@@ -256,7 +256,7 @@ window.THEME = {
     { icon: "fan",       line: "天氣不太熱，我們先開電扇就好，好嗎？",     short: "先開電扇" },
     { icon: "curtain",   line: "白天很亮，我們拉開窗簾，不用開燈，好嗎？", short: "拉開窗簾用陽光" },
     { icon: "towel",     line: "洗完頭，先用毛巾擦乾，再用吹風機吹，好嗎？", short: "先擦乾再吹" },
-    { icon: "kettle",    line: "要喝熱水的時候再煮，好嗎？",               short: "要喝再煮水" },
+    { icon: "kettle",    line: "熱水煮好了，我們不要一直加熱保溫，好嗎？", short: "熱水不用一直加熱" },
     { icon: "filter",    line: "冷氣濾網髒了，我們把它洗乾淨，好嗎？",     short: "洗冷氣濾網" }
   ],
 
