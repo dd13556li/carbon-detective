@@ -181,7 +181,7 @@
     if (g !== k) {
       P.wrong++; c.classList.add('wrong'); c.disabled = true; sfx.gentle();
       const say = g > k ? `${g}公斤太重了，再找輕一點的。` : `${g}公斤太輕了，再找重一點的。`;
-      $('msg').className = 'msg no'; $('msg').textContent = say; speak(say);
+      $('msg').className = 'msg no'; $('msg').textContent = say; speak(say.replace(/重/g, '種'));   // 朗讀用「種」：TTS 會把「重」唸成ㄔㄨㄥˊ
       if (P.wrong >= (P.tier === 'A' ? 3 : 1)) showHint();
       return;
     }
