@@ -103,10 +103,6 @@ a{color:var(--accent)}
   </header><a class="home" href="../lesson/index.html">← 活動選單</a></div>
 
   <section id="setup" class="panel">
-    <h2>怎麼玩</h2>
-    <div class="seg" id="mode"></div>
-    <div id="solo"><h2>選一個任務等級</h2>
-    <div class="tiers" id="tiers"></div></div>
     <h2>朗讀與音效</h2>
     <div class="seg" id="opts"></div>
     <button class="go" id="start">開始尋寶 Start</button>
@@ -175,7 +171,7 @@ a{color:var(--accent)}
     B: { name: 'B', desc: '重點標示版，照紅框①、藍框②找度數和金額', ver: 'marked', tasks: [1, 2], hintAfter: 1, pad: 18 },
     C: { name: 'C', desc: '重點標示版，跟著閃動的紅框找度數', ver: 'marked', tasks: [1], hintAfter: 0, pad: 30 },
   };
-  const S = { tier: 'B', speak: true, sfx: true, rot: true, bi: 0, ti: 0, wrong: 0, hinted: false, log: [] };
+  const S = { tier: 'B', speak: true, sfx: true, bi: 0, ti: 0, wrong: 0, hinted: false, log: [] };
   window.GameSfx.enabled = () => S.sfx;
   const sfx = window.GameSfx.sfx;
 
@@ -188,19 +184,12 @@ a{color:var(--accent)}
 
   // ---- 設定 ----
   function renderSetup() {
-    $('tiers').innerHTML = Object.entries(TIERS).map(([k, t]) =>
-      `<button class="tier" data-tier="${k}" aria-pressed="${S.tier === k}"><b>${t.name}</b><span>${t.desc}</span></button>`).join('');
     const seg = (k, label) => `<span>${label}</span>` + [[true, '開'], [false, '關']].map(([v, l]) =>
       `<button data-opt="${k}" data-v="${v}" aria-pressed="${S[k] === v}">${l}</button>`).join('');
     $('opts').innerHTML = seg('speak', '朗讀') + '<span style="width:16px"></span>' + seg('sfx', '音效');
-    $('mode').innerHTML = [[true, '輪流上台（每人一張）'], [false, '一個人玩三張']].map(([v, l]) =>
-      `<button data-opt="rot" data-v="${v}" aria-pressed="${S.rot === v}">${l}</button>`).join('');
-    $('solo').hidden = S.rot;
-    if ($('first')) { $('first').hidden = !S.rot; $('start').hidden = S.rot; }   // 輪流上台：第 1 位直接在這裡選等級
   }
   $('setup').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.tier) { S.tier = b.dataset.tier; renderSetup(); }
     if (b.dataset.opt) { S[b.dataset.opt] = b.dataset.v === 'true'; renderSetup(); if (window.Act) Act.S[b.dataset.opt] = S[b.dataset.opt]; if (b.dataset.opt === 'sfx' && S.sfx) sfx.good(); }
   });
   // 輪流上台：Act.turns 管「第 n 位 → 選層級 → 全班結果」，這裡只管一位同學找一張帳單
@@ -208,11 +197,7 @@ a{color:var(--accent)}
   const turns = window.Act && Act.turns({
     tiers: TIERS, resultCols: ['帳單', '找到的寶藏'], row: (x) => [`範例 ${x.bill}`, x.found],
     beforeStart: () => { Act.S.speak = S.speak; }, onSetup: () => renderSetup(),
-    play: (tier, n, done) => { S.tier = tier; S.bi = pickBill(); S.seq = [S.bi]; S.k = 0; S.log = []; S.turnDone = done; show('play'); startBill(); },
-  });
-  $('start').addEventListener('click', () => {
-    if (S.rot && turns) { Act.S.speak = S.speak; $('setup').hidden = true; turns.next(); return; }
-    startSolo();
+    play: (tier, n, done) => { S.tier = tier; S.bi = pickBill(); S.log = []; S.turnDone = done; show('play'); startBill(); },
   });
   renderSetup();
   // ---- 列印練習單：用遊戲同一份帳單圖與題目（T），一張帳單一頁 ----
@@ -257,7 +242,6 @@ a{color:var(--accent)}
     const pool = BILLS.map((_, i) => i).filter((i) => BILLS.length < 2 || i !== lastBill);
     return (lastBill = pool[Math.floor(Math.random() * pool.length)]);
   }
-  function startSolo() { S.seq = shuffle(BILLS.map((_, i) => i)); S.k = 0; S.bi = S.seq[0]; S.log = []; show('play'); startBill(); }
 
   function startBill() {
     S.ti = 0; S.order = shuffle(tier().tasks); sfx.flip();
@@ -270,10 +254,10 @@ a{color:var(--accent)}
     const t = T[tid()], tr = tier();
     $('task').style.setProperty('--tc', t.c);
     $('task').innerHTML = `<span class="num">${tr.ver === 'marked' ? tid() : '?'}</span><span class="q">找出「${t.zh}」<small>${t.en}</small></span>`;
-    $('prog').textContent = `${S.rot ? `範例帳單 ${bill().key}` : `帳單 ${S.k + 1}／${S.seq.length}`}・寶藏 ${S.ti + 1}／${tr.tasks.length}`;
+    $('prog').textContent = `範例帳單 ${bill().key}・寶藏 ${S.ti + 1}／${tr.tasks.length}`;
     $('msg').textContent = ''; $('msg').className = 'msg';
     if (tr.hintAfter === 0) showHint();
-    speak((first ? (S.rot ? '這是你的帳單。' : `第${S.k + 1}張帳單。`) : '') + `請找出${t.zh}，點一下。` + (tr.hintAfter === 0 ? t.hintMk : ''));
+    speak((first ? '這是你的帳單。' : '') + `請找出${t.zh}，點一下。` + (tr.hintAfter === 0 ? t.hintMk : ''));
   }
   // 量好的框是 900 寬的帳單座標；換成百分比，畫面多寬都對得上
   function place(el, r, grow = 6) {
@@ -334,39 +318,15 @@ a{color:var(--accent)}
   function next() {
     if (busy) return; busy = true; setTimeout(() => { busy = false; }, 300);
     if (S.ti + 1 < tier().tasks.length) { S.ti++; startTask(false); return; }
-    if (S.rot || S.k + 1 < S.seq.length) { billDone(); return; }
-    finish();
+    billDone();
   }
   function billDone() {
     const b = bill();
     $('msg').className = 'msg ok';
-    if (S.rot) {
-      const how = S.log.reduce((w, x) => HOWRANK[x.how] > HOWRANK[w] ? x.how : w, '獨立');
-      $('msg').innerHTML = `這張帳單的寶藏都找到了！<button class="small" id="nextbill" style="margin-left:10px">完成 ✓</button>`;
-      speak(`太棒了！你找到了${S.log.length}個寶藏。`);
-      $('nextbill').addEventListener('click', () => S.turnDone({ bill: b.key, found: S.log.map((x) => T[x.task].zh).join('、'), how }), { once: true });
-      return;
-    }
-    $('msg').innerHTML = `這張帳單的寶藏都找到了！<button class="small" id="nextbill" style="margin-left:10px">下一張 Next ▶</button>`;
-    speak('這張帳單的寶藏都找到了！按下一張。');
-    $('nextbill').addEventListener('click', () => { S.k++; S.bi = S.seq[S.k]; startBill(); }, { once: true });
-  }
-  function finish() {
-    sfx.fanfare();
-    const tot = S.log.length;
-    const rows = BILLS.map((b) => {
-      const items = S.log.filter((x) => x.bill === b.key).map((x) =>
-        `<li style="--c:${T[x.task].c}"><span class="chip">${x.task}</span>${T[x.task].zh}：${T[x.task].val(b)}<span class="how">${x.how}${x.tries > 1 ? `・點了 ${x.tries} 次` : ''}</span></li>`).join('');
-      return `<h2>範例帳單 ${b.key}：${b.title}</h2><ul class="found-list">${items}</ul>`;
-    }).join('');
-    $('done').innerHTML = `<div class="score">🎉 找到 ${tot} 個寶藏！</div>
-      <p class="sub">${tier().name}・${['獨立', '提示', '協助'].map((h) => [h, S.log.filter((x) => x.how === h).length]).filter(([, c]) => c).map(([h, c]) => `${h === '獨立' ? '自己找到' : h === '提示' ? '看提示找到' : '在協助下找到'} ${c} 個`).join('、')}</p>${rows}
-      <div class="row"><button class="go" id="replay">再玩一次</button><button class="go alt" id="back">換等級</button></div>
-      <p class="note">教師紀錄：依協助程度（獨立／提示／協助）記入紀錄表。下一步：用 <a href="../calculator/index.html">用電碳排計算器</a> 把度數換成碳排。</p>`;
-    show('done');
-    speak(`太棒了！你找到了${tot}個寶藏。`);
-    $('replay').addEventListener('click', startSolo);
-    $('back').addEventListener('click', () => { renderSetup(); show('setup'); });
+    const how = S.log.reduce((w, x) => HOWRANK[x.how] > HOWRANK[w] ? x.how : w, '獨立');
+    $('msg').innerHTML = `這張帳單的寶藏都找到了！<button class="small" id="nextbill" style="margin-left:10px">完成 ✓</button>`;
+    speak(`太棒了！你找到了${S.log.length}個寶藏。`);
+    $('nextbill').addEventListener('click', () => S.turnDone({ bill: b.key, found: S.log.map((x) => T[x.task].zh).join('、'), how }), { once: true });
   }
   $('again').addEventListener('click', () => { const t = T[tid()]; speak(`請找出${t.zh}。` + (tier().ver === 'marked' ? t.hintMk : t.hint)); });
   $('hintbtn').addEventListener('click', () => { showHint(); const t = T[tid()]; speak(tier().ver === 'marked' ? t.hintMk : t.hint); });
