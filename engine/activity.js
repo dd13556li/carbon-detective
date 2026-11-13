@@ -19,6 +19,17 @@
     }, wait);
   }
   function stop() { try { speechSynthesis.cancel(); } catch (e) {} }
+  // 英文朗讀（字卡、巡守口號共用）：每次念之前重抓語音清單（物件會過期）；挑不到也照念，交給系統挑
+  function speakEn(text, opt = {}) {
+    if (!S.speak || !window.speechSynthesis) { opt.onEnd && opt.onEnd(); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US'; u.rate = opt.rate || 0.85; if (opt.onEnd) u.onend = opt.onEnd;
+    const vs = speechSynthesis.getVoices().filter((v) => v && /^en[-_]/i.test(v.lang || ''));
+    const us = (x) => /en[-_]us/i.test(x.lang);
+    const v = vs.find((x) => /online|natural/i.test(x.name) && us(x)) || vs.find((x) => /google/i.test(x.name) && us(x)) || vs.find(us) || vs[0];
+    try { if (v) u.voice = v; } catch (e) {}
+    speechSynthesis.speak(u);
+  }
   document.addEventListener('pointerdown', () => { try { window.ZhTTS && ZhTTS.unlock(); } catch (e) {} }, { once: true });
 
   const icon = (k, alt = '') => ART[k] ? `<img src="${ARTDIR}${ART[k]}" alt="${alt}">`
@@ -123,5 +134,5 @@
     return { text, html, clouds: Math.round(kg / KPU) };
   }
 
-  window.Act = { S, $, speak, stop, icon, mountOptions, turns, story, anim, sleep, weigh, fmt1, TH, sfx: window.GameSfx.sfx };
+  window.Act = { S, $, speak, speakEn, stop, icon, mountOptions, turns, story, anim, sleep, weigh, fmt1, TH, sfx: window.GameSfx.sfx };
 })();

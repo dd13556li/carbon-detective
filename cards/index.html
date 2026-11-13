@@ -66,22 +66,12 @@
 <script src="../engine/activity.js"></script>
 <script>
 (function () {
-  const { $, speak, stop } = window.Act;
+  const { $, speak, speakEn, stop } = window.Act;
   const W = window.THEME.words;
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const TABS = [['全部', () => true], ['第一節', (w) => w.when.startsWith('第一節')], ['第二節', (w) => w.when.startsWith('第二節')]];
   let filt = 0, big = false, idx = 0, cur = -1;
 
-  // 英文：每次念之前重抓語音清單（物件會過期）；挑不到也照念，交給系統挑
-  function speakEn(text) {
-    if (!Act.S.speak || !window.speechSynthesis) return;
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'en-US'; u.rate = 0.85;
-    const vs = speechSynthesis.getVoices().filter((v) => /^en[-_]/i.test(v.lang));
-    const v = vs.find((x) => /online|natural/i.test(x.name) && /en[-_]us/i.test(x.lang)) || vs.find((x) => /google/i.test(x.name) && /en[-_]us/i.test(x.lang)) || vs.find((x) => /en[-_]us/i.test(x.lang)) || vs[0];
-    try { if (v) u.voice = v; } catch (e) {}
-    speechSynthesis.speak(u);
-  }
   function say(i) {
     stop(); cur = i; mark();
     const w = W[i];
