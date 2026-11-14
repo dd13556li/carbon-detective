@@ -233,18 +233,20 @@
     const n = S.ring.length, w = Math.ceil((n + 4) / 4), h = (n + 4) / 2 - w;
     const bd = $('#board');
     bd.style.gridTemplateColumns = `repeat(${w}, 1fr)`; bd.style.gridTemplateRows = `repeat(${h}, 1fr)`;
+    bd.style.setProperty('--w', w); bd.style.setProperty('--h', h);   // 手機版（窄／矮螢幕）用：控制區放到棋盤下面
     bd.innerHTML = S.ring.map((sq, i) => {
       const [r, c] = cellOf(i, w, h);
       return `<div class="sq ${sq.type}" id="sq${i}" style="grid-area:${r}/${c}"><div class="pic">${icon(sq.icon)}</div><div class="nm">${esc(sq.name)}</div></div>`;
-    }).join('') + `<div id="hud" style="grid-area:2/2/${h}/${w}"></div>`;
+    }).join('') + `<div id="skymid"></div><div id="hud" style="grid-area:2/2/${h}/${w}"></div>`;
   }
   const cur = () => S.players[S.turn % S.players.length];
   function renderHUD(rolling) {
     const p = cur(), R = T.resource, over = S.amt > R.goal.keepAtMost;
+    // 天空區（標題、場景、目標）：寬螢幕放在 #hud 裡；手機版放在棋盤正中間（#skymid），控制區（輪到誰、擲骰子、按鈕）才在棋盤下方
+    const skyBlock = `<div class="hudsky"><div class="resname">${esc(R.name)}</div>${skyScene(S.amt, R.max || 10, S.shown ?? 0)}<div class="goal">碳雲不超過 ${R.goal.keepAtMost} ${R.unit}，就過關</div></div>`;
+    $('#skymid').innerHTML = skyBlock;
     $('#hud').innerHTML = `
-      <div class="resname">${esc(R.name)}</div>
-      ${skyScene(S.amt, R.max || 10, S.shown ?? 0)}
-      <div class="goal">碳雲不超過 ${R.goal.keepAtMost} ${R.unit}，就過關</div>
+      ${skyBlock}
       <div id="turn"><span class="av">${avatarHTML(p)}</span><span>輪到 ${esc(p.name)}</span><span class="tier">${p.tier}</span></div>
       <button class="btn" id="dicebtn" ${rolling ? 'disabled' : ''}><span id="die">?</span><span>擲骰子</span></button>
       <div class="hudtools"><button id="speakbtn">朗讀：${S.set.speak ? '開' : '關'}</button><button id="sfxbtn">音效：${S.set.sfx ? '開' : '關'}</button><button id="quitbtn">回設定</button></div>`;

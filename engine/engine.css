@@ -50,8 +50,10 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 4px s
 #token { position: absolute; right: 2px; top: 2px; width: 42%; aspect-ratio: 1; background: #fff; border-radius: 50%; border: 3px solid var(--orange); padding: 2px; animation: hop .35s; z-index: 2; }
 @keyframes hop { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-30%) scale(1.15); } 100% { transform: translateY(0) scale(1); } }
 #hud { background: var(--card); border-radius: 18px; padding: 2vmin; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 1vmin; min-width: 0; min-height: 0; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-#hud .resname { font-weight: 700; font-size: clamp(16px, 2.8vmin, 30px); }
-#hud .goal { color: var(--sub); font-size: clamp(12px, 1.9vmin, 20px); }
+.hudsky .resname { font-weight: 700; font-size: clamp(16px, 2.8vmin, 30px); }
+.hudsky .goal { color: var(--sub); font-size: clamp(12px, 1.9vmin, 20px); }
+.hudsky { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1vmin; min-height: 0; }
+#skymid { display: none; }
 /* 資源單位（碳雲）：不滿一個畫小一點、淡一點；空位是淡淡的虛影 */
 .units { display: flex; gap: .4vmin; align-items: center; justify-content: center; flex-wrap: wrap; height: 100%; }
 .unit { height: var(--uh, 60px); aspect-ratio: 1; display: inline-grid; place-items: center; flex: none; }
@@ -180,6 +182,27 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; }
 @media (max-width: 640px) {
   body { font-size: 17px; }
   .opts { gap: 8px; } .opt .lb { font-size: 1.05em; }
+  /* 偵探名單：頭像、照片鈕、名字一行；A／B／C 另起一行三等分，名字欄不會被擠成一小條 */
+  .prow { grid-template-columns: 56px auto 1fr; row-gap: 6px; }
+  .prow .seg { grid-column: 1 / -1; flex-wrap: nowrap; }
+  .prow .seg button { flex: 1; }
+}
+/* 手機（窄螢幕）或矮螢幕（橫放手機）：棋盤只留一圈格子，天空場景放正中間，
+   輪到誰／擲骰子／朗讀音效按鈕放在棋盤下面，按鈕不再被格子蓋住（2026-11-14） */
+@media (max-width: 700px), (max-height: 520px) {
+  #game { display: block; padding: 8px; }
+  #board { display: grid; width: 100%; height: auto; gap: 6px;
+    grid-template-columns: repeat(var(--w), minmax(0, 1fr)) !important; grid-template-rows: none !important; grid-auto-rows: minmax(84px, auto); }
+  #skymid { display: flex; flex-direction: column; grid-area: 2 / 2 / var(--h) / var(--w); background: var(--card); border-radius: 18px; padding: 8px; min-width: 0; min-height: 0; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  #skymid .hudsky { flex: 1; gap: 4px; }
+  #skymid .skyscene { flex: 1; height: auto; min-height: 56px; }
+  #skymid .resname { font-size: 15px; } #skymid .goal { font-size: 12px; text-align: center; }
+  #hud { grid-area: auto / 1 / auto / -1 !important; grid-row: calc(var(--h) + 1) !important; padding: 14px 12px; gap: 12px; }
+  #hud .hudsky { display: none; }
+  #turn { font-size: 18px; gap: 10px; } #turn .av { width: 44px; height: 44px; }
+  #dicebtn { font-size: 22px; padding: 12px 36px; gap: 12px; }
+  .hudtools { flex-wrap: wrap; justify-content: center; }
+  .hudtools button { white-space: nowrap; padding: 8px 14px; font-size: 15px; }
 }
 @media print {
   body { background: #fff; }
