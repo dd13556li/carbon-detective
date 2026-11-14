@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
 <link rel="stylesheet" href="../engine/activity.css">
 <style>
-/* 第二節 巡守任務的替代：教室裡有電器開著沒人用，點一下關掉；冰箱不能關。
+/* 第二節 巡守任務的替代：教室裡有電器開著沒人用，點一下關掉。
    給「教室沒有可關的電器、或電器早就關了」的時候用，學生仍能練習判斷「哪些該關」 */
 .room{position:relative;width:100%;aspect-ratio:16/10;border-radius:20px;overflow:hidden;border:3px solid var(--line);
   background:linear-gradient(#fdf6e3 0 66%,#d9b98c 66% 100%)}
@@ -44,9 +44,9 @@
     <a class="home" href="../lesson/index.html">← 活動選單</a>
   </div>
   <section id="setup" class="panel">
-    <p>「減碳偵探的一天」巡守任務的替代練習：教室裡沒有可關的電器、或電器早就關了的時候，用這一頁練習判斷「哪些該關」。<b>冰箱要一直開著，不能關。</b></p>
+    <p>「減碳偵探的一天」巡守任務的替代練習：教室裡沒有可關的電器、或電器早就關了的時候，用這一頁練習判斷「哪些該關」。</p>
     <h2>關電器前的安全守則</h2>
-    <div class="safe"><div>✋ 手擦乾再碰開關</div><div>🔌 拔插頭要握插頭，不拉電線</div><div>🧊 冰箱不關</div><div>🙋 不確定就先問老師</div></div>
+    <div class="safe"><div>✋ 手擦乾再碰開關</div><div>🔌 拔插頭要握插頭，不拉電線</div><div>🙋 不確定就先問老師</div></div>
     <h2>朗讀與音效</h2>
     <div id="opts"></div>
     <button class="go" id="start">開始，第 1 位上台 ▶</button>
@@ -71,7 +71,7 @@
 <script>
 (function () {
   const { $, speak, speakEn, sfx, icon } = Act;
-  // 教室裡的電器與位置（百分比）。fridge＝不能關的陷阱；其餘每局隨機挑幾樣「開著沒人用」
+  // 教室裡的電器與位置（百分比）。每局隨機挑幾樣「開著沒人用」（教室沒有冰箱，2026-11-14 拿掉）
   const SPOTS = [
     { key: 'bulb',   name: '電燈',   x: 44, y: 0,  w: 12, offName: 'lightsOff' },
     { key: 'ac',     name: '冷氣',   x: 4,  y: 8,  w: 20 },
@@ -79,7 +79,6 @@
     { key: 'pcOn',   name: '電腦',   x: 10, y: 46, w: 15 },
     { key: 'fan',    name: '電扇',   x: 76, y: 44, w: 15 },
     { key: 'plug',   name: '延長線', x: 38, y: 70, w: 13 },
-    { key: 'fridge', name: '冰箱',   x: 84, y: 14, w: 15, keep: true },
   ];
   const TIERS = {
     A: { name: 'A', desc: '自己找出全部開著的電器關掉，覺得關完了再按「巡守完成」', k: 4, count: false, blink: false, self: true },
@@ -92,9 +91,9 @@
   let lastSet = '';
   function play(tier, n, done) {
     const t = TIERS[tier];
-    let pick; do { pick = shuffle(SPOTS.filter((s) => !s.keep)).slice(0, t.k).map((s) => s.key); } while (pick.slice().sort().join() === lastSet);
+    let pick; do { pick = shuffle(SPOTS).slice(0, t.k).map((s) => s.key); } while (pick.slice().sort().join() === lastSet);
     lastSet = pick.slice().sort().join();
-    Object.assign(P, { tier, n, done, on: new Set(pick), offed: [], wrong: 0, fridge: 0, hinted: false, over: false });
+    Object.assign(P, { tier, n, done, on: new Set(pick), offed: [], wrong: 0, hinted: false, over: false });
     $('prog').textContent = `第 ${n} 位・${t.name}`;
     $('room').innerHTML = '<div class="win"></div><div class="board"></div><div class="desk"></div><div class="sock"></div>' +
       SPOTS.map((s) => `<button class="ap" data-k="${s.key}" style="left:${s.x}%;top:${s.y}%;--w:${s.w}%">${icon(s.key, s.name)}<span class="tag"></span></button>`).join('');
@@ -108,9 +107,9 @@
   function draw() {
     const t = TIERS[P.tier];
     $('room').querySelectorAll('.ap').forEach((b) => {
-      const s = SPOTS.find((x) => x.key === b.dataset.k), on = s.keep || P.on.has(s.key);
+      const s = SPOTS.find((x) => x.key === b.dataset.k), on = P.on.has(s.key);
       b.classList.toggle('on', on); b.classList.toggle('off', !on);
-      b.querySelector('.tag').textContent = s.name + (s.keep ? '・要開著' : on ? '・開著' : '・已關');
+      b.querySelector('.tag').textContent = s.name + (on ? '・開著' : '・已關');
       b.setAttribute('aria-label', b.querySelector('.tag').textContent);
     });
     $('room').classList.toggle('dark', !P.on.has('bulb'));
@@ -123,11 +122,6 @@
   $('room').addEventListener('click', (e) => {
     const b = e.target.closest('.ap'); if (!b || P.over) return;
     const s = SPOTS.find((x) => x.key === b.dataset.k);
-    if (s.keep) {
-      P.fridge++; sfx.gentle(); b.classList.add('wrong'); setTimeout(() => b.classList.remove('wrong'), 450);
-      const say = '冰箱要一直開著，裡面的食物才不會壞掉，不能關喔！';
-      $('msg').className = 'msg no'; $('msg').textContent = '🧊 ' + say; return speak(say);
-    }
     if (!P.on.has(s.key)) {
       const say = `${s.name}已經關了，找找看還有哪個開著？`;
       $('msg').className = 'msg no'; $('msg').textContent = say; return speak(say);
@@ -155,15 +149,15 @@
     const how = P.tier === 'C' ? '協助' : (P.wrong === 0 && !P.hinted ? '獨立' : '提示');
     const n = P.offed.length;
     $('msg').className = 'msg ok';
-    $('msg').textContent = `巡守完成！關掉了 ${n} 個電器${P.fridge ? '，也記得冰箱不能關' : ''}。`;
+    $('msg').textContent = `巡守完成！關掉了 ${n} 個電器。`;
     speak(`巡守完成！你關掉了${n}個沒人用的電器。`);
     $('acts').innerHTML = '<button class="go" id="next">完成 ✓</button>';
-    $('next').addEventListener('click', () => P.done({ list: P.offed.join('、'), fridge: P.fridge ? `點了 ${P.fridge} 次` : '—', how }), { once: true });
+    $('next').addEventListener('click', () => P.done({ list: P.offed.join('、'), how }), { once: true });
   }
   $('again').addEventListener('click', () => P.over ? speak('按完成。') : speak('教室裡有電器開著，沒有人在用。找出來，點一下關掉。'));
   $('hintbtn').addEventListener('click', () => { if (!P.over && P.on.size) { hint(); speak(`找找看${left()[0].name}。`); } });
   Act.mountOptions($('opts'), '你好，我是朗讀的聲音。電燈關掉了！');
-  const turns = Act.turns({ tiers: TIERS, play, resultCols: ['關掉的電器', '冰箱'], row: (x) => [x.list, x.fridge] });
+  const turns = Act.turns({ tiers: TIERS, play, resultCols: ['關掉的電器'], row: (x) => [x.list] });
   $('start').addEventListener('click', () => { $('setup').hidden = true; turns.next(); });
   window.__patrol = { P, SPOTS, left };
 })();
