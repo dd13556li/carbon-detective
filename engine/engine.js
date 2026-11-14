@@ -76,8 +76,22 @@
     if (b <= 0) return unitRow(0, 1, 0, cls);
     return unitRow(Math.max(b, 0.08), Math.max(1, Math.ceil(b - 1e-9)), 0, cls);
   }
-  // 天空顏色：碳雲越多越灰
-  const skyStyle = () => `--sky:${Math.round(Math.min(1, S.amt / (T.resource.max || 10)) * 100)}%`;
+  // 天空場景（2026-11-14 使用者定）：碳雲越多，天空越灰暗、太陽越被遮、越像危險；沒有安全線旗子，只靠場景變化。
+  //   --k＝0–1（碳雲占上限的比例）。新增的碳雲從城市「冒出來、飄進天空」（只對這次新增的播動畫）；超過目標加 over（天邊泛紅）。
+  const CITY = '<svg class="city" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60V34h14v-8h18v14h12V20h20v22h14V30h18v12h12V24h22v18h14V32h16v10h12V16h8v-6h6v6h6v26h14V30h16v30z" fill="#3b4a5a"/>' +
+    [[20, 40], [26, 40], [52, 30], [58, 30], [52, 38], [58, 38], [92, 36], [100, 36], [136, 32], [144, 32], [136, 42], [144, 42], [172, 28], [180, 28], [172, 38], [180, 38], [228, 36], [236, 36]].map(([x, y]) => `<rect x="${x}" y="${y}" width="4" height="5" fill="#ffe27a"/>`).join('') + '</svg>';
+  const SUN = '<svg class="sun" viewBox="0 0 100 100" aria-hidden="true"><g stroke="#ffd34d" stroke-width="6" stroke-linecap="round">' +
+    Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6; return `<line x1="${50 + 34 * Math.cos(a)}" y1="${50 + 34 * Math.sin(a)}" x2="${50 + 46 * Math.cos(a)}" y2="${50 + 46 * Math.sin(a)}"/>`; }).join('') +
+    '</g><circle cx="50" cy="50" r="26" fill="#ffd34d"/></svg>';
+  function skyScene(amount, count, prev, cls = '') {
+    const k = Math.min(1, amount / (T.resource.max || 10)), over = amount > T.resource.goal.keepAtMost;
+    let units = '';
+    for (let i = 0; i < count; i++) {
+      const f = Math.max(0, Math.min(1, amount - i));
+      units += `<span class="unit ${f <= 0 ? 'empty' : ''} ${amount > prev + 1e-9 && f > 0 && i >= Math.floor(prev) ? 'new' : ''}" style="--f:${f.toFixed(2)}">${icon(T.resource.icon)}</span>`;
+    }
+    return `<div class="skyscene ${over ? 'over' : ''} ${amount < prev - 1e-9 ? 'cleared' : ''} ${cls}" style="--k:${k.toFixed(2)}">${SUN}<div class="units">${units}</div>${CITY}</div>`;
+  }
 
   // ---------- 聲音與朗讀 ----------
   // 音效：全部由 Web Audio 即時合成（沒有音檔）。音量偏小、不做刺耳或像處罰的聲音（有些學生對聲音敏感）。
@@ -129,6 +143,7 @@
   const VERDICT = { good: '👍 這是比較省電的選擇！', bad: '這個比較耗電，下次試試另一個。' };
   const feedbackText = (q, better) => (better ? VERDICT.good : VERDICT.bad).replace('👍 ', '') + (q.feedback || '');
   const chanceText = (c) => { const R = T.resource, save = c.effect === 'save'; return c.say + (save ? R.verbDown : R.verbUp) + fmtUnits(unitsOf(kwhOf(c.use))) + (R.unitName || ''); };
+  window.__game = { S, renderHUD: (...a) => renderHUD(...a) };   // 測試用：改 S.amt 再畫 HUD，看天空場景各階段
   window.__voiceLines = () => {
     const out = [];
     for (const q of Object.values(T.questions)) {
@@ -228,12 +243,13 @@
     const p = cur(), R = T.resource, over = S.amt > R.goal.keepAtMost;
     $('#hud').innerHTML = `
       <div class="resname">${esc(R.name)}</div>
-      <div class="sky" style="${skyStyle()}">${unitRow(S.amt, R.max || 10, R.goal.keepAtMost)}</div>
+      ${skyScene(S.amt, R.max || 10, S.shown ?? 0)}
       <div class="leftnum ${over ? 'low' : ''}">現在有 ${r1(S.amt)} ${R.unit}${esc(R.unitName || '')}</div>
       <div class="goal">一天結束時，不超過 ${R.goal.keepAtMost} ${R.unit}就過關</div>
       <div id="turn"><span class="av">${avatarHTML(p)}</span><span>輪到 ${esc(p.name)}</span><span class="tier">${p.tier}</span></div>
       <button class="btn" id="dicebtn" ${rolling ? 'disabled' : ''}><span id="die">?</span><span>擲骰子</span></button>
       <div class="hudtools"><button id="speakbtn">朗讀：${S.set.speak ? '開' : '關'}</button><button id="sfxbtn">音效：${S.set.sfx ? '開' : '關'}</button><button id="quitbtn">回設定</button></div>`;
+    S.shown = S.amt;
     document.querySelectorAll('.sq').forEach((x) => x.classList.remove('here'));
     const here = $('#sq' + S.pos); here.classList.add('here');
     const old = $('#token'); if (old) old.remove();
@@ -449,7 +465,7 @@
       <h1>${pass ? esc(R.passText || '🎉 過關！') : esc(R.failText || '一天結束了，再挑戰一次吧')}</h1>
       <p class="sum">全班一天排了 <b>${r1(S.amt)}</b> ${R.unit}${esc(R.unitName || '')}（目標：不超過 ${R.goal.keepAtMost} ${R.unit}）</p>
       <p class="sum2">碳約 ${fmtKg(kg)} 公斤，${compareText(kg)}</p>
-      <div class="sumunits sky" style="${skyStyle()}">${unitRow(S.amt, Math.max(R.max || 10, Math.ceil(S.amt)), R.goal.keepAtMost)}</div>
+      ${skyScene(S.amt, Math.max(R.max || 10, Math.ceil(S.amt)), S.amt, 'sumunits')}
       ${summaryHTML()}
       <div class="actions"><button class="btn" id="printbtn">列印總結</button><a class="btn ghost" href="cert/index.html">減碳身分認證 →</a><button class="btn ghost" id="againbtn">再玩一次</button><button class="btn ghost" id="backbtn">回設定</button></div>
       <p class="tip">教師紀錄：依每人選省電的題數與完成方式記入紀錄表。這份總結只留在這個分頁，重新整理就清除，不會上傳。</p>
