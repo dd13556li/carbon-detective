@@ -15,6 +15,17 @@
 .wc{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;background:var(--paper);border:3px solid var(--line);border-radius:20px;padding:14px;cursor:pointer;color:var(--ink);font:inherit}
 .wc:hover,.wc:focus-visible{border-color:var(--accent)}
 .wc.on{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+.wcw{display:flex;flex-direction:column;gap:8px;min-width:0}
+.more{font:inherit;font-size:18px;font-weight:900;padding:8px 12px;border-radius:14px;border:3px solid var(--accent);background:var(--paper);color:var(--accent);cursor:pointer}
+.more:hover,.more:focus-visible{background:var(--accent);color:var(--accent-ink)}
+#more{border:4px solid var(--accent);border-radius:24px;background:var(--paper);color:var(--ink);padding:22px;width:min(640px,92vw)}
+#more::backdrop{background:rgba(0,0,0,.55)}
+#more h2{margin:0 0 4px;font-size:clamp(28px,5vw,40px)}
+#more .en{font-size:22px;font-weight:700;color:var(--accent);margin:0 0 12px}
+#more ol{margin:0 0 16px;padding-left:1.4em;display:grid;gap:12px;font-size:clamp(22px,3.6vw,30px);font-weight:700;line-height:1.5}
+#more .acts{display:flex;gap:12px;flex-wrap:wrap}
+#more .acts button{font:inherit;font-size:22px;font-weight:900;padding:12px 20px;border-radius:16px;border:3px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+#more .acts button.primary{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
 .wc img{width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:12px}
 .wc .zh{font-size:30px;font-weight:900;line-height:1.25}
 .wc .en{font-size:24px;font-weight:700;color:var(--accent);line-height:1.25}
@@ -22,15 +33,16 @@
 .wc .note{font-size:12px;color:var(--muted)}
 /* 大卡：一次一張，給觸控電視 */
 #big{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}
+#big .wcw{max-width:560px;width:100%;margin:0 auto}
 #big .wc{cursor:pointer;max-width:560px;width:100%;margin:0 auto}
 #big .wc img{max-height:48vh;width:auto;max-width:100%}
 #big .wc .zh{font-size:clamp(36px,7vw,60px)}
 #big .wc .en{font-size:clamp(28px,5vw,44px)}
 #big .nav{font-size:34px;font-weight:900;padding:18px 16px;border-radius:16px;border:3px solid var(--line);background:var(--paper)}
 #count{text-align:center;color:var(--muted);font-weight:700}
-@media (max-width:600px){#big{grid-template-columns:1fr 1fr}#big .wc{grid-column:1/-1;grid-row:1}}
+@media (max-width:600px){#big{grid-template-columns:1fr 1fr}#big .wcw{grid-column:1/-1;grid-row:1}}
 @media print{
-  .top .home,.tabs,.bar,#big,.note{display:none!important}
+  .top .home,.tabs,.bar,#big,.note,.more,#more{display:none!important}
   #all{display:grid!important;grid-template-columns:1fr 1fr;gap:10mm}
   body{background:#fff;padding:0}
   .wc{break-inside:avoid;border-color:#999}
@@ -56,6 +68,7 @@
     <button class="nav" id="next" aria-label="下一張">▶</button>
   </section>
   <p id="count" hidden></p>
+  <dialog id="more" aria-labelledby="mzh"></dialog>
   <section id="all" class="grid"></section>
   <p class="note">英文用瀏覽器的英文語音朗讀；找不到英文語音時交給系統挑。電費單圖是教學範例帳單（非真實帳單）。</p>
 </main>
@@ -77,8 +90,9 @@
     const w = W[i];
     speak(w.zh.replace(/（.*?）/g, ''), { onEnd: () => setTimeout(() => speakEn(w.say || w.en), 250) });
   }
-  const card = (w, i) => `<button class="wc" data-i="${i}" aria-label="${esc(w.zh)} ${esc(w.en)}"><img src="../${esc(w.img)}" alt="">` +
-    `<span class="zh">${esc(w.zh)}</span><span class="en">${esc(w.en)}</span><span class="when">${esc(w.when)}</span>${w.note ? `<span class="note">${esc(w.note)}</span>` : ''}</button>`;
+  const card = (w, i) => `<div class="wcw"><button class="wc" data-i="${i}" aria-label="${esc(w.zh)} ${esc(w.en)}"><img src="../${esc(w.img)}" alt="">` +
+    `<span class="zh">${esc(w.zh)}</span><span class="en">${esc(w.en)}</span><span class="when">${esc(w.when)}</span>${w.note ? `<span class="note">${esc(w.note)}</span>` : ''}</button>` +
+    `${(w.more || []).length ? `<button class="more" data-more="${i}" aria-label="更多：${esc(w.zh)}">更多 ▾</button>` : ''}</div>`;
   const list = () => W.map((w, i) => [w, i]).filter(([w]) => TABS[filt][1](w));
   function mark() { document.querySelectorAll('.wc').forEach((el) => el.classList.toggle('on', +el.dataset.i === cur)); }
   function render() {
@@ -92,8 +106,29 @@
   }
   document.addEventListener('click', (e) => {
     const t = e.target.closest('[data-t]'); if (t) { filt = +t.dataset.t; idx = 0; return render(); }
+    const m = e.target.closest('[data-more]'); if (m) return openMore(+m.dataset.more);
     const c = e.target.closest('.wc'); if (c) say(+c.dataset.i);
   });
+  // 「更多」：幾句話簡單說明這個概念（theme.js words[].more），可朗讀；關掉視窗就停
+  const dlg = $('more');
+  function readMore(i) {
+    stop(); const L = W[i].more; let k = 0;
+    const next = () => { if (k >= L.length || !dlg.open) return; speak(L[k++].replace(/（.*?）/g, ''), { onEnd: () => setTimeout(next, 300) }); };
+    next();
+  }
+  function openMore(i) {
+    const w = W[i]; stop();
+    dlg.innerHTML = `<h2 id="mzh">${esc(w.zh)}</h2><p class="en">${esc(w.en)}</p>` +
+      `<ol>${w.more.map((t) => `<li>${esc(t)}</li>`).join('')}</ol>` +
+      `<div class="acts"><button class="primary" data-act="read">🔊 念給我聽</button><button data-act="close">關閉</button></div>`;
+    dlg.dataset.i = i; dlg.showModal();
+  }
+  dlg.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act]');
+    if (b && b.dataset.act === 'read') readMore(+dlg.dataset.i);
+    else if ((b && b.dataset.act === 'close') || e.target === dlg) dlg.close();
+  });
+  dlg.addEventListener('close', () => stop());
   $('mode').addEventListener('click', () => { big = !big; idx = 0; render(); });
   const step = (d) => { const n = list().length; idx = (idx + d + n) % n; render(); say(list()[idx][1]); };
   $('prev').addEventListener('click', () => step(-1));
