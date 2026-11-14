@@ -101,19 +101,19 @@
     if (a.key !== w.key) {
       P.wrong++; c.classList.add('wrong'); setTimeout(() => c.classList.remove('wrong'), 450); sfx.gentle();
       // A 卡片不寫瓦數：第一次點錯只說「還有更吃電的」，再錯才說出瓦數當提示
-      const say = TIERS[P.tier].showW || P.wrong >= 2 ? `${a.name}是${a.watts}瓦，還有更吃電的喔。` : `還有更吃電的喔，想一想：哪一個家電用起來最耗電？`;
+      const say = TIERS[P.tier].showW || P.wrong >= 2 ? `${a.name}一般約${a.watts}瓦，還有更吃電的喔。` : `還有更吃電的喔，想一想：哪一個家電用起來最耗電？`;
       $('msg').className = 'msg no'; $('msg').textContent = say; speak(say);
       if (P.wrong >= Math.max(1, TIERS[P.tier].hintAfter)) hint();
       return;
     }
     c.disabled = true; c.classList.remove('hint'); sfx.step();
     const s = $('slots').children[P.placed];
-    s.classList.add('filled'); s.innerHTML = `<span class="rk">第 ${P.placed + 1}</span>${icon(a.key, a.name)}<span>${a.name}</span><span class="rk">${a.watts} W</span>`;
+    s.classList.add('filled'); s.innerHTML = `<span class="rk">第 ${P.placed + 1}</span>${icon(a.key, a.name)}<span>${a.name}</span><span class="rk">一般約 ${a.watts} W</span>`;
     P.placed++;
-    if (P.tier === 'C' && P.placed === 1) { const rest = P.order[1], s2 = $('slots').children[1]; s2.classList.add('filled'); s2.innerHTML = `<span class="rk">第 2</span>${icon(rest.key, rest.name)}<span>${rest.name}</span><span class="rk">${rest.watts} W</span>`; $('cards').querySelector(`[data-k="${rest.key}"]`).disabled = true; P.placed = 2; }
+    if (P.tier === 'C' && P.placed === 1) { const rest = P.order[1], s2 = $('slots').children[1]; s2.classList.add('filled'); s2.innerHTML = `<span class="rk">第 2</span>${icon(rest.key, rest.name)}<span>${rest.name}</span><span class="rk">一般約 ${rest.watts} W</span>`; $('cards').querySelector(`[data-k="${rest.key}"]`).disabled = true; P.placed = 2; }
     if (P.placed < P.order.length) {
-      $('msg').className = 'msg ok'; $('msg').textContent = `對！${a.name} ${a.watts} 瓦。下一個呢？`;
-      speak(`對！${a.name}${a.watts}瓦。下一個呢？`);
+      $('msg').className = 'msg ok'; $('msg').textContent = `對！${a.name}一般約 ${a.watts} 瓦。下一個呢？`;
+      speak(`對！${a.name}一般約${a.watts}瓦。下一個呢？`);
       if (P.hinted && P.tier === 'C') hint(); else $('cards').querySelectorAll('.hint').forEach((x) => x.classList.remove('hint'));
       return;
     }
@@ -130,10 +130,10 @@
     $('cards').innerHTML = '';
     const byMonth = P.order.slice().sort((a, b) => month(b) - month(a));
     const jump = byMonth.find((a, i) => P.order.indexOf(a) > i);          // 瓦數排名後面、一個月卻用得多的
-    $('after').innerHTML = `<h2>瓦數（用電的力氣）</h2>${bars(P.order, (a) => a.watts, (a) => `${a.watts} W`)}
+    $('after').innerHTML = `<h2>瓦數（用電的力氣）</h2>${bars(P.order, (a) => a.watts, (a) => `一般約 ${a.watts} W`)}
       <div class="row" style="margin-top:14px"><button class="go alt" id="mon">一個月用多少度？📅</button><button class="go" id="next">完成 ✓</button></div>
       <div id="monbox"></div>`;
-    speak(`排好了！最吃電的是${P.order[0].name}，${P.order[0].watts}瓦。`);
+    speak(`排好了！最吃電的是${P.order[0].name}，一般約${P.order[0].watts}瓦。`);
     $('mon').addEventListener('click', () => {
       $('monbox').innerHTML = `<h2 style="margin-top:14px">一個月大約用幾度（瓦數 × 每天幾小時 × 30 天 ÷ 1000）</h2>
         ${bars(byMonth, month, (a) => `${+month(a).toFixed(1)} 度`)}
