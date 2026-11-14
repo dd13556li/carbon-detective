@@ -255,10 +255,10 @@ window.THEME = {
     { zh: "電費單", en: "Electricity Bill", say: "Electricity bill", when: "第一節 引起動機", img: "hunt/bills/B.webp", note: "教學範例帳單", more: ["電費單是電力公司寄來的帳單。", "上面寫這一期用了幾度電、要繳多少錢。", "也寫從哪一天算到哪一天，還有排出多少二氧化碳。"] },
     { zh: "度（用電度數）", en: "kWh", say: "kilowatt-hour", when: "第一節 電費單尋寶", img: "themes/save-power/images/meter.webp", more: ["1,000 瓦的電器用 1 小時，就是用了 1 度電。", "電費單上的「度」，就是用電的多少。", "度數越多，電費越多，排出的二氧化碳也越多。"] },
     { zh: "二氧化碳", en: "CO2（carbon dioxide）", say: "carbon dioxide", when: "第一節 度數變碳排", img: "themes/save-power/art/cloud.webp", more: ["二氧化碳（CO₂）是看不見的氣體。", "燒煤、燒天然氣來發電，就會排出二氧化碳。", "排太多，地球會越來越熱。"] },
-    { zh: "節能", en: "Save Energy", say: "Save energy", when: "第一節 吃電大戶排排站", img: "themes/save-power/images/ledLamp.webp", more: ["節能，就是節省能源，把電用得聰明。", "沒有人的時候關燈，冷氣不要開太冷。", "少用一點電，電費變少，二氧化碳也變少。"] },
-    { zh: "碳排放", en: "Carbon Emissions", say: "Carbon emissions", when: "第二節 引起動機", img: "themes/save-power/images/co2.webp", more: ["排出二氧化碳，叫做碳排放。", "用電、開車、騎機車，都會有碳排放。", "少用一點電，就能減少碳排放。"] },
+    { zh: "節能", en: "Save Energy", say: "Save energy", when: "第一節 吃電大戶排排站", img: "themes/save-power/images/ledLamp.webp", more: ["節能，就是節省能源，把電用得聰明。", "沒有人的時候關燈，冷氣不要開太冷。", "節省用電，電費變少，二氧化碳也變少。"] },
+    { zh: "碳排放", en: "Carbon Emissions", say: "Carbon emissions", when: "第二節 引起動機", img: "themes/save-power/images/co2.webp", more: ["排出二氧化碳，叫做碳排放。", "用電、開車、騎機車，都會有碳排放。", "節省用電，就能減少碳排放。"] },
     { zh: "關掉", en: "Turn off", say: "Turn off", when: "第二節 巡守任務", img: "themes/save-power/images/lightsOff.webp", more: ["沒有人在用的電器，要關掉。", "關掉了，電器就不會再用電。", "離開房間，記得關燈、關電腦。"] },
-    { zh: "淨零排放", en: "Net Zero", say: "Net zero", when: "第二節 總結", img: "themes/save-power/images/netZero.webp", more: ["淨零排放，是排出的二氧化碳，和地球吸收掉的一樣多。", "這樣空氣裡的二氧化碳，就不會再變多。", "我們少用電、少排碳，就是在幫忙。"] },
+    { zh: "淨零排放", en: "Net Zero", say: "Net zero", when: "第二節 總結", img: "themes/save-power/images/netZero.webp", more: ["淨零排放，是排出的二氧化碳，和地球吸收掉的一樣多。", "這樣空氣裡的二氧化碳，就不會再變多。", "我們節省用電、減少排碳，就是在愛護我們的環境資源。"] },
   ],
   // 分層換顆粒度，不是只剪短（依 money_tutor dialogue/data/topic_presets.js 的 T1／T2／T3 原則）：
   //   lineA＝A 層：自然口語、帶理由、結尾有變化；不寫稱呼（不知道學生家裡有誰），畫面另提示「先叫一聲你的家人」
