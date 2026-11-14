@@ -109,8 +109,8 @@ a{color:var(--accent)}
     <div class="seg" id="opts"></div>
     <button class="go" id="start">開始尋寶 Start</button>
     <h2>🖨️ 列印紙本練習單</h2>
-    <div class="printbar" id="printbar"><button data-print="A">A 練習單</button><button data-print="B">B 練習單</button><button data-print="C">C 練習單</button><button data-print="key">教師答案</button></div>
-    <p class="note">每個等級印 3 頁（三張範例帳單各一頁，A4 直式），題目同遊戲；教師答案 1 頁。課後或回家再練習一次。</p>
+    <div class="printbar" id="printbar"><button data-print="A">A 練習單</button><button data-print="B">B 練習單</button><button data-print="C">C 練習單</button></div>
+    <p class="note">每個等級印 3 頁（三張範例帳單各一頁，A4 直式），題目同遊戲。課後或回家再練習一次。</p>
   </section>
 
   <section id="turn" class="panel" hidden></section>
@@ -209,19 +209,12 @@ a{color:var(--accent)}
   const sheetHd = (title) => `<div class="sh-hd"><h1>${title}</h1><div class="who">姓名：＿＿＿＿＿＿　日期：＿＿＿＿＿</div></div>`;
   function printSheets(which) {
     let h;
-    if (which === 'key') {
-      h = `<section class="sheet">${sheetHd('電費單尋寶 教師答案')}
-        <table><thead><tr><th>範例帳單</th>${[1, 2, 3, 4].map((n) => `<th>${n} ${T[n].zh}</th>`).join('')}</tr></thead>
-        <tbody>${BILLS.map((b) => `<tr><td>${b.key}：${b.title}</td>${[1, 2, 3, 4].map((n) => `<td>${T[n].val(b)}</td>`).join('')}</tr>`).join('')}</tbody></table>
-        <p class="foot">A 找 1–4 四項（原版帳單）；B 找 1、2（重點標示版）；C 找 1 並圈出紅框（重點標示版）。</p></section>`;
-    } else {
-      const tr = TIERS[which];
-      h = BILLS.map((b) => `<section class="sheet">${sheetHd(`電費單尋寶 練習單・${tr.name}`)}
-        <img class="billimg" src="${b[tr.ver].img}" alt="範例帳單 ${b.key}">
-        <ol class="qs">${PRINTQ[which](b).join('')}</ol>
-        <p class="self">我是：☐ 自己找到　☐ 看提示找到　☐ 老師幫忙找到</p>
-        <p class="foot">教學範例帳單，非真實帳單。</p></section>`).join('');
-    }
+    const tr = TIERS[which];
+    h = BILLS.map((b) => `<section class="sheet">${sheetHd(`電費單尋寶 練習單・${tr.name}`)}
+      <img class="billimg" src="${b[tr.ver].img}" alt="範例帳單 ${b.key}">
+      <ol class="qs">${PRINTQ[which](b).join('')}</ol>
+      <p class="self">我是：☐ 自己找到　☐ 看提示找到　☐ 老師幫忙找到</p>
+      <p class="foot">教學範例帳單，非真實帳單。</p></section>`).join('');
     $('printArea').innerHTML = h;
     const imgs = [...$('printArea').querySelectorAll('img')];
     Promise.all(imgs.map((i) => i.complete ? 0 : new Promise((r) => { i.onload = i.onerror = r; }))).then(() => window.print());
