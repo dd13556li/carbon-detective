@@ -36,7 +36,7 @@
   </div>
 
   <section id="setup" class="panel">
-    <p>卡片上是<b>示例瓦數</b>（常見機種的概略值），家裡的家電以標示為準。和紙本家電瓦數卡（教案附錄六）、用電碳排計算器的家電模式同一份數字。</p>
+    <p>卡片上寫的是<b>一般約</b>多少瓦（常見機種的概略值），家裡的家電以標示為準。和紙本家電瓦數卡（教案附錄六）、用電碳排計算器的家電模式同一份數字。</p>
     <h2>朗讀與音效</h2>
     <div id="opts"></div>
     <button class="go" id="start">開始，第 1 位上台 ▶</button>
@@ -85,7 +85,7 @@
     $('prog').textContent = `第 ${n} 位・${t.name}`;
     $('slots').style.setProperty('--n', t.k);
     $('slots').innerHTML = P.order.map((_, i) => `<div class="slot" data-i="${i}"><span class="rk">第 ${i + 1}</span></div>`).join('');
-    $('cards').innerHTML = pick.map((a) => `<button class="card" data-k="${a.key}">${icon(a.key, a.name)}<span class="nm">${a.name}</span>${t.showW ? `<span class="w">示例 ${a.watts} W</span>` : ''}${t.bars ? `<span class="wbar"><i style="width:${a.watts / MAXW * 100}%"></i></span>` : ''}</button>`).join('');
+    $('cards').innerHTML = pick.map((a) => `<button class="card" data-k="${a.key}">${icon(a.key, a.name)}<span class="nm">${a.name}</span>${t.showW ? `<span class="w">一般約 ${a.watts} W</span>` : ''}${t.bars ? `<span class="wbar"><i style="width:${a.watts / MAXW * 100}%"></i></span>` : ''}</button>`).join('');
     $('msg').textContent = ''; $('after').innerHTML = '';
     if (t.hintAfter === 0) hint();
     speak(t.k === 2 ? `${pick[0].name}和${pick[1].name}，哪一個比較吃電？點一下。` : `從最吃電的開始，一個一個點。`);
