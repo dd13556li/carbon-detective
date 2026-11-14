@@ -90,7 +90,7 @@
       const f = Math.max(0, Math.min(1, amount - i));
       units += `<span class="unit ${f <= 0 ? 'empty' : ''} ${amount > prev + 1e-9 && f > 0 && i >= Math.floor(prev) ? 'new' : ''}" style="--f:${f.toFixed(2)}">${icon(T.resource.icon)}</span>`;
     }
-    return `<div class="skyscene ${over ? 'over' : ''} ${amount < prev - 1e-9 ? 'cleared' : ''} ${cls}" style="--k:${k.toFixed(2)}">${SUN}<div class="units">${units}</div>${CITY}</div>`;
+    return `<div class="skyscene ${over ? 'over' : ''} ${amount < prev - 1e-9 ? 'cleared' : ''} ${cls}" style="--k:${k.toFixed(2)}" role="img" aria-label="現在有 ${r1(amount)} ${T.resource.unit}${esc(T.resource.unitName || '')}">${SUN}<div class="units">${units}</div>${CITY}</div>`;
   }
 
   // ---------- 聲音與朗讀 ----------
@@ -244,8 +244,7 @@
     $('#hud').innerHTML = `
       <div class="resname">${esc(R.name)}</div>
       ${skyScene(S.amt, R.max || 10, S.shown ?? 0)}
-      <div class="leftnum ${over ? 'low' : ''}">現在有 ${r1(S.amt)} ${R.unit}${esc(R.unitName || '')}</div>
-      <div class="goal">一天結束時，不超過 ${R.goal.keepAtMost} ${R.unit}就過關</div>
+      <div class="goal">碳雲不超過 ${R.goal.keepAtMost} ${R.unit}，就過關</div>
       <div id="turn"><span class="av">${avatarHTML(p)}</span><span>輪到 ${esc(p.name)}</span><span class="tier">${p.tier}</span></div>
       <button class="btn" id="dicebtn" ${rolling ? 'disabled' : ''}><span id="die">?</span><span>擲骰子</span></button>
       <div class="hudtools"><button id="speakbtn">朗讀：${S.set.speak ? '開' : '關'}</button><button id="sfxbtn">音效：${S.set.sfx ? '開' : '關'}</button><button id="quitbtn">回設定</button></div>`;

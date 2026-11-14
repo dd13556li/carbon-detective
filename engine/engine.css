@@ -63,7 +63,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 4px s
   background: linear-gradient(to top right, transparent calc(50% - 2px), var(--green) calc(50% - 2px), var(--green) calc(50% + 2px), transparent calc(50% + 2px)); }
 .goalmark { width: 4px; align-self: stretch; background: repeating-linear-gradient(var(--red) 0 6px, transparent 6px 10px); border-radius: 2px; flex: none; }
 /* 天空場景：碳雲越多，天空越灰暗、太陽越被遮、天邊泛紅（--k 0–1）；沒有安全線旗子 */
-.skyscene { position: relative; width: 100%; height: clamp(78px, 16.5vmin, 150px); border-radius: 14px; overflow: hidden; flex: none;
+.skyscene { position: relative; width: 100%; height: clamp(96px, 22vmin, 200px); border-radius: 14px; overflow: hidden; flex: none;
   background-color: color-mix(in srgb, #4d525c calc(var(--k, 0) * 100%), #8fcdf6); transition: background-color .8s; }
 .skyscene::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
   background: linear-gradient(to bottom, rgba(255,255,255,.0) 20%, rgba(255,255,255,calc(.45 - var(--k, 0) * .4)) 100%); }
@@ -87,8 +87,6 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 4px s
 @keyframes cloudIn { from { opacity: 0; translate: 220% 260%; scale: .25; } to { opacity: 1; translate: 0 0; scale: 1; } }
 @media (prefers-reduced-motion: reduce) { .skyscene .unit .ic, .skyscene .unit.new, .skyscene.cleared::after { animation: none; } }
 #result .skyscene.sumunits { margin: 8px auto; max-width: 900px; height: clamp(150px, 32vmin, 320px); }
-#hud .leftnum { font-size: clamp(16px, 2.6vmin, 28px); font-weight: 700; }
-#hud .leftnum.low { color: var(--red); }
 #turn { display: flex; align-items: center; gap: 1.2vmin; font-size: clamp(16px, 2.8vmin, 30px); font-weight: 700; }
 #turn .av { width: clamp(40px, 8vmin, 84px); height: clamp(40px, 8vmin, 84px); border-radius: 50%; border: 3px solid var(--blue); background: #fff; padding: 3px; }
 #turn .tier { font-size: .6em; background: #eef2f7; border-radius: 8px; padding: 2px 8px; color: var(--sub); }
