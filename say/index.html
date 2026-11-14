@@ -21,10 +21,6 @@
 .face.front .en2{font-size:22px;font-weight:900;color:var(--accent)}
 .cue{font-size:clamp(20px,3vw,26px);font-weight:900;text-align:center;margin:0 0 8px;color:var(--accent)}
 .line{font-size:clamp(26px,4.6vw,40px);font-weight:900;text-align:center;line-height:1.45;padding:14px;border-radius:16px;background:var(--paper);border:3px solid var(--accent)}
-.judge{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.judge button{font-size:22px;font-weight:900;padding:16px 8px;border-radius:16px;border:3px solid var(--line);background:var(--paper)}
-.judge button:first-child{border-color:var(--ok)}
-@media (max-width:560px){.judge{grid-template-columns:1fr}}
 @media (prefers-reduced-motion: reduce){.flip .in{transition:none}}
 </style>
 </head>
@@ -57,8 +53,7 @@
         <p class="cue" id="cue" hidden>👋 先叫一聲你的家人，再說：</p>
         <div class="line" id="line"></div>
         <div class="row" style="margin-top:12px" id="tools"></div>
-        <h2 style="margin-top:16px">完成：選這位同學的作答方式（按了就回到設定頁）</h2>
-        <div class="judge" id="judge"><button data-how="獨立">自己說出來 👍</button><button data-how="提示">跟著念／看提示</button><button data-how="協助">指圖卡／協助</button></div>
+        <div class="row" style="margin-top:16px"><button class="go" id="donebtn">完成任務 ✓</button></div>
       </div>
     </div>
   </section>
@@ -129,10 +124,12 @@
     $('flip').classList.remove('open'); $('flip').setAttribute('aria-label', '抽一張卡'); sfx.step();
     speak('再抽一張，練習下一句。');
   }
-  $('judge').addEventListener('click', (e) => {
-    const b = e.target.closest('button'); if (!b || !P.card) return;
-    sfx.good(); const card = P.card; P.card = null;
-    P.done({ card: P.said.join('、'), how: b.dataset.how });
+  // 完成任務：回設定頁換下一位。完成方式依等級自動記（A 自己看句子說＝獨立、B 跟著複誦＝提示、C 跟著說或指圖卡＝協助），不用老師另選
+  const HOW = { A: '獨立', B: '提示', C: '協助' };
+  $('donebtn').addEventListener('click', () => {
+    if (!P.card) return;
+    sfx.good(); P.card = null;
+    P.done({ card: P.said.join('、'), how: HOW[P.tier] });
   });
   // 🔊 給老師用：任何層級都可以再念一次
   $('again').addEventListener('click', () => { if (!P.card) return speak('點卡片，抽一張省電卡。'); if (P.tier === 'B') $('line').hidden = false; speak(lineOf(P.card, P.tier)); });
