@@ -249,7 +249,7 @@ window.THEME = {
   ] },
   // 我會說：抽一張，對家人說出這一句（icon＝art/ 的圖）
   // 中英雙語關鍵字卡（cards/ 字卡頁、教案附錄十三都讀這一份）。img 是從遊戲根目錄算起的路徑；
-  // ebill／meter／co2／certBadge／netZero 由 tools/gen_icons.py 產生（2026-11-13），其餘重用遊戲裡現成的圖
+  // ebill／co2／certBadge／netZero 由 tools/gen_icons.py 產生（2026-11-13）；meter（度）是 tools/gen_kwh_card.py 自己畫的示意圖（2026-11-14），其餘重用遊戲裡現成的圖
   // 雙語字卡＝教案「雙語融入」表的 7 張（2026-11-13 定案：兩邊一一對應，多的刪掉）
   words: [
     { zh: "電費單", en: "Electricity Bill", say: "Electricity bill", when: "第一節 引起動機", img: "hunt/bills/B.webp", note: "教學範例帳單" },
